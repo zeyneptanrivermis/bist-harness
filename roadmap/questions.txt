@@ -1,0 +1,37 @@
+Questions and Answers About the Project
+ 
+2. Yahoo yerine başka veri kaynağı kullanabilir miyim?
+
+Evet. Yahoo Finance zorunlu değil. Eğer endeks veya geçmiş veri yetersizse başka güvenilir ve yasal erişilebilir veri kaynakları kullanabilirsiniz. 
+
+Önemli olan veri kaynağını, tarih aralığını, düzeltmeleri ve eksik veri işlemlerini raporda açıkça belirtmenizdir. 
+
+Projede Yahoo/yfinance örnek kaynak olarak verilmiştir.   
+ 
+3. Haber ve konuşma katmanı zorunlu mu? KAP kullanabilir miyim?
+
+Haber/bağlam katmanı proje mimarisinin bir parçasıdır. Şirket bazlı olaylar için KAP bildirimlerini kullanabilirsiniz ve hatta bu oldukça uygundur çünkü KAP resmi açıklama zamanlarını verir. Özellikle finansal sonuçlar, önemli şirket olayları ve açıklama tarihleri için güçlü bir kaynaktır. Speech-to-text kısmı ise daha sınırlı, seçilmiş ve onaylı örneklerle uygulanabilir. Buradaki temel amaç, metinsel kaynakları zaman damgalı bağlamsal evidence  olarak kullanmak; sayısal finansal verilerin yerini bunlarla doldurmamaktır.   
+ 
+4. Şirketler bankalar hariç 2024 sonrası yıllık tablolarını TMS 29'a göre raporluyor. bu yüzden önceki dönemlerle ve bankalarla doğrudan karşılaştırma yanıltıcı olabiliyor. çeyreklik analizde sadece TMS 29 sonrası dönemle mi çalışayım, yoksa önceki dönemi reel bazda enflasyon verisiyle düzelterek mi dahil edeyim?
+
+TMS = Türkiye Muhasebe Standartları demektir.
+
+TMS 29, yüksek enflasyonlu ekonomilerde finansal raporların enflasyona göre düzeltilmesini düzenleyen standarttır.
+
+Burada doğrudan nominal eski dönem verileriyle TMS 29 sonrası düzeltilmiş verileri karıştırmak yanıltıcı olabilir. Bu nedenle ana analizde mümkünse TMS 29 sonrası, kendi içinde tutarlı dönemleri kullanmanızı öneririm.
+ 
+Testlerinizi 1 ocak 2025 - kasım 2026 arası verilerle yapabilirsiniz.
+ 
+5. Harness deneylerinde hangi modeli kullanalım?
+
+Belirli bir LLM zorunlu değil. Benim önerim, harness deneylerinde aynı modeli sabit tutmanız ve asıl karşılaştırmayı mimari üzerinden yapmanızdır.
+
+Yani şu aşamaları karşılaştırın:
+
+Raw LLM → LLM + Tools → Tools + Stateful Harness → + Evidence/Quality Gate → + Memory + Human Review
+
+Buradaki amaç “hangi LLM daha iyi?” sorusunu cevaplamak değil; tool, state, evidence, verification ve human review eklendikçe sistem ne kadar daha güvenilir ve tekrarlanabilir oluyor? sorusunu incelemek
+
+Yönergeler
+This project asks students to build an integrated educational financial-analysis system for a selected universe of BIST 100 stocks. The system does not consist of a single prediction model. Instead, it combines deterministic financial tools, multiple evidence sources, historical verification, and a controlled AI-agent workflow.
+Students investigate whether observable market patterns exist before a stock moves, whether lagging stocks within a strong sector later catch up, whether weekday return patterns are stable, whether technical reversal events repeat, and how quarterly financial changes are reflected in subsequent prices. The project also introduces macroeconomic context, curated financial news, and speech-to-text summaries of instructor-approved public finance commentary. 
