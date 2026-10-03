@@ -99,54 +99,67 @@ Aşağıdaki 6 ana dosya oluşturulmuş ve her biri tek tek doğrulanmıştır:
   4. **MACD:** 12-26-9 parametreli momentum ve histogram göstergesi.
   5. **Bollinger Bantları:** Üst bant, orta bant, alt bant, %B ve Bant Genişliği (Bandwidth).
   6. **ATR (14 günlük):** Volatilite (gerçek aralık ortalaması).
-  7. **Supertrend (10, 3.0):** Trend yönü (+1 Boğa, -1 Ayı).
-  8. **Ichimoku Cloud:** Tenkan-sen, Kijun-sen, Senkou Span A/B, Bulut Üstü (`ABOVE_CLOUD`), Bulut Altı (`BELOW_CLOUD`) tespiti.
-* **Test Sonucu:** `THYAO` hissesi üzerinde denendi; 689 günlük veriye 34 sütunluk analitik göstergeler başarıyla eklendi.
+  7. **Supertrend (10, 3.0):** Trend yönü (+1 Boğa, -1 Ayı), başlangıç ATR ısınması sonrası sıfır NaN ile düzeltildi ve `Supertrend_State` (`BULLISH_FLIP`, `BEARISH_FLIP`, `BULLISH`, `BEARISH`) eklendi.
+  8. **Ichimoku Cloud:** Tenkan-sen, Kijun-sen, Senkou Span A/B, Bulut Üstü (`ABOVE_CLOUD`), Bulut Altı (`BELOW_CLOUD`) tespiti ve point-in-time `Chikou_vs_Past`.
+  9. **Destek / Direnç ve Bant Olayları:** `find_support_resistance()`, `calculate_bollinger_events()`, `calculate_kama_state()`.
+* **Test Sonucu:** `THYAO` hissesi üzerinde denendi; 689 günlük veriye 44 sütunluk analitik göstergeler başarıyla eklendi.
 
 ### 6. `src/scenarios/sector_laggard.py` (1. Araştırma Senaryosu: Catch-Up)
 * **Amacı:** *"Bir sektör yükselirken geride kalan hisse sonradan arayı kapatır mı?"* hipotezini test etmek.
 * **Nasıl Çalışır?**
   1. `calculate_sector_returns()`: Her hissenin ve her sektörün 20 günlük medyan getirisini hesaplar.
   2. `calculate_sector_lag_scores()`: `Hisse Getirisi - Sektör Getirisi` farkını bulur (Eksi ise hisse geridedir).
-  3. `evaluate_laggard_catchup()`: Sektörün güçlü olduğu (+%5 üzeri) ama hissenin geride kaldığı (-%3'ten fazla) tüm geçmiş günleri bulur ve bu hissenin sonraki 5, 10 ve 20 günde sektöründen daha çok getiri sağlayıp sağlamadığını (`Outperformance`) ölçer.
-* **Test Sonucu:** 
+  3. `rank_sector_laggards()`: Belirli bir tarihte sektör içi hisseleri geride kalma skoruna göre 1'den N'ye sıralar.
+  4. `evaluate_laggard_catchup()`: Sektörün güçlü olduğu (+%5 üzeri) ama hissenin geride kaldığı (-%3'ten fazla) tüm geçmiş günleri bulur ve $t+1$ gecikmeli işlemle sonraki 5, 10 ve 20 günde sektördeki diğer hisselerden daha çok getiri sağlayıp sağlamadığını (`Outperformance`) ölçer.
+* **Test Sonucu (Katı t+1 İcrası ile):** 
   * Tespit edilen toplam vaka: **746 olay**.
-  * 5 günlük arayı kapatma başarı oranı: **%51.47**. (Yani tek başına sektör geriliği bir alım garantisi değildir; temel analiz ve makro kanıtlarla filtrelenmesi gerekir!)
+  * 5 Günlük Arayı Kapatma Başarı Oranı: **%52.41**.
+  * 10 Günlük Arayı Kapatma Başarı Oranı: **%53.75**.
+  * 20 Günlük Arayı Kapatma Başarı Oranı: **%55.83**.
 
 ---
 
-## 4. KODLARI TEST ETMEK VE ÇALIŞTIRMAK İÇİN KOMUTLAR
+## 4. KODLARI TEST ETMEK VE ÇALIŞTIRMAK İÇİN GÜNCEL KOMUTLAR
 
-Herhangi bir arkadaşın terminalde şu komutları çalıştırarak yapılanları anında kendi gözüyle görebilir:
+Terminalde şu komutları çalıştırarak yapılanları anında test edebilirsiniz:
 
 ```bash
 # 1. Proje ana klasörüne git
-cd /Users/zeyneptanrivermis/Desktop/projects/economics
+cd /Users/zeyneptanrivermis/Desktop/projects/bist-harness
 
 # 2. İndirilen 31 veri dosyasını listele
 ls -lh data/processed/
 
 # 3. İndikatör hesaplamasını THYAO üzerinde test et
 PYTHONPATH=. .venv/bin/python -c "
-from src.data_pipeline import load_ticker_data
+from src.data_pipeline import get_stock_history
 from src.indicators import calculate_all_indicators
 
-df = load_ticker_data('THYAO')
+df = get_stock_history('THYAO')
 enriched = calculate_all_indicators(df)
-print(enriched[['Close', 'RSI_14', 'Supertrend_Direction', 'Ichimoku_State']].tail(5))
+print(enriched[['Close', 'RSI_14', 'Supertrend', 'Supertrend_State', 'Ichimoku_State', 'KAMA_Slope_State']].tail(5))
 "
 
 # 4. Sektör Gerisinde Kalanlar (Catch-Up) motorunu çalıştır
 PYTHONPATH=. .venv/bin/python -c "
-from src.data_pipeline import load_ticker_data
+from src.data_pipeline import get_stock_history
 from src.universe import get_all_tickers
-from src.scenarios.sector_laggard import calculate_sector_lag_scores, evaluate_laggard_catchup
+from src.scenarios.sector_laggard import rank_sector_laggards, evaluate_laggard_catchup
 
 tickers = get_all_tickers()
-prices = {t: load_ticker_data(t) for t in tickers}
-events = evaluate_laggard_catchup(prices)
-print('Tespit edilen olay sayısı:', len(events))
+prices = {t: get_stock_history(t) for t in tickers}
+
+# Sektör içi sıralama
+print('En Güncel Sektör İçi Sıralama:')
+ranks = rank_sector_laggards(price_dict=prices)
+print(ranks[['Sector', 'Ticker', 'Stock_Return', 'Lag_Score', 'Rank_In_Sector']].head(6))
+
+# t+1 Katı Look-ahead Korumalı Backtest
+events = evaluate_laggard_catchup(prices, signal_shift=1)
+print('\nTespit edilen olay sayısı:', len(events))
 print('5 Günlük Başarı Oranı:', f\"{events['Fwd_5d_CatchUp_Hit'].mean():.2%}\")
+print('10 Günlük Başarı Oranı:', f\"{events['Fwd_10d_CatchUp_Hit'].mean():.2%}\")
+print('20 Günlük Başarı Oranı:', f\"{events['Fwd_20d_CatchUp_Hit'].mean():.2%}\")
 "
 ```
 
@@ -154,15 +167,14 @@ print('5 Günlük Başarı Oranı:', f\"{events['Fwd_5d_CatchUp_Hit'].mean():.2%
 
 ## 5. SIRADAKİ ADIMLAR (TASK 2)
 
-Bir sonraki aşamada yapılacaklar:
+Task 2 kapsamında uygulanacak modüller:
 1. **Diğer 3 Araştırma Senaryosunun Yazılması:**
-   * Senaryo 2: Gün ve Çok Günlük Kalıplar (`weekday_patterns.py`)
-   * Senaryo 3: Teknik Dönüş Sinyalleri (`technical_reversals.py`)
-   * Senaryo 4: Bilanço Açıklama Reaksiyonu (`fundamental_reaction.py`)
-2. **Backtesting Motorunun Kurulması:**
-   * $t+1$ gecikmeli al-sat simülasyonu, komisyon, Sharpe oranı ve Max Drawdown hesaplayıcı.
-3. **MCP Tool ve Kalite Kapısı Katmanı:**
-   * Bu fonksiyonların LLM'e araç (tool) olarak sunulması.
+   * **Senaryo 2 (`src/scenarios/weekday_patterns.py`):** Gün ve çok günlük takvim kalıpları (Pzt düşüşü / Cuma rallisi, 3 gün düşüş sonrası 2 gün toparlanma, çoklu test düzeltmesi).
+   * **Senaryo 3 (`src/scenarios/technical_reversals.py`):** Bollinger alt/orta/üst bant temasları, RSI dip/tepe dönüşleri, Supertrend yön değişimleri ve çoklu gösterge birleşik sinyal filtreleri.
+   * **Senaryo 4 (`src/scenarios/fundamental_reaction.py`):** Çeyreklik bilanço açıklanma tarihi (Point-in-time KAP), ciro/FAVÖK/kâr büyümesi ve açıklama sonrası kümülatif anormal getiri (CAR).
+2. **Backtesting ve Doğrulama Motoru (`src/backtest/engine.py`):**
+   * $t+1$ gecikmeli emir icrası, komisyon (%0.10) ve kayma (%0.05), Sharpe oranı, Max Drawdown, kümülatif getiri ve XU100 benchmark kıyaslaması.
 
 ---
-*Bu doküman, projede Task 1'de yapılan tüm adımları ve çalışma mantığını belgelemektedir.*
+*Bu doküman, projede Task 1'in gözden geçirilip optimize edilmiş durumunu belgelemektedir.*
+

@@ -9,7 +9,7 @@ Pure mathematical/deterministic calculation of:
 - Cloud / Structure: Ichimoku Cloud
 """
 
-from typing import Dict, Tuple
+from typing import Dict, List, Optional, Tuple
 import numpy as np
 import pandas as pd
 
@@ -60,17 +60,29 @@ def calculate_kama(
 def calculate_rsi(series: pd.Series, period: int = 14) -> pd.Series:
     """
     Relative Strength Index (RSI) using Wilder's exponential smoothing.
+    Safely handles edge cases (e.g. 0 loss -> 100, 0 gain -> 0).
     """
     delta = series.diff()
     gain = delta.clip(lower=0)
-    loss = -1 * delta.clip(upper=0)
+    loss = -1.0 * delta.clip(upper=0)
 
     avg_gain = gain.ewm(alpha=1.0 / period, min_periods=period, adjust=False).mean()
     avg_loss = loss.ewm(alpha=1.0 / period, min_periods=period, adjust=False).mean()
 
-    rs = avg_gain / avg_loss.replace(0, np.nan)
-    rsi = 100 - (100 / (1 + rs))
-    return rsi.fillna(50.0).rename(f"RSI_{period}")
+    rsi = pd.Series(np.nan, index=series.index)
+    both_zero = (avg_gain == 0) & (avg_loss == 0)
+    gain_only = (avg_loss == 0) & (avg_gain > 0)
+    loss_only = (avg_gain == 0) & (avg_loss > 0)
+    normal = (avg_loss > 0) & (avg_gain > 0)
+
+    rsi[both_zero] = 50.0
+    rsi[gain_only] = 100.0
+    rsi[loss_only] = 0.0
+
+    rs = avg_gain[normal] / avg_loss[normal]
+    rsi[normal] = 100.0 - (100.0 / (1.0 + rs))
+
+    return rsi.rename(f"RSI_{period}")
 
 
 def calculate_macd(
@@ -155,30 +167,43 @@ def calculate_supertrend(
     Returns:
     - Supertrend line
     - Supertrend_Direction: +1 (Bullish), -1 (Bearish)
+    Correctly handles initial ATR warmup to prevent NaN propagation.
     """
     high = df["High"].values
     low = df["Low"].values
     close = df["Close"].values
     n = len(df)
 
-    atr = calculate_atr(df, period=period).values
+    atr_series = calculate_atr(df, period=period)
+    atr = atr_series.values
     hl2 = (high + low) / 2.0
 
     basic_upper = hl2 + (multiplier * atr)
     basic_lower = hl2 - (multiplier * atr)
 
     final_upper = np.zeros(n)
+    final_upper[:] = np.nan
     final_lower = np.zeros(n)
+    final_lower[:] = np.nan
     trend = np.zeros(n)
+    trend[:] = np.nan
     supertrend = np.zeros(n)
+    supertrend[:] = np.nan
 
-    # Initialize
-    trend[0] = 1
-    final_upper[0] = basic_upper[0]
-    final_lower[0] = basic_lower[0]
-    supertrend[0] = final_lower[0]
+    valid_indices = np.where(~np.isnan(atr))[0]
+    if len(valid_indices) == 0:
+        return pd.DataFrame(
+            {"Supertrend": supertrend, "Supertrend_Direction": trend},
+            index=df.index,
+        )
 
-    for i in range(1, n):
+    start_idx = valid_indices[0]
+    trend[start_idx] = 1
+    final_upper[start_idx] = basic_upper[start_idx]
+    final_lower[start_idx] = basic_lower[start_idx]
+    supertrend[start_idx] = final_lower[start_idx]
+
+    for i in range(start_idx + 1, n):
         # Final Upper Band
         if basic_upper[i] < final_upper[i - 1] or close[i - 1] > final_upper[i - 1]:
             final_upper[i] = basic_upper[i]
@@ -224,6 +249,7 @@ def calculate_ichimoku(
 ) -> pd.DataFrame:
     """
     Ichimoku Kinko Hyo (Ichimoku Cloud).
+    Cloud bounds are lagged by 26 days (point-in-time compliant).
     """
     high = df["High"]
     low = df["Low"]
@@ -235,16 +261,14 @@ def calculate_ichimoku(
     # Kijun-sen (Base Line)
     kijun_sen = (high.rolling(kijun_period).max() + low.rolling(kijun_period).min()) / 2
 
-    # Senkou Span A (Leading Span A) - plotted 26 periods ahead
+    # Senkou Span A (Leading Span A) - plotted 26 periods ahead in charting,
+    # so on historical date t, the current cloud bound was computed 26 periods ago.
     senkou_span_a = ((tenkan_sen + kijun_sen) / 2).shift(kijun_period)
 
-    # Senkou Span B (Leading Span B) - plotted 26 periods ahead
+    # Senkou Span B (Leading Span B)
     senkou_span_b = (
         (high.rolling(senkou_b_period).max() + low.rolling(senkou_b_period).min()) / 2
     ).shift(kijun_period)
-
-    # Chikou Span (Lagging Span) - close plotted 26 periods behind
-    chikou_span = close.shift(-kijun_period)
 
     cloud_top = pd.concat([senkou_span_a, senkou_span_b], axis=1).max(axis=1)
     cloud_bottom = pd.concat([senkou_span_a, senkou_span_b], axis=1).min(axis=1)
@@ -256,19 +280,136 @@ def calculate_ichimoku(
         np.where(close < cloud_bottom, "BELOW_CLOUD", "INSIDE_CLOUD"),
     )
 
+    # Point-in-time Chikou comparison: compares current close to close 26 bars ago
+    chikou_vs_past = (close / close.shift(kijun_period)) - 1.0
+
     return pd.DataFrame(
         {
             "Tenkan_Sen": tenkan_sen,
             "Kijun_Sen": kijun_sen,
             "Senkou_Span_A": senkou_span_a,
             "Senkou_Span_B": senkou_span_b,
-            "Chikou_Span": chikou_span,
             "Cloud_Top": cloud_top,
             "Cloud_Bottom": cloud_bottom,
             "Ichimoku_State": state,
+            "Chikou_vs_Past": chikou_vs_past,
         },
         index=df.index,
     )
+
+
+def calculate_kama_state(
+    close: pd.Series,
+    kama: pd.Series,
+    slope: pd.Series,
+    atr: Optional[pd.Series] = None,
+) -> pd.DataFrame:
+    """
+    Classifies KAMA state:
+    - KAMA_Slope_State: RISING, FALLING, FLATTENING
+    - KAMA_Position: ABOVE_KAMA, BELOW_KAMA
+    """
+    threshold = (atr * 0.05) if atr is not None else (kama * 0.001)
+    slope_state = np.where(
+        slope > threshold,
+        "RISING",
+        np.where(slope < -threshold, "FALLING", "FLATTENING"),
+    )
+    position = np.where(close >= kama, "ABOVE_KAMA", "BELOW_KAMA")
+
+    return pd.DataFrame(
+        {
+            "KAMA_Slope_State": slope_state,
+            "KAMA_Position": position,
+        },
+        index=close.index,
+    )
+
+
+def calculate_supertrend_state(st_direction: pd.Series) -> pd.Series:
+    """
+    Detects Supertrend transitions and states:
+    - BULLISH_FLIP: flipped from -1 to +1 today
+    - BEARISH_FLIP: flipped from +1 to -1 today
+    - BULLISH: ongoing uptrend (+1)
+    - BEARISH: ongoing downtrend (-1)
+    """
+    prev_dir = st_direction.shift(1)
+    state = pd.Series(index=st_direction.index, dtype=str)
+
+    state[st_direction == 1] = "BULLISH"
+    state[st_direction == -1] = "BEARISH"
+    state[(prev_dir == -1) & (st_direction == 1)] = "BULLISH_FLIP"
+    state[(prev_dir == 1) & (st_direction == -1)] = "BEARISH_FLIP"
+
+    return state.rename("Supertrend_State")
+
+
+def calculate_bollinger_events(
+    close: pd.Series,
+    low: pd.Series,
+    high: pd.Series,
+    bb_upper: pd.Series,
+    bb_middle: pd.Series,
+    bb_lower: pd.Series,
+) -> pd.DataFrame:
+    """
+    Identifies Bollinger Band touch/penetration events:
+    - BB_Lower_Touch: Low touched or penetrated lower band
+    - BB_Upper_Touch: High touched or penetrated upper band
+    - BB_Middle_Test: Price crossed or touched middle band
+    """
+    lower_touch = (low <= bb_lower) | (close <= bb_lower)
+    upper_touch = (high >= bb_upper) | (close >= bb_upper)
+    middle_test = ((low <= bb_middle) & (high >= bb_middle))
+
+    return pd.DataFrame(
+        {
+            "BB_Lower_Touch": lower_touch.astype(int),
+            "BB_Upper_Touch": upper_touch.astype(int),
+            "BB_Middle_Test": middle_test.astype(int),
+        },
+        index=close.index,
+    )
+
+
+def find_support_resistance(
+    df: pd.DataFrame,
+    window: int = 20,
+) -> pd.DataFrame:
+    """
+    Identifies rolling support and resistance levels using rolling local extrema (pivot points).
+    """
+    rolling_high = df["High"].rolling(window=window, min_periods=window // 2).max()
+    rolling_low = df["Low"].rolling(window=window, min_periods=window // 2).min()
+
+    dist_resistance = (rolling_high - df["Close"]) / df["Close"]
+    dist_support = (df["Close"] - rolling_low) / df["Close"]
+
+    return pd.DataFrame(
+        {
+            "Resistance_Level": rolling_high,
+            "Support_Level": rolling_low,
+            "Dist_Resistance_Pct": dist_resistance,
+            "Dist_Support_Pct": dist_support,
+        },
+        index=df.index,
+    )
+
+
+def calculate_reversal_strength(
+    close: pd.Series,
+    event_mask: pd.Series,
+    horizons: Tuple[int, ...] = (1, 3, 5, 10),
+) -> pd.DataFrame:
+    """
+    Calculates forward returns following detected events.
+    """
+    res = pd.DataFrame(index=close.index)
+    for h in horizons:
+        fwd_ret = (close.shift(-h) / close) - 1.0
+        res[fwd_ret.name or f"Fwd_{h}d_Return"] = np.where(event_mask == 1, fwd_ret, np.nan)
+    return res
 
 
 def calculate_all_indicators(df: pd.DataFrame) -> pd.DataFrame:
@@ -299,9 +440,26 @@ def calculate_all_indicators(df: pd.DataFrame) -> pd.DataFrame:
     # Trend State (Supertrend)
     st_df = calculate_supertrend(result, period=10, multiplier=3.0)
     result = pd.concat([result, st_df], axis=1)
+    result["Supertrend_State"] = calculate_supertrend_state(result["Supertrend_Direction"])
 
     # Cloud Structure (Ichimoku)
     ichi_df = calculate_ichimoku(result)
     result = pd.concat([result, ichi_df], axis=1)
 
+    # KAMA State
+    kama_state_df = calculate_kama_state(close, result["KAMA_10"], result["KAMA_Slope"], result["ATR_14"])
+    result = pd.concat([result, kama_state_df], axis=1)
+
+    # Bollinger Events
+    bb_events = calculate_bollinger_events(
+        close, result["Low"], result["High"],
+        result["BB_Upper"], result["BB_Middle"], result["BB_Lower"]
+    )
+    result = pd.concat([result, bb_events], axis=1)
+
+    # Support & Resistance
+    sr_df = find_support_resistance(result, window=20)
+    result = pd.concat([result, sr_df], axis=1)
+
     return result
+

@@ -160,5 +160,47 @@ def download_entire_universe(
     return all_data
 
 
+# Suggested Section 32 API bindings
+def get_stock_history(
+    ticker: str,
+    start_date: Optional[str] = None,
+    end_date: Optional[str] = None,
+) -> pd.DataFrame:
+    """
+    Syllabus Section 32 function: retrieves processed historical OHLCV data for a ticker.
+    Automatically fetches and caches from Yahoo Finance if not already available locally.
+    """
+    try:
+        return load_ticker_data(ticker, is_raw=False, start_date=start_date, end_date=end_date)
+    except FileNotFoundError:
+        symbol_map = get_ticker_to_yahoo_map()
+        yahoo_symbol = symbol_map.get(ticker)
+        if not yahoo_symbol:
+            raise ValueError(f"Ticker {ticker} is not part of the study universe.")
+        raw_df = fetch_single_ticker(yahoo_symbol, start_date=start_date or WARMUP_START_DATE, end_date=end_date)
+        save_ticker_data(ticker, raw_df, is_raw=True)
+        cleaned_df = clean_and_preprocess_ohlcv(raw_df)
+        save_ticker_data(ticker, cleaned_df, is_raw=False)
+        return cleaned_df
+
+
+def get_index_history(
+    start_date: Optional[str] = None,
+    end_date: Optional[str] = None,
+) -> pd.DataFrame:
+    """
+    Syllabus Section 32 function: retrieves processed historical OHLCV data for the XU100 benchmark index.
+    """
+    try:
+        return load_ticker_data("XU100", is_raw=False, start_date=start_date, end_date=end_date)
+    except FileNotFoundError:
+        raw_df = fetch_single_ticker(BENCHMARK_SYMBOL, start_date=start_date or WARMUP_START_DATE, end_date=end_date)
+        save_ticker_data("XU100", raw_df, is_raw=True)
+        cleaned_df = clean_and_preprocess_ohlcv(raw_df)
+        save_ticker_data("XU100", cleaned_df, is_raw=False)
+        return cleaned_df
+
+
 if __name__ == "__main__":
     download_entire_universe()
+

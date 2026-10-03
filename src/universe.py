@@ -92,3 +92,16 @@ def get_peer_group(ticker: str) -> List[str]:
     if not target_sector:
         return [ticker]
     return get_stocks_in_sector(target_sector)
+
+
+# Suggested Section 32 API bindings
+def load_universe() -> pd.DataFrame:
+    """Syllabus Section 32 function: loads the 30-stock universe with sector metadata."""
+    return get_universe_df()
+
+
+def build_sector_peer_groups() -> Dict[str, List[str]]:
+    """Syllabus Section 32 function: builds dictionary mapping each sector to its constituent tickers."""
+    sectors = get_sectors()
+    return {sector: get_stocks_in_sector(sector) for sector in sectors}
+
