@@ -13,9 +13,18 @@ PROCESSED_DATA_DIR = DATA_DIR / "processed"
 MACRO_DATA_DIR = DATA_DIR / "macro"
 REPORTS_DIR = BASE_DIR / "reports"
 NOTEBOOKS_DIR = BASE_DIR / "notebooks"
+ANALYSIS_LOG_DIR = DATA_DIR / "analysis_logs"
 
 # Ensure all subdirectories exist
-for d in [DATA_DIR, RAW_DATA_DIR, PROCESSED_DATA_DIR, MACRO_DATA_DIR, REPORTS_DIR, NOTEBOOKS_DIR]:
+for d in [
+    DATA_DIR,
+    RAW_DATA_DIR,
+    PROCESSED_DATA_DIR,
+    MACRO_DATA_DIR,
+    REPORTS_DIR,
+    NOTEBOOKS_DIR,
+    ANALYSIS_LOG_DIR,
+]:
     d.mkdir(parents=True, exist_ok=True)
 
 # Date Configurations
