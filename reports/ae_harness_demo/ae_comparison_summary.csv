@@ -1,0 +1,6 @@
+version,passed_pct,numeric_hallucination_pct,invalid_tool_call_pct,look_ahead_violation_pct,unsupported_conclusion_pct,direct_trade_advice_pct,state_bypass_pct,quality_gate_bypass_pct,missing_replay_pct,missing_human_review_pct,issue_count,latency_ms
+A_RAW_LLM,0.0,100.0,0.0,8.333333333333332,0.0,100.0,0.0,0.0,0.0,0.0,2.0833333333333335,5.0
+B_TOOLS,83.33333333333334,0.0,8.333333333333332,8.333333333333332,0.0,0.0,0.0,0.0,0.0,0.0,0.16666666666666666,5.0
+C_STATEFUL_HARNESS,91.66666666666666,0.0,0.0,8.333333333333332,0.0,0.0,0.0,0.0,0.0,0.0,0.08333333333333333,5.0
+D_EVIDENCE_QUALITY,100.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,5.0
+E_REPLAY_HUMAN_REVIEW,100.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,5.0
