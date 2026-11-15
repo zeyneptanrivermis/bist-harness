@@ -1,0 +1,10 @@
+# Optional local / Google Colab fine-tuning stack.
+# Install only for notebooks/05_local_llm_finetuning.ipynb.
+torch>=2.4.0
+transformers>=4.51.0
+datasets>=3.0.0
+accelerate>=1.0.0
+peft>=0.20.0
+trl>=1.18.0
+bitsandbytes>=0.45.0
+sentencepiece>=0.2.0
