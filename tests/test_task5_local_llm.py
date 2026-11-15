@@ -166,3 +166,11 @@ class ScoreTests(unittest.TestCase):
         ref = '{"arguments": {"as_of_date": "2025-01-02"}, "tool_name": "rank_sector_laggards"}'
         self.assertEqual(score("tool_selection", prompt, ref, ref)["wrong_tool_call"], 0)
         self.assertEqual(score("tool_selection", prompt, "not json", ref)["wrong_tool_call"], 1)
+
+
+class FirstJsonTests(unittest.TestCase):
+    def test_runaway_tool_output_is_cut_after_first_object(self) -> None:
+        from src.llm.infer import first_json
+
+        self.assertEqual(first_json('{"a": 1}\n</think>\n{"fake": null}'), '{"a": 1}')
+        self.assertEqual(first_json("no json"), "no json")

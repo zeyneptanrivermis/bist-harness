@@ -60,7 +60,16 @@ def generate(question: str, evidence: str | None = None, *, tool_mode: bool = Fa
         _cache["model"], _cache["tok"] = load()
     system = DEFAULT_SYSTEM_PROMPT + (f"\n\n{TOOL_CALL_FORMAT}" if tool_mode else "")
     user = question if evidence is None else f"Question: {question}\nCommitted evidence:\n{evidence}\n\nWrite an English research summary."
-    return chat(_cache["model"], _cache["tok"], [{"role": "system", "content": system}, {"role": "user", "content": user}])
+    out = chat(_cache["model"], _cache["tok"], [{"role": "system", "content": system}, {"role": "user", "content": user}], max_new_tokens=120 if tool_mode else 400)
+    return first_json(out) if tool_mode else out
+
+
+def first_json(text: str) -> str:
+    """Keep only the first JSON object; a model that fails to stop must not smuggle in invented tool results."""
+    try:
+        return json.dumps(json.JSONDecoder().raw_decode(text.lstrip())[0], sort_keys=True)
+    except json.JSONDecodeError:
+        return text
 
 
 def score(task: str, prompt: str, answer: str, reference: str) -> dict[str, int]:
