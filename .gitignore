@@ -32,7 +32,17 @@ wheels/
 .DS_Store
 
 # Data files and directories
-data/
+# Keep only the LLM dataset instructions under version control.
+data/*
+!data/llm/
+data/llm/*
+!data/llm/README.md
 *.parquet
 *.sqlite
 *.db
+
+# Local/Colab LLM artefacts
+data/llm/*.jsonl
+data/llm/*.json
+artifacts/llm/
+checkpoints/

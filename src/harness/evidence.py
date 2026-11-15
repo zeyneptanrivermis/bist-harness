@@ -53,7 +53,7 @@ def select_action(scenario: str, scenario_summary: Dict[str, Any]) -> str:
         action = "TECHNICAL_REVERSAL_CANDIDATE"
     elif scenario == "fundamental_reaction" and scenario_summary.get("strong_improvement_count", 0) > 0:
         action = "FUNDAMENTAL_IMPROVEMENT_CANDIDATE"
-    elif scenario == "sector_laggard" and scenario_summary.get("rank_in_sector") == 1:
+    elif scenario == "sector_laggard" and scenario_summary.get("rank_in_sector") == 1 and scenario_summary.get("Lag_Score", 0) < 0:  # single-stock sectors tie at 0
         action = "POTENTIAL_CATCH_UP_CANDIDATE"
     elif scenario == "weekday_pattern":
         action = "INVESTIGATE"
