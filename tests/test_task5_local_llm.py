@@ -152,3 +152,17 @@ class SectorActionTests(unittest.TestCase):
 
         self.assertEqual(select_action("sector_laggard", {"rank_in_sector": 1, "Lag_Score": 0.0}), "WATCH")
         self.assertEqual(select_action("sector_laggard", {"rank_in_sector": 1, "Lag_Score": -0.05}), "POTENTIAL_CATCH_UP_CANDIDATE")
+
+
+class ScoreTests(unittest.TestCase):
+    def test_score_flags_advice_bad_status_and_wrong_tool(self) -> None:
+        from src.llm.infer import score
+
+        prompt = "As-of date: 2025-01-02"
+        bad = score("evidence_report", prompt, "You should buy. Status: MOON on 2025-03-01 gain 9.9", "Status: WATCH. E1")
+        self.assertEqual((bad["trade_advice"], bad["future_date"], bad["bad_status"], bad["no_evidence_id"], bad["number_not_in_reference"]), (1, 1, 1, 1, 1))
+        good = score("evidence_report", prompt, "Status: WATCH. E1 holds 9.9", "Status: WATCH. E1 9.9")
+        self.assertEqual(sum(good.values()), 0)
+        ref = '{"arguments": {"as_of_date": "2025-01-02"}, "tool_name": "rank_sector_laggards"}'
+        self.assertEqual(score("tool_selection", prompt, ref, ref)["wrong_tool_call"], 0)
+        self.assertEqual(score("tool_selection", prompt, "not json", ref)["wrong_tool_call"], 1)
