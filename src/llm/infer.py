@@ -33,9 +33,9 @@ def load(adapter_dir: str = ADAPTER_DIR, model_name: str = BASE_MODEL):
 
     kwargs: dict[str, Any] = {}
     if torch.cuda.is_available():
-        kwargs = {"device_map": {"": 0}, "quantization_config": BitsAndBytesConfig(
-            load_in_4bit=True, bnb_4bit_quant_type="nf4", bnb_4bit_use_double_quant=True,
-            bnb_4bit_compute_dtype=torch.bfloat16 if torch.cuda.is_bf16_supported() else torch.float16)}
+        dtype = torch.bfloat16 if torch.cuda.get_device_capability(0)[0] >= 8 else torch.float16  # T4 lacks real bf16
+        kwargs = {"device_map": {"": 0}, "dtype": dtype, "quantization_config": BitsAndBytesConfig(
+            load_in_4bit=True, bnb_4bit_quant_type="nf4", bnb_4bit_use_double_quant=True, bnb_4bit_compute_dtype=dtype)}
     model = AutoModelForCausalLM.from_pretrained(model_name, **kwargs)
     if adapter_dir:
         from peft import PeftModel
