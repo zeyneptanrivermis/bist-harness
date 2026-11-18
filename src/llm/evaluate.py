@@ -103,13 +103,13 @@ def main() -> None:
 
     from src.llm.infer import BASE_MODEL, chat, load
 
-    model, tok = load(args.adapter)
+    from peft import PeftModel
 
-    def base_chat(messages):
-        with model.disable_adapter():
-            return chat(model, tok, messages)
-
-    reports = [evaluate(base_chat, "base"), evaluate(lambda m: chat(model, tok, m), "adapter")]
+    # Base first, then wrap it with the adapter: no adapter toggling inside generate(), which is what crashed before.
+    model, tok = load("")
+    reports = [evaluate(lambda m: chat(model, tok, m), "base")]
+    model = PeftModel.from_pretrained(model, args.adapter).eval()
+    reports.append(evaluate(lambda m: chat(model, tok, m), "adapter"))
     weights = next(Path(args.adapter).glob("adapter_model.*"))
     out = {"base_model": BASE_MODEL, "adapter": args.adapter, "adapter_sha256": hashlib.sha256(weights.read_bytes()).hexdigest(), "analysis_date": A,
            "statuses": sorted(STATUSES), "results": reports}
