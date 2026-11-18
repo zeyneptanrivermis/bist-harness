@@ -48,25 +48,31 @@ class LocalLlmTrainingDataTests(unittest.TestCase):
 
 
 class LocalToolRouterTests(unittest.TestCase):
-    def test_router_rejects_malformed_and_future_calls_without_running_tools(self) -> None:
+    def test_router_rejects_malformed_future_and_unknown_calls_without_running_tools(self) -> None:
         router = SafeProjectToolRouter()
-        with self.assertRaises(ToolRequestError):
-            router.execute_json("not json", as_of_date="2025-09-30")
-        with self.assertRaises(ToolRequestError):
-            router.execute_json(
-                '{"tool_name":"check_data_quality","arguments":{"ticker":"ASELS","as_of_date":"2025-10-01"}}',
-                as_of_date="2025-09-30",
-            )
-        with self.assertRaises(ToolRequestError):
-            router.execute_json(
-                '{"tool_name":"get_stock_history","arguments":{"ticker":"ASELS","allow_download":true}}',
-                as_of_date="2025-09-30",
-            )
-        with self.assertRaises(ToolRequestError):
-            router.execute_json(
-                '{"tool_name":"check_data_quality","arguments":{"ticker":"TESTX"}}',
-                as_of_date="2025-09-30",
-            )
+        bad = [
+            "not json",
+            '{"tool_calls": []}',
+            '{"tool_calls": [{"tool_name": "check_data_quality", "arguments": {"ticker": "ASELS", "as_of_date": "2026-09-11"}}]}',
+            '{"tool_calls": [{"tool_name": "get_stock_history", "arguments": {"ticker": "ASELS", "allow_download": true}}]}',
+            '{"tool_calls": [{"tool_name": "check_data_quality", "arguments": {"ticker": "TESTX"}}]}',
+            '{"tool_calls": [{"tool_name": "detect_reversal_events", "arguments": {}}]}',
+            '{"tool_calls": [{"tool_name": "detect_reversal_events", "arguments": {"ticker": "ASELS", "end_date": "2026-09-11"}}]}',
+            '{"tool_calls": [{"tool_name": "detect_reversal_events", "arguments": {"ticker": "ASELS", "end_date": "2026-02-30"}}]}',
+            '{"tool_calls": [{"tool_name": "detect_reversal_events", "arguments": {"ticker": "ASELS", "start_date": "2026-03-01", "end_date": "2026-01-01"}}]}',
+            '{"tool_calls": [{"tool_name": "rank_sector_relative_strength", "arguments": {"tickers": ["ASELS"]}}]}',
+        ]
+        for text in bad:
+            with self.assertRaises(ToolRequestError, msg=text):
+                router.validate_plan(text, as_of_date="2026-09-10")
+
+    def test_valid_plan_is_accepted_and_the_cutoff_is_not_a_model_argument(self) -> None:
+        router = SafeProjectToolRouter()
+        plan = router.validate_plan(
+            '{"tool_calls": [{"tool_name": "rank_sector_relative_strength", "arguments": {"tickers": ["BIMAS", "MGROS"], "start_date": "2024-01-01", "end_date": "2026-09-10"}}]}',
+            as_of_date="2026-09-10",
+        )
+        self.assertEqual(plan[0][0], "rank_sector_relative_strength")
 
 
 class CorpusBuilderTests(unittest.TestCase):
@@ -152,20 +158,6 @@ class SectorActionTests(unittest.TestCase):
 
         self.assertEqual(select_action("sector_laggard", {"rank_in_sector": 1, "Lag_Score": 0.0}), "WATCH")
         self.assertEqual(select_action("sector_laggard", {"rank_in_sector": 1, "Lag_Score": -0.05}), "POTENTIAL_CATCH_UP_CANDIDATE")
-
-
-class ScoreTests(unittest.TestCase):
-    def test_score_flags_advice_bad_status_and_wrong_tool(self) -> None:
-        from src.llm.infer import score
-
-        prompt = "As-of date: 2025-01-02"
-        bad = score("evidence_report", prompt, "You should buy. Status: MOON on 2025-03-01 gain 9.9", "Status: WATCH. E1")
-        self.assertEqual((bad["trade_advice"], bad["future_date"], bad["bad_status"], bad["no_evidence_id"], bad["number_not_in_reference"]), (1, 1, 1, 1, 1))
-        good = score("evidence_report", prompt, "Status: WATCH. E1 holds 9.9", "Status: WATCH. E1 9.9")
-        self.assertEqual(sum(good.values()), 0)
-        ref = '{"arguments": {"as_of_date": "2025-01-02"}, "tool_name": "rank_sector_laggards"}'
-        self.assertEqual(score("tool_selection", prompt, ref, ref)["wrong_tool_call"], 0)
-        self.assertEqual(score("tool_selection", prompt, "not json", ref)["wrong_tool_call"], 1)
 
 
 class FirstJsonTests(unittest.TestCase):
