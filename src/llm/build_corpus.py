@@ -33,7 +33,7 @@ from src.harness.harness import HarnessSession
 from src.mcp_tools.models import AnalysisRequest
 from src.mcp_tools.serialization import json_safe
 from src.universe import BENCHMARK_SYMBOL, get_all_tickers, get_ticker_to_yahoo_map
-from src.llm.training_data import DEFAULT_SYSTEM_PROMPT
+from src.llm.training_data import DEFAULT_SYSTEM_PROMPT, report_prompt
 
 
 SUPPORTED_SCENARIOS = (
@@ -154,7 +154,7 @@ def _fact_line(item: dict[str, Any]) -> str:
     return text
 
 
-def _draft_summary(action: str, evidence: list[dict[str, Any]]) -> str:
+def draft_summary(action: str, evidence: list[dict[str, Any]]) -> str:
     evidence_ids = ", ".join(item["evidence_id"] for item in evidence)
     facts = "\n".join(_fact_line(item) for item in evidence)
     return (
@@ -182,17 +182,12 @@ def _review_flags(action: str | None, quality: str | None, evidence: list[dict[s
 def _candidate_record(session: HarnessSession) -> dict[str, Any]:
     evidence = json_safe(session.evidence)
     question = _question(session.request.ticker, session.request.scenario, session.request.as_of_date)
-    user_prompt = (
-        f"Question: {question}\n"
-        f"As-of date: {session.request.as_of_date}\n"
-        f"Committed evidence (JSON):\n{json.dumps(evidence, ensure_ascii=False, sort_keys=True)}\n\n"
-        "Write a concise English research summary. Cite evidence IDs, do not add facts, and do not provide BUY/SELL advice."
-    )
+    user_prompt = report_prompt(question, session.request.as_of_date, evidence)
     return {
         "messages": [
             {"role": "system", "content": DEFAULT_SYSTEM_PROMPT},
             {"role": "user", "content": user_prompt},
-            {"role": "assistant", "content": _draft_summary(session.action or "WATCH", evidence)},
+            {"role": "assistant", "content": draft_summary(session.action or "WATCH", evidence)},
         ],
         "metadata": {
             "case_id": f"{session.request.ticker}_{session.request.scenario}_{session.request.as_of_date.replace('-', '')}",
@@ -209,24 +204,32 @@ def _candidate_record(session: HarnessSession) -> dict[str, Any]:
     }
 
 
-def _run_case(
+def run_session(
     *, ticker: str, scenario: str, as_of_date: str, price_data: dict[str, pd.DataFrame]
-) -> tuple[dict[str, Any] | None, str | None]:
+) -> tuple[HarnessSession, str | None]:
+    """Run the authoritative harness; returns (session, failure reason). A blocked gate is a session in BLOCKED state."""
     request = AnalysisRequest(ticker=ticker, scenario=scenario, as_of_date=as_of_date, require_human_review=False)
     session = HarnessSession(request)
     session.select_universe()
     session.load_data(price_data[ticker], price_data["XU100"])
     quality = session.check_quality()
     if quality.status in {"ANALYSIS_UNSAFE", "HARD_BLOCK"}:
-        return None, f"quality gate returned {quality.status}"
+        return session, f"quality gate returned {quality.status}"
     try:
         session.calculate()
         session.run_scenario(universe_data={key: value for key, value in price_data.items() if key != "XU100"})
         session.run_backtest()
         session.build_evidence()
     except Exception as exc:  # The manifest preserves failures for team review.
-        return None, f"{type(exc).__name__}: {exc}"
-    return _candidate_record(session), None
+        return session, f"{type(exc).__name__}: {exc}"
+    return session, None
+
+
+def _run_case(
+    *, ticker: str, scenario: str, as_of_date: str, price_data: dict[str, pd.DataFrame]
+) -> tuple[dict[str, Any] | None, str | None]:
+    session, reason = run_session(ticker=ticker, scenario=scenario, as_of_date=as_of_date, price_data=price_data)
+    return (None, reason) if reason else (_candidate_record(session), None)
 
 
 def build_corpus(
