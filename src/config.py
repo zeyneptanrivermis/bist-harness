@@ -32,7 +32,9 @@ for d in [
 WARMUP_START_DATE = "2024-01-01"
 # TMS 29 inflation-adjusted reporting period recommended by instructor
 ANALYSIS_START_DATE = "2025-01-01"
-ANALYSIS_END_DATE = "2026-11-01"
+ANALYSIS_END_DATE = "2026-09-10"
+# Default as-of date for the agent: nothing published after this date may be used (course sample questions).
+ANALYSIS_AS_OF_DATE = "2026-09-10"
 
 # Trading & Backtest Assumptions
 DEFAULT_INITIAL_CAPITAL = 100_000.0  # TL
