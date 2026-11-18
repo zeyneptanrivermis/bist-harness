@@ -1,10 +1,10 @@
 # Optional local / Google Colab fine-tuning stack.
-# Install only for notebooks/05_local_llm_finetuning.ipynb.
+# Colab (training) and local/Mac (running the adapter).
 torch>=2.4.0
 transformers>=4.51.0
 datasets>=3.0.0
 accelerate>=1.0.0
 peft>=0.20.0
 trl>=1.18.0
-bitsandbytes>=0.45.0
+bitsandbytes>=0.45.0; sys_platform != "darwin"  # CUDA only; not needed to run the model on a Mac
 sentencepiece>=0.2.0

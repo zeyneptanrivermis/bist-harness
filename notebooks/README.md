@@ -1,44 +1,57 @@
-# Notebooks (Task 5: local, group-specific LLM)
+# Task 5: local, group-specific LLM (Qwen3 + QLoRA)
 
-Two notebooks, two different jobs. They do not overlap.
+Core principle of the course: the LLM reasons and explains, Python tools calculate, the harness controls, backtests verify, the model runs locally.
 
-| Notebook | Job | Where it runs | GPU |
-|---|---|---|---|
-| `05_local_llm_finetuning.ipynb` | **Data preparation and guardrail demo.** Generates the A-E seed records, splits them into train/validation/test, validates reviewed data, and demonstrates the guarded tool router and guardrail metrics. It never trains or loads a model. | Your own machine | No |
-| `bist_llm_training.ipynb` | **Training, evaluation and use.** Trains the QLoRA adapter, compares base model vs adapter on the held-out split, tries `generate()`, and exports the results. Self-contained: it does not call the other notebook. | Google Colab | T4 |
+## What the model does and what code does
 
-## Workflow
+| Step | Who | Where |
+|---|---|---|
+| Question -> JSON tool plan (1-4 calls, ISO dates) | model | `src/llm/agent.py` |
+| Plan validation (tool names, tickers, dates never after the analysis date) | code | `src/llm/tool_loop.py` |
+| Quality gate -> tools -> backtest -> evidence, in fixed order | code | `execute_plan` in `agent.py` |
+| Final status (WATCH, INVESTIGATE, REJECT_SIGNAL, ...) | code, from the tools' evidence | `mcp_tools/research.py` |
+| English summary of the evidence | model | |
+| Guard: status, numbers, evidence ids, advice words, future dates | code; a bad summary is replaced by the deterministic draft | `agent.py`, `summaries.py` |
 
-1. **Generate candidates** (your machine, once; downloads public OHLCV data):
+Tools (names from the course table): `get_stock_history`, `calculate_indicators`, `detect_reversal_events`, `rank_sector_relative_strength`, `test_weekday_pattern`, `get_fundamental_metrics`, `calculate_fundamental_change`, `get_macro_context`, `run_backtest`, `check_data_quality`. Each takes `start_date`/`end_date`; the analysis date (`config.ANALYSIS_AS_OF_DATE`, 2026-09-10) is set by the harness, not the model. Forward windows that are not complete by the end date are excluded and reported.
+
+## Train in Colab (T4)
+
+1. Push the `zeynep` branch (the notebook clones it).
+2. Open `bist_llm_training.ipynb`, choose a **T4 GPU**, run top to bottom. Cell 4 downloads prices and FX and builds the dataset (`python -m src.llm.dataset`, about 700 records: tool plans, evidence reports, refusals). Targets are deterministic, built from the tool outputs, so no target number can be wrong. Six tickers (`dataset.HOLDOUT_TICKERS`) are never used in training, so the evaluation has unseen stocks.
+3. Models: `Qwen/Qwen3-4B` (demo model) or `Qwen/Qwen3-1.7B` (faster fallback). Keep the same model for training, evaluation and the local run: an adapter only fits the model it was trained on.
+4. The adapter is copied to Google Drive right after training. Download `results.zip` at the end; Colab runtimes reset.
+5. The last cell runs `python -m src.llm.evaluate`: 12 questions in the style of the course sample test, each asked twice, for the base model and the adapter. Rates: invalid tool call, wrong plan (tool/tickers/dates), numeric hallucination, unsupported conclusion, look-ahead, missing evidence, rule violation, not reproducible, guard replaced the answer.
+
+Macro data: FX comes from Yahoo (`python -m src.macro --download`). TCMB policy rate, TUIK CPI and Fed funds must be supplied by the team as `data/macro/<NAME>.csv` (columns `date,value,published_date`); without them the tool reports them as unavailable and the model must not state values.
+
+## Run fully locally (no cloud API, no internet)
+
+1. `pip install -r requirements-llm.txt` (on a Mac `bitsandbytes` is skipped automatically).
+2. Download the base model once with internet, then use `export BIST_LLM_OFFLINE=1`.
+3. Put the adapter in `artifacts/llm/qwen_bist_lora/adapter` and run:
    ```bash
-   python -m src.llm.build_corpus --download --dates-per-ticker 3 --output-dir data/llm/candidates_v2 --reviewers Name1 Name2 Name3
+   python -m src.llm.agent --adapter artifacts/llm/qwen_bist_lora/adapter
    ```
-   Creates `candidates.jsonl` (unreviewed drafts with real numbers from the harness), `candidates_review.csv` (for reviewers) and `manifest.json`.
-2. **Review** `candidates_review.csv` as a group: set `human_reviewed=true`, fill `reviewer`, edit `reviewed_summary`. Follow the checklist in `roadmap/TASK_5_LOCAL_LLM.md`.
-3. **Convert approved rows** into the training file:
+   With no question it opens an interactive session (the model loads once). `--as-of` defaults to 2026-09-10, `--json` prints the audit trail. Without CUDA the model loads in bf16 on the Apple GPU (MPS) or CPU; `BIST_LLM_DEVICE=cpu` forces CPU. 4-bit loading and training are CUDA-only.
+4. Optional, faster Ollama/llama.cpp route:
    ```bash
-   python -m src.llm.prepare_reviewed_records --candidates data/llm/candidates_v2/candidates.jsonl --review-csv data/llm/candidates_v2/candidates_review.csv
+   python -m src.llm.export_local --adapter artifacts/llm/qwen_bist_lora/adapter --out artifacts/llm/merged
+   python llama.cpp/convert_hf_to_gguf.py artifacts/llm/merged --outfile artifacts/llm/bist-qwen.gguf --outtype q8_0
+   printf 'FROM ./artifacts/llm/bist-qwen.gguf\nPARAMETER temperature 0\n' > Modelfile && ollama create bist-qwen -f Modelfile
+   python -m src.llm.agent --backend ollama
    ```
-   Creates `data/llm/reviewed_records.jsonl`. Rows that are unreviewed, incomplete, or contain BUY/SELL wording are refused.
-4. *(Optional)* Open `05_local_llm_finetuning.ipynb` locally to inspect the seed split and check that `reviewed_records.jsonl` validates.
-5. **Train and evaluate** in Colab with `bist_llm_training.ipynb` (below).
+   Ollama only listens on localhost. The GGUF steps need llama.cpp checked out and were not run in this repo.
 
-## Using `bist_llm_training.ipynb` in Colab
+## Demo-day checklist (the day before, on the demo machine)
 
-1. Open it in Colab and choose Runtime -> Change runtime type -> **T4 GPU**.
-2. Run the cells top to bottom:
-   - **clone and install:** gets the `defne` branch and `requirements-llm.txt`. The branch must be pushed, because Colab clones from GitHub.
-   - **mode and model cell:** two switches.
-     - `BIST_LLM_TRIAL`: `"1"` trains on unreviewed drafts plus seed records. This is a pipeline test only and is **not valid for submission**. `"0"` trains only on `reviewed_records.jsonl`.
-     - `BIST_LLM_MODEL`: `Qwen/Qwen3-1.7B` (about 20 min) or `Qwen/Qwen3-4B` (slower).
-   - **upload cell:** trial needs `candidates.jsonl`; a real run needs `reviewed_records.jsonl`. Data is not in Git.
-   - **training cells:** the adapter is saved to `artifacts/llm/qwen_bist_lora_TRIAL_unreviewed/adapter` (trial) or `artifacts/llm/qwen_bist_lora/adapter` (real).
-   - **generate cell:** `generate(question, evidence=...)` returns an English summary; `tool_mode=True` returns a JSON tool request.
-   - **evaluation cell:** compares base model and adapter on the held-out split and writes `artifacts/llm/eval_report.json` (model, adapter hash, violation counts, sample answers).
-   - **download cell:** zips the adapter and report. Colab runtimes reset, so download before closing.
-3. Keep the mode and model settings the same for the evaluation cells as for training. The adapter only fits the model it was trained on.
+1. Price cache in `data/processed` (not in Git): copy it or run `python -m src.data_pipeline`; FX: `python -m src.macro --download`.
+2. Base model on disk and the adapter in place.
+3. `python -m src.llm.check_local --adapter artifacts/llm/qwen_bist_lora/adapter` prints no FAIL (add `--ollama-model bist-qwen` for the Ollama route).
+4. Ask the five sample questions with Wi-Fi off, twice each: the answers must be identical.
+5. Keep the 1.7B adapter as a fallback if the 4B is too slow.
 
 ## Notes
 
-- A trial run proves the pipeline works. For the submitted model use `BIST_LLM_TRIAL="0"` with reviewed data.
-- Data, checkpoints and adapters are ignored by Git. Record the model ID, adapter hash and seed in the report (the evaluation report has them).
+- The older review-based pipeline (`build_corpus`, `prepare_reviewed_records`, `05_local_llm_finetuning.ipynb`) is still in the repo but is not used by the current training notebook.
+- Data, checkpoints and adapters are ignored by Git. Record the model id, adapter hash and seed in the report; the evaluation report has them.
