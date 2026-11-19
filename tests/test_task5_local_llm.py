@@ -12,7 +12,7 @@ import pandas as pd
 from src.llm.build_corpus import _ensure_market_cache, build_corpus, select_common_cutoffs
 from src.llm.prepare_reviewed_records import prepare_reviewed_records
 from src.llm.tool_loop import SafeProjectToolRouter, ToolRequestError
-from src.llm.training_data import generate_seed_records, stable_split, validate_records, write_jsonl_splits
+from src.llm.training_data import generate_seed_records, stable_split, to_prompt_completion, validate_records, write_jsonl_splits
 
 
 class LocalLlmTrainingDataTests(unittest.TestCase):
@@ -34,6 +34,13 @@ class LocalLlmTrainingDataTests(unittest.TestCase):
                 locations.setdefault(case_id, split)
                 self.assertEqual(locations[case_id], split)
         self.assertTrue(all(splits.values()))
+
+    def test_prompt_completion_keeps_only_the_answer_as_completion(self) -> None:
+        record = generate_seed_records()[0]
+        row = to_prompt_completion(record)
+        self.assertEqual(row["completion"], [record["messages"][-1]])
+        self.assertEqual(row["prompt"], record["messages"][:-1])
+        self.assertEqual(row["completion"][0]["role"], "assistant")
 
     def test_training_requires_human_review(self) -> None:
         with self.assertRaises(ValueError):
