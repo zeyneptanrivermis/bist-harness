@@ -37,6 +37,8 @@ data/*
 !data/llm/
 data/llm/*
 !data/llm/README.md
+# Small official macro series (FX, TCMB, TUIK, Fed) are tracked so a clone has them.
+!data/macro/
 *.parquet
 *.sqlite
 *.db

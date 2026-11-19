@@ -69,7 +69,22 @@ data/macro/        (USDTRY.csv, EURTRY.csv, and TCMB_POLICY_RATE.csv, TUIK_CPI.c
 python -m src.data_pipeline          # 30 stocks + XU100 into data/processed
 python -m src.macro --download       # USD/TRY and EUR/TRY into data/macro
 ```
-Without the TCMB, CPI and Fed files, the macro tool reports those series as unavailable and the model must not state values for them. That is expected.
+Without the TCMB, CPI and Fed files, the macro tool reports those series as unavailable and the model must not state values for them. That is expected. Only macro questions (USD/TRY, rates, inflation) are affected, not training or the other scenarios.
+
+Optional official series go in `data/macro/` with these exact file names:
+
+| File | Content | Source |
+|------|---------|--------|
+| `TCMB_POLICY_RATE.csv` | TCMB one-week repo (policy) rate | TCMB EVDS |
+| `TUIK_CPI.csv` | Turkish CPI (inflation) | TUIK / TCMB EVDS |
+| `FED_FUNDS.csv` | Fed funds rate | FRED, series `FEDFUNDS` |
+
+All three use the same columns:
+```
+date,value,published_date
+2024-01-01,5.33,2024-02-01
+```
+`date` is the period the value belongs to, `value` the number, and `published_date` the day it became public. Add `published_date` whenever possible: CPI for January is published in February, and without the column the loader uses `date`, which leaks future information. Keep only rows from 2024-01-01 whose `published_date` is on or before 2026-09-10. After adding files, re-run `python -m src.llm.check_local` to confirm they are read.
 
 The curated fundamentals file (`data/fundamentals`) is created automatically on first use.
 
