@@ -80,6 +80,9 @@ def detect_reversal_events_summary(ticker: str, as_of: str, start_date: Optional
     comparison = compare_single_vs_combined_reversals(events, base_event=event, target_horizon=5)
     out["combined_conditions"] = [{"condition": r["Condition"], "n": int(r["Sample_Count"]), "hit_rate_5d": _r(r["Win_Rate"]), "mean_5d": _r(r["Mean_Return"])}
                                   for r in json_safe(comparison)] if not comparison.empty else []
+    thin = [f"{c['condition'].split('. ', 1)[1]} (n={c['n']})" for c in out["combined_conditions"] if c["n"] < MIN_EPISODES]
+    if thin:
+        out["warnings"].append(f"Small sample: fewer than {MIN_EPISODES} events in " + "; ".join(thin) + ". Their hit rates are anecdotal.")
     hit5 = out["by_horizon"]["5d"]["hit_rate"]
     out["suggested_status"] = "INVESTIGATE" if len(complete) < 10 else "TECHNICAL_REVERSAL_CANDIDATE" if (hit5 or 0) >= 0.6 else "WATCH"
     return out

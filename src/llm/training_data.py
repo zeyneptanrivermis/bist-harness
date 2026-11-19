@@ -155,6 +155,12 @@ def generate_seed_records(cases: Iterable[ExperimentCase] | None = None) -> list
     return records
 
 
+def to_prompt_completion(record: dict[str, Any]) -> dict[str, Any]:
+    """Chat record -> TRL prompt/completion row, so the loss covers only the assistant answer, not the 2k-token evidence prompt."""
+    *prompt, answer = record["messages"]
+    return {"prompt": prompt, "completion": [answer]}
+
+
 def stable_split(records: Iterable[dict[str, Any]]) -> dict[str, list[dict[str, Any]]]:
     """Split by case ID so one case never leaks across train/validation/test."""
     result = {"train": [], "validation": [], "test": []}

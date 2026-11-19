@@ -48,3 +48,4 @@ data/llm/*.jsonl
 data/llm/*.json
 artifacts/llm/
 checkpoints/
+.venv-llm/
