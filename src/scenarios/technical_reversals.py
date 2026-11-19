@@ -233,6 +233,7 @@ def compare_single_vs_combined_reversals(
         "6. High Risk Flaw: Event but Bearish Supertrend & Below Cloud": base_sub[
             (base_sub["Supertrend_Direction"] == -1) & (base_sub["Ichimoku_State"] == "BELOW_CLOUD")
         ],
+        "7. Combined: Event + RSI<=35 + Volume Surge (>1.2x)": base_sub[(base_sub["RSI_14"] <= 35) & (base_sub["Volume_Ratio"] >= 1.2)],
     }
 
     comparison = []
