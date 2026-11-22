@@ -48,7 +48,8 @@ def ollama_chat_fn(model: str = "bist-qwen", host: str = "http://localhost:11434
     def chat(messages: list[dict[str, str]]) -> str:
         body = json.dumps({"model": model, "messages": messages, "stream": False, "options": {"temperature": 0, "num_predict": max_new_tokens}}).encode()
         with urlopen(Request(f"{host}/api/chat", body, {"Content-Type": "application/json"}), timeout=300) as response:
-            return json.loads(response.read())["message"]["content"].strip()
+            text = json.loads(response.read())["message"]["content"]
+            return re.sub(r"^\s*<think>\s*</think>\s*", "", text).strip()  # Qwen3 non-thinking mode writes an empty think block
 
     return chat
 
