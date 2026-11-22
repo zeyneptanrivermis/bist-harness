@@ -7,6 +7,8 @@ from typing import Dict, Iterable, Optional
 import pandas as pd
 
 from src.backtest.engine import calculate_performance, run_backtest
+from src.context.news import get_news_events
+from src.strategies.variants import compare_strategy_variants
 from src.data_pipeline import get_index_history, get_stock_history, load_ticker_data
 from src.fundamentals import get_fundamental_metrics
 from src.indicators import calculate_all_indicators, find_support_resistance
@@ -173,6 +175,22 @@ def run_backtest_tool(ticker: str, as_of_date: str, signals: Optional[list[int]]
         signal_series = pd.Series(signals, index=price.index)
     result = run_backtest(signal_series, price, benchmark_df=market)
     return ToolResponse(tool_name="run_backtest", as_of_date=as_of_date, data={"metrics": json_safe(result.metrics), "trade_count": len(result.trades)})
+
+
+def get_news_events_tool(as_of_date: str, ticker: Optional[str] = None, topic: Optional[str] = None,
+                         start_date: Optional[str] = None, end_date: Optional[str] = None) -> ToolResponse:
+    frame = get_news_events(ticker=ticker, topic=topic, start_date=start_date, end_date=end_date, as_of=as_of_date)
+    return ToolResponse(
+        tool_name="get_news_events", as_of_date=as_of_date, source="local_news_metadata",
+        status="ok" if len(frame) else "warning",
+        message=None if len(frame) else "No timestamped news records for this request; do not infer news context.",
+        data=frame_payload(frame),
+    )
+
+
+def compare_strategy_variants_tool(ticker: str, as_of_date: str, oos_start: Optional[str] = None) -> ToolResponse:
+    return ToolResponse(tool_name="compare_strategy_variants", as_of_date=as_of_date,
+                        data=compare_strategy_variants(ticker, as_of_date, oos_start=oos_start))
 
 
 def calculate_performance_tool(equity_values: list[float], dates: list[str]) -> ToolResponse:

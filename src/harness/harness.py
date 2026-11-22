@@ -10,6 +10,7 @@ from uuid import uuid4
 import pandas as pd
 
 from src.backtest.engine import run_backtest
+from src.context.news import get_news_events
 from src.harness.evidence import build_evidence, evidence_to_dict, select_action
 from src.harness.quality import QualityReport, check_data_quality
 from src.harness.replay import log_decision
@@ -29,6 +30,7 @@ class HarnessState(str, Enum):
     CHECK_DATA_QUALITY = "CHECK_DATA_QUALITY"
     CALCULATE = "CALCULATE"
     RUN_SCENARIO = "RUN_SCENARIO"
+    LOAD_CONTEXT = "LOAD_CONTEXT"  # optional: news context
     RUN_BACKTEST = "RUN_BACKTEST"
     BUILD_EVIDENCE = "BUILD_EVIDENCE"
     HUMAN_REVIEW = "HUMAN_REVIEW"
@@ -43,7 +45,8 @@ _ALLOWED_TRANSITIONS = {
     HarnessState.LOAD_DATA: {HarnessState.CHECK_DATA_QUALITY},
     HarnessState.CHECK_DATA_QUALITY: {HarnessState.CALCULATE, HarnessState.BLOCKED},
     HarnessState.CALCULATE: {HarnessState.RUN_SCENARIO},
-    HarnessState.RUN_SCENARIO: {HarnessState.RUN_BACKTEST},
+    HarnessState.RUN_SCENARIO: {HarnessState.LOAD_CONTEXT, HarnessState.RUN_BACKTEST},
+    HarnessState.LOAD_CONTEXT: {HarnessState.RUN_BACKTEST},
     HarnessState.RUN_BACKTEST: {HarnessState.BUILD_EVIDENCE},
     HarnessState.BUILD_EVIDENCE: {HarnessState.HUMAN_REVIEW, HarnessState.LOG_AND_CLOSE},
     HarnessState.HUMAN_REVIEW: {HarnessState.LOG_AND_CLOSE},
@@ -65,6 +68,7 @@ class HarnessSession:
     enriched_data: Optional[pd.DataFrame] = None
     scenario_summary: Dict[str, Any] = field(default_factory=dict)
     backtest_metrics: Dict[str, Any] = field(default_factory=dict)
+    context: Dict[str, Any] = field(default_factory=dict)
     evidence: List[Dict[str, Any]] = field(default_factory=list)
     action: Optional[str] = None
     human_review: Optional[HumanReview] = None
@@ -133,6 +137,24 @@ class HarnessSession:
             self.scenario_summary = json_safe(row.iloc[0].to_dict())
             self.scenario_summary["rank_in_sector"] = int(row.iloc[0]["Rank_In_Sector"])
 
+    def load_context(self, news: Optional[pd.DataFrame] = None) -> None:
+        """Optional step: attach timestamped news metadata known by the analysis date.
+
+        Context is logged and replayable but is never a committed numeric fact.
+        """
+        if self.state != HarnessState.RUN_SCENARIO:
+            raise RuntimeError("Context can be loaded only right after the scenario step.")
+        self._transition(HarnessState.LOAD_CONTEXT)
+        if news is None:
+            news = get_news_events(ticker=self.request.ticker, as_of=self.request.as_of_date)
+        else:
+            news = news[news["effective_date"] <= pd.Timestamp(self.request.as_of_date)]  # same cutoff for supplied records
+        self.context = {
+            "news_count": int(len(news)),
+            "news": json_safe(news.tail(5)),
+            "warnings": [] if len(news) else ["No timestamped news records: news coverage is sparse (soft warning)."],
+        }
+
     def run_backtest(self) -> None:
         if self.enriched_data is None:
             raise RuntimeError("Indicators must be calculated before backtesting.")
@@ -175,6 +197,7 @@ class HarnessSession:
             "quality": self.quality.to_dict() if self.quality else None,
             "scenario_summary": self.scenario_summary,
             "backtest_metrics": self.backtest_metrics,
+            "context": self.context,
             "evidence": self.evidence,
             "action": self.action,
             "human_review": self.human_review.model_dump() if self.human_review else None,
