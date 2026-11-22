@@ -5,82 +5,99 @@
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>BIST research assistant</title>
 <style>
-:root{--bg:#f4f3ee;--card:#fff;--text:#1f1f1d;--text2:#5f5e5a;--muted:#888780;--line:#e3e1d8;--accent-bg:#e6f1fb;--accent:#0c447c;--accent-line:#85b7eb;--ok-bg:#eaf3de;--ok:#27500a;--warn-bg:#faeeda;--warn:#633806;--bad-bg:#fcebeb;--bad:#791f1f;--neutral-bg:#f1efe8}
-@media (prefers-color-scheme:dark){:root{--bg:#1c1c1a;--card:#262624;--text:#f1efe8;--text2:#b4b2a9;--muted:#888780;--line:#3a3a37;--accent-bg:#0c447c;--accent:#b5d4f4;--accent-line:#378add;--ok-bg:#27500a;--ok:#c0dd97;--warn-bg:#633806;--warn:#fac775;--bad-bg:#791f1f;--bad:#f7c1c1;--neutral-bg:#33332f}}
+:root{--bg:#fafaf9;--card:#fff;--text:#1c1c1a;--text2:#57564f;--muted:#85847c;--line:#e7e5df;--accent:#1d4ed8;--ok:#166534;--warn:#92400e;--bad:#991b1b}
+@media (prefers-color-scheme:dark){:root{--bg:#161615;--card:#1e1e1c;--text:#ececea;--text2:#b0afa6;--muted:#85847c;--line:#323230;--accent:#8ab4ff;--ok:#86d69b;--warn:#f0b66b;--bad:#f1a1a1}}
 *{box-sizing:border-box}
-body{margin:0;background:var(--bg);color:var(--text);font:16px/1.6 -apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,sans-serif}
-main{max-width:880px;margin:0 auto;padding:28px 20px 48px}
-header{display:flex;justify-content:space-between;align-items:center;gap:12px;flex-wrap:wrap;margin:0 0 18px}
-h1{font-size:22px;font-weight:500;margin:0}
-.sub{font-size:13px;color:var(--text2);margin:2px 0 0}
-.pill{font-size:13px;padding:4px 12px;border-radius:8px;background:var(--ok-bg);color:var(--ok)}
-.tabs{display:flex;flex-wrap:wrap;gap:8px;margin:0 0 14px}
-.tab{font:inherit;font-size:14px;padding:6px 14px;border:1px solid var(--line);border-radius:8px;background:var(--card);color:var(--text2);cursor:pointer}
-.tab:hover{border-color:var(--accent-line)}
-.card{background:var(--card);border:1px solid var(--line);border-radius:12px;padding:18px 20px;margin:0 0 14px}
-label,.lab{display:block;font-size:12px;color:var(--muted);margin:0 0 6px}
-textarea{width:100%;font:inherit;font-size:15px;color:var(--text);background:var(--bg);border:1px solid var(--line);border-radius:8px;padding:10px 12px;resize:vertical;min-height:88px}
-textarea:focus{outline:2px solid var(--accent-line)}
+body{margin:0;background:var(--bg);color:var(--text);font:15px/1.6 -apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,sans-serif}
+main{max-width:760px;margin:0 auto;padding:40px 20px 56px}
+h1{font-size:20px;font-weight:600;margin:0}
+.sub{font-size:13px;color:var(--muted);margin:2px 0 28px}
+.lab{display:block;font-size:12px;font-weight:600;letter-spacing:.04em;text-transform:uppercase;color:var(--muted);margin:0 0 8px}
+.samples{display:flex;flex-wrap:wrap;gap:6px;margin:0 0 20px}
+.samples button{font:inherit;font-size:13px;padding:4px 12px;border:1px solid var(--line);border-radius:999px;background:var(--card);color:var(--text2);cursor:pointer}
+.samples button:hover{border-color:var(--accent);color:var(--accent)}
+textarea{width:100%;font:inherit;color:var(--text);background:var(--card);border:1px solid var(--line);border-radius:8px;padding:12px 14px;resize:vertical;min-height:96px}
+textarea:focus,button:focus-visible{outline:2px solid var(--accent);outline-offset:1px}
 .bar{display:flex;align-items:center;justify-content:space-between;gap:12px;margin:10px 0 0}
 .hint{font-size:12px;color:var(--muted)}
-button.go{font:inherit;font-size:15px;font-weight:500;padding:8px 22px;border:0;border-radius:8px;background:var(--text);color:var(--card);cursor:pointer}
+button.go{font:inherit;font-weight:500;padding:7px 20px;border:0;border-radius:8px;background:var(--text);color:var(--bg);cursor:pointer}
 button.go:disabled{opacity:.5;cursor:wait}
-.badge{display:inline-block;font-size:14px;font-weight:500;padding:4px 12px;border-radius:8px;margin:0 0 10px}
-.ans{white-space:pre-wrap;font-size:15px;line-height:1.7;margin:0 0 16px}
-.chip{display:inline-block;font:12px ui-monospace,Menlo,monospace;padding:2px 8px;border-radius:8px;background:var(--accent-bg);color:var(--accent);margin:0 6px 6px 0}
-.row{display:grid;grid-template-columns:repeat(auto-fit,minmax(200px,1fr));gap:8px;margin:0 0 16px}
-.ev{border:1px solid var(--line);border-radius:8px;padding:8px 10px;font-size:13px;color:var(--text2);line-height:1.45}
-.ev b{display:block;font-weight:500;color:var(--text)}
-.ck{display:flex;flex-wrap:wrap;gap:6px 18px;font-size:13px;color:var(--text2);border-top:1px solid var(--line);padding-top:12px}
+.out{margin:32px 0 0;padding:24px 0 0;border-top:1px solid var(--line)}
+.q{font-weight:600;margin:0 0 10px}
+.top{display:flex;justify-content:space-between;align-items:center;margin:32px 0 0}
+.top .lab{margin:0}
+button.link{font:inherit;font-size:12px;border:0;background:none;color:var(--muted);cursor:pointer;text-decoration:underline}
+.status{font-size:13px;font-weight:600;letter-spacing:.02em;margin:0 0 8px}
+.ans{white-space:pre-wrap;line-height:1.7;margin:0 0 24px}
+.note{font-size:13px;color:var(--warn);border-left:3px solid var(--warn);padding:2px 0 2px 12px;margin:0 0 20px}
+section{margin:0 0 24px}
+.chips{display:flex;flex-wrap:wrap;gap:6px}
+.chip{font:12px ui-monospace,Menlo,monospace;padding:2px 8px;border:1px solid var(--line);border-radius:6px;color:var(--text2)}
+.ev{display:grid;grid-template-columns:auto 1fr;gap:2px 14px;font-size:13px;color:var(--text2);margin:0}
+.ev dt{font:12px ui-monospace,Menlo,monospace;color:var(--muted)}
+.ev dd{margin:0}
+.ev small{display:block;color:var(--muted)}
+.ck{display:flex;flex-wrap:wrap;gap:4px 20px;font-size:13px;color:var(--text2)}
 .ok{color:var(--ok)}.no{color:var(--bad)}
-.note{font-size:13px;background:var(--warn-bg);color:var(--warn);border-radius:8px;padding:8px 12px;margin:0 0 14px}
-details{font-size:13px;color:var(--text2);margin-top:12px}
-details pre{white-space:pre-wrap;background:var(--bg);border-radius:8px;padding:10px 12px;font-size:12px}
-.err{color:var(--bad);font-size:14px}
+details{font-size:13px;color:var(--text2)}
+details pre{white-space:pre-wrap;border:1px solid var(--line);border-radius:8px;padding:10px 12px;font-size:12px}
+.err{color:var(--bad);font-size:14px;margin:16px 0 0}
+.foot{font-size:12px;color:var(--muted);margin:40px 0 0}
 .hide{display:none}
-.foot{font-size:12px;color:var(--muted);margin:8px 0 0}
 </style>
 </head>
 <body>
 <main>
-<header>
-<div><h1>BIST research assistant</h1><p class="sub">Analysis date 10 Sep 2026 · local model, no cloud API</p></div>
-<span class="pill">Runs locally</span>
-</header>
-<div class="tabs" id="tabs"></div>
-<div class="card">
-<label for="q">Question</label>
+<h1>BIST research assistant</h1>
+<p class="sub">Analysis date 10 Sep 2026 · local model, no cloud API</p>
+<span class="lab">Examples</span>
+<div class="samples" id="tabs"></div>
+<label class="lab" for="q">Question</label>
 <textarea id="q" placeholder="Ask about a BIST stock, a sector or a pattern"></textarea>
 <div class="bar"><span class="hint">Ctrl or Cmd + Enter to send</span><button class="go" id="go">Ask</button></div>
-</div>
-<div class="card hide" id="out">
-<div id="note" class="note hide"></div>
-<span class="badge" id="status"></span>
-<p class="ans" id="ans"></p>
-<div class="lab">Tools called</div><div id="tools" style="margin:0 0 8px"></div>
-<div class="lab">Evidence</div><div class="row" id="ev"></div>
-<div class="ck" id="ck"></div>
-<details id="rawbox" class="hide"><summary>Model draft before the guard</summary><pre id="raw"></pre></details>
-</div>
-<p class="err hide" id="err"></p>
+<p class="err hide" id="err" role="alert"></p>
+<div class="top hide" id="top"><span class="lab">History (this browser)</span><button class="link" id="clear">Clear</button></div>
+<div id="log"></div>
+<template id="tpl"><article class="out" aria-live="polite">
+<p class="q"></p>
+<p class="status"></p>
+<p class="ans"></p>
+<p class="note hide"></p>
+<section><span class="lab">Tools called</span><div class="chips"></div></section>
+<section><span class="lab">Evidence</span><dl class="ev"></dl></section>
+<section class="ckbox"><span class="lab">Guard checks</span><div class="ck"></div></section>
+<details class="hide"><summary>Model draft before the guard</summary><pre></pre></details>
+</article></template>
 <p class="foot">Educational, evidence-bound summary. It is not investment advice.</p>
 </main>
 <script>
 var $=function(id){return document.getElementById(id)};
 var COLORS={INVESTIGATE:"warn",WATCH:"warn",REJECT_SIGNAL:"bad",ANALYSIS_UNSAFE:"bad",HARD_BLOCK:"bad",INVALID_TOOL_REQUEST:"bad",TECHNICAL_REVERSAL_CANDIDATE:"ok",POTENTIAL_CATCH_UP_CANDIDATE:"ok"};
 function el(tag,cls,text){var e=document.createElement(tag);if(cls)e.className=cls;if(text!==undefined)e.textContent=text;return e}
-function show(p){
-  $("err").classList.add("hide");$("out").classList.remove("hide");
-  var c=COLORS[p.status]||"neutral";
-  var b=$("status");b.textContent=p.status;b.style.background="var(--"+(c==="neutral"?"neutral":c)+"-bg)";b.style.color=c==="neutral"?"var(--text)":"var(--"+c+")";
-  $("ans").textContent=p.answer;
-  var note=$("note");
-  if(p.guard_replaced){note.classList.remove("hide");note.textContent="The guard replaced the model draft with the deterministic summary ("+p.violations.join(", ")+").";}else note.classList.add("hide");
-  var t=$("tools");t.replaceChildren();p.tools.forEach(function(n){t.appendChild(el("span","chip",n))});
-  var e=$("ev");e.replaceChildren();p.evidence.forEach(function(x){var d=el("div","ev");d.appendChild(el("b","",x.id+" · "+x.label));if(x.note)d.appendChild(document.createTextNode(x.note));e.appendChild(d)});
-  var k=$("ck");k.replaceChildren();p.checks.forEach(function(x){var s=el("span",x.ok?"ok":"no");s.textContent=(x.ok?"✓ ":"✗ ")+x.label;k.appendChild(s)});
-  if(p.raw_answer){$("rawbox").classList.remove("hide");$("raw").textContent=p.raw_answer}else $("rawbox").classList.add("hide");
+var KEY="bist-chat-history",MAX=20,hist=[];
+try{hist=JSON.parse(localStorage.getItem(KEY)||"[]")}catch(x){}
+function save(){try{localStorage.setItem(KEY,JSON.stringify(hist))}catch(x){}}
+function render(p){
+  var n=$("tpl").content.firstElementChild.cloneNode(true),q=function(c){return n.querySelector(c)};
+  q(".q").textContent=p.question;
+  var s=q(".status");s.textContent=p.status;s.style.color="var(--"+(COLORS[p.status]||"text2")+")";
+  q(".ans").textContent=p.answer;
+  if(p.guard_replaced){var note=q(".note");note.classList.remove("hide");note.textContent="The guard replaced the model draft with the deterministic summary ("+p.violations.join(", ")+").";}
+  p.tools.forEach(function(t){q(".chips").appendChild(el("span","chip",t))});
+  p.evidence.forEach(function(x){q(".ev").appendChild(el("dt","",x.id));var d=el("dd","",x.label);if(x.note)d.appendChild(el("small","",x.note));q(".ev").appendChild(d)});
+  p.checks.forEach(function(x){q(".ck").appendChild(el("span",x.ok?"ok":"no",(x.ok?"✓ ":"✗ ")+x.label))});
+  if(!p.checks.length)q(".ckbox").classList.add("hide");
+  if(p.raw_answer){q("details").classList.remove("hide");q("pre").textContent=p.raw_answer}
+  return n;
 }
+function show(p){
+  $("err").classList.add("hide");
+  hist.unshift(p);hist=hist.slice(0,MAX);save();
+  $("log").prepend(render(p));$("top").classList.remove("hide");
+}
+hist.forEach(function(p){$("log").appendChild(render(p))});
+if(hist.length)$("top").classList.remove("hide");
+$("clear").onclick=function(){hist=[];save();$("log").replaceChildren();$("top").classList.add("hide")};
 function ask(){
   var q=$("q").value.trim();if(!q){$("q").focus();return}
   var go=$("go");go.disabled=true;go.textContent="Thinking…";$("err").classList.add("hide");
@@ -92,7 +109,7 @@ function ask(){
 $("go").onclick=ask;
 $("q").addEventListener("keydown",function(e){if(e.key==="Enter"&&(e.ctrlKey||e.metaKey)){e.preventDefault();ask()}});
 fetch("/api/samples").then(function(r){return r.json()}).then(function(list){
-  list.forEach(function(s){var b=el("button","tab",s.name);b.onclick=function(){$("q").value=s.question;ask()};$("tabs").appendChild(b)});
+  list.forEach(function(s){var b=el("button","",s.name);b.onclick=function(){$("q").value=s.question;ask()};$("tabs").appendChild(b)});
 });
 </script>
 </body>
