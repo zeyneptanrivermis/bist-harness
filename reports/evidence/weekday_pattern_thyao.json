@@ -37,8 +37,8 @@
    },
    "unconditional_thu_mean": 0.002,
    "unconditional_fri_mean": 0.0033,
-   "thu_fri_mean": 0.0137,
-   "thu_fri_net_mean": 0.0107,
+   "wed_fri_mean": 0.0136,
+   "wed_fri_net_mean": 0.0106,
    "roundtrip_cost": 0.003,
    "p_value_vs_other_weeks": 0.2585,
    "tests_run": 32
@@ -68,8 +68,8 @@
    },
    "unconditional_thu_mean": 0.0009,
    "unconditional_fri_mean": 0.0056,
-   "thu_fri_mean": 0.0014,
-   "thu_fri_net_mean": -0.0016,
+   "wed_fri_mean": 0.0013,
+   "wed_fri_net_mean": -0.0017,
    "roundtrip_cost": 0.003,
    "p_value_vs_other_weeks": null,
    "tests_run": 32

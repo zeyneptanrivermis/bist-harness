@@ -85,11 +85,13 @@ class AgentLoopTests(unittest.TestCase):
         self.assertEqual(run["evidence"][2]["values"]["fx_relationship"]["ticker"], "MAVI")
         pattern = SafeProjectToolRouter().execute("test_weekday_pattern", {"ticker": "THYAO", "pattern": "mon_tue_wed_down", "start_date": "2024-01-01", "end_date": "2025-12-31", "oos_start_date": "2026-01-01"}, as_of_date=AS_OF)
         p = pattern["in_sample"]
-        self.assertAlmostEqual(p["thu_fri_net_mean"], p["thu_fri_mean"] - 0.003, places=3)
+        self.assertAlmostEqual(p["wed_fri_net_mean"], p["wed_fri_mean"] - 0.003, places=3)
         self.assertEqual(pattern["multiple_testing"]["tests_run"], 32)
-        text = draft_summary("REJECT_SIGNAL", [{"evidence_id": "E1", "values": pattern}])
+        evidence = [{"evidence_id": "E1", "values": pattern}]
+        text = draft_summary("REJECT_SIGNAL", evidence)
         self.assertIn("round-trip cost", text)
         self.assertIn("median", text)
+        self.assertEqual(check_answer(text, evidence, "REJECT_SIGNAL", AS_OF), [])  # the template must survive its own guard
 
     def test_good_answer_is_kept_and_bad_answer_is_replaced_but_raw_is_kept(self) -> None:
         run = execute_plan(StubRouter().validate_plan(PLAN, as_of_date=AS_OF), AS_OF, StubRouter())

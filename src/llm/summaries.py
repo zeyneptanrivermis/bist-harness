@@ -57,8 +57,9 @@ def fact_line(item: dict[str, Any]) -> str:
                 text = (f"{label}: {p['occurrences']} occurrences in {p['weeks']} weeks; Thursday and Friday were both up in {p['thu_fri_both_up']}; "
                         f"mean Thursday {_p(p['thu']['mean'])} (median {_p(p['thu']['median'])}), mean Friday {_p(p['fri']['mean'])} (median {_p(p['fri']['median'])}) "
                         f"against {_p(p['unconditional_thu_mean'])} and {_p(p['unconditional_fri_mean'])} in other weeks (p {_n(p['p_value_vs_other_weeks'], 3)}).")
-                if "thu_fri_net_mean" in p:
-                    text += (f" Holding Thursday to Friday gave a mean {_p(p['thu_fri_mean'])}, or {_p(p['thu_fri_net_mean'])} after a {_p(p['roundtrip_cost'])} round-trip cost.")
+                if "wed_fri_net_mean" in p:
+                    text += (f" Buying at Wednesday's close, when the pattern is known, and selling at Friday's close gave a mean {_p(p['wed_fri_mean'])}, "
+                             f"or {_p(p['wed_fri_net_mean'])} after a {_p(p['roundtrip_cost'])} round-trip cost.")
                 return text
             return f"{label}: {p['occurrences']} occurrences."
         text = f"{eid}: " + block(f"In-sample {v['period']['start']} to {v['period']['end']}", v["in_sample"])

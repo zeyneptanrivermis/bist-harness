@@ -53,7 +53,7 @@ Veri hakkında doğrulanmamış noktalar (alt raporlarda yinelenir):
 | Senaryo | Rapor | Ana sonuç | Sistem durumu |
 |---|---|---|---|
 | Sektörde geride kalanlar | `03` | Perakende grubunda MAVI en geride (%−3,25); geçmiş benzer gerilikler 10 günde %51,8 kapandı (494 olay, 53 bağımsız dönem). Yakalama hipotezi desteklenmiyor. | `INVESTIGATE` |
-| Hafta içi kalıplar | `weekday_patterns_report.pdf` | THYAO'da "Pzt-Sal-Çar düşer, Per-Cum yükselir" örüntüsü desteklenmiyor: örnek içinde 87 haftanın 19'unda görüldü ve bunların yalnızca 6'sında Perşembe ile Cuma birlikte yükseldi; örnek dışında 30 haftanın 3'ünde görüldü, hiçbirinde yükselmedi. Perşembe–Cuma tutmanın maliyet sonrası (%0,3 gidiş-dönüş) ortalaması örnek içi %1,1, örnek dışı %−0,2; 32 aday haftalık dizi için Bonferroni α 0,0016 ve örnek içi p 0,259. Kaynak: `reports/evidence/weekday_pattern_thyao.json`. | `REJECT_SIGNAL` |
+| Hafta içi kalıplar | `weekday_patterns_report.pdf` | THYAO'da "Pzt-Sal-Çar düşer, Per-Cum yükselir" örüntüsü desteklenmiyor: örnek içinde 87 haftanın 19'unda görüldü ve bunların yalnızca 6'sında Perşembe ile Cuma birlikte yükseldi; örnek dışında 30 haftanın 3'ünde görüldü, hiçbirinde yükselmedi. Örüntünün bilindiği Çarşamba kapanışında alıp Cuma kapanışında satmanın maliyet sonrası (%0,3 gidiş-dönüş) ortalaması örnek içi %1,1, örnek dışı %−0,2; 32 aday haftalık dizi için Bonferroni α 0,0016 ve örnek içi p 0,259. Kaynak: `reports/evidence/weekday_pattern_thyao.json`. | `REJECT_SIGNAL` |
 | Teknik dönüşler | `02` | ASELS'te 34 alt bant teması; 5 günde isabet %67,6 (genel eğilim %59,2). İdeal birleşik koşul hiç oluşmadı (n=0), "RSI dibi + hacim" yalnızca 3 olay. | `TECHNICAL_REVERSAL_CANDIDATE` (küçük örneklem uyarılı) |
 | Bilanço ve fiyat tepkisi | `04` | TUPRS'te iyileşen çeyrekler 20 günde daha iyi görünüyor, ama fark tek çeyreğe dayanıyor ve 5 günde ortadan kalkıyor. Tüm sayılar örnek. | `INVESTIGATE` |
 | Makro bağlam | `05` | USD/TRY %+67,1; EREGL ile haftalık korelasyon −0,26 (zayıf ve ters). "Kur yükselince ihracatçı yükselir" varsayımı desteklenmiyor. | `INVESTIGATE` |
@@ -68,7 +68,7 @@ A–E strateji varyantları 30 hissede, t+1 zamanlaması ve maliyetlerle çalı�
 - **Replay günlüğü eksikliği:** günlük yalnızca son cevabı saklıyordu; guard'ın taslağı değiştirip değiştirmediği izlenemiyordu. Ham taslak ve ihlaller eklendi.
 - **Ollama çıktısı:** Qwen3'ün boş `<think></think>` bloğu araç planı ayrıştırıcısını bozuyordu; temizlendi.
 - **Sektör sorusunda makro kanıt eksikti:** model planı `get_macro_context` çağırmıyordu, bu yüzden yapısal ve geçici gerilik ayrılamıyordu. Harness artık sektör planlarında `LOAD_CONTEXT` adımında en geride kalan hisse için makro bağlamı kendisi ekler (zorunlu backtest gibi).
-- **Hafta içi kalıbında maliyet ve çoklu test eksikti:** çıktı yalnızca ortalama veriyordu ve "1 test" diyordu. Artık medyanlar, Perşembe–Cuma tutmanın %0,3 gidiş-dönüş maliyeti sonrası getirisi ve 32 olası haftalık yukarı/aşağı dizisi için Bonferroni düzeltmesi raporlanır.
+- **Hafta içi kalıbında maliyet ve çoklu test eksikti:** çıktı yalnızca ortalama veriyordu ve "1 test" diyordu. Artık medyanlar, Çarşamba kapanışında alıp Cuma kapanışında satmanın (bileşik) %0,3 gidiş-dönüş maliyeti sonrası getirisi ve 32 olası haftalık yukarı/aşağı dizisi için Bonferroni düzeltmesi raporlanır.
 
 ## 5. Yerel model ve harness değerlendirmesi
 

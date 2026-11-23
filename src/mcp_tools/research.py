@@ -28,6 +28,7 @@ from src.universe import get_universe_df
 from src.config import DEFAULT_COMMISSION_RATE, DEFAULT_SLIPPAGE_RATE
 
 ROUNDTRIP_COST = 2.0 * (DEFAULT_COMMISSION_RATE + DEFAULT_SLIPPAGE_RATE)
+WEEK_SEQUENCES = 32  # the Mon-Wed-down pattern is one of 2^5 possible Mon-Fri up/down sequences; correct for all of them
 
 SMALL_SAMPLE = 30  # below this many events a hit rate is anecdotal
 MIN_EPISODES = 10  # below this many independent episodes nothing may be labelled a candidate
@@ -120,17 +121,16 @@ def _weekday_period(df: pd.DataFrame, pattern: str) -> dict[str, Any]:
                 rows.append({"cond": all(by_day[k] < 0 for k in (0, 1, 2)), "thu": by_day[3], "fri": by_day[4]})
         t = pd.DataFrame(rows)
         if t.empty or t["cond"].sum() == 0:
-            return {"occurrences": 0, "weeks": int(len(t)), "tests_run": 1}
+            return {"occurrences": 0, "weeks": int(len(t)), "tests_run": WEEK_SEQUENCES}
         hit, rest = t[t["cond"]], t[~t["cond"]]
         both_up = int(((hit["thu"] > 0) & (hit["fri"] > 0)).sum())
         p = stats.ttest_ind(hit["thu"] + hit["fri"], rest["thu"] + rest["fri"], equal_var=False).pvalue if len(hit) >= 5 and len(rest) > 1 else None
-        thu_fri = hit["thu"] + hit["fri"]
+        # buy at Wednesday's close (when the pattern is known), sell at Friday's close: one round trip of commission + slippage
+        wed_fri = (1 + hit["thu"]) * (1 + hit["fri"]) - 1
         return {"occurrences": int(len(hit)), "weeks": int(len(t)), "thu_fri_both_up": both_up, "thu": _stat(hit["thu"]), "fri": _stat(hit["fri"]),
                 "unconditional_thu_mean": _r(rest["thu"].mean()), "unconditional_fri_mean": _r(rest["fri"].mean()),
-                # hold Thursday open to Friday close once: one round trip of commission + slippage
-                "thu_fri_mean": _r(thu_fri.mean()), "thu_fri_net_mean": _r(thu_fri.mean() - ROUNDTRIP_COST), "roundtrip_cost": ROUNDTRIP_COST,
-                "p_value_vs_other_weeks": _r(p) if p is not None else None,
-                "tests_run": 32}  # the pattern is one of 2^5 possible Mon-Fri up/down sequences, so correct for all 32
+                "wed_fri_mean": _r(wed_fri.mean()), "wed_fri_net_mean": _r(wed_fri.mean() - ROUNDTRIP_COST), "roundtrip_cost": ROUNDTRIP_COST,
+                "p_value_vs_other_weeks": _r(p) if p is not None else None, "tests_run": WEEK_SEQUENCES}
     from src.scenarios.weekday_patterns import detect_multiday_patterns, summarize_pattern_performance
 
     events = detect_multiday_patterns(df, pattern_type=pattern, forward_horizons=[1, 2, 5])
