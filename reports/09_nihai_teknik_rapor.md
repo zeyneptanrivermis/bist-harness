@@ -72,7 +72,7 @@ A–E strateji varyantları 30 hissede, t+1 zamanlaması ve maliyetlerle çalı�
 
 ## 5. Yerel model ve harness değerlendirmesi
 
-12 soru (6'sı eğitimde hiç görülmemiş hisselerle), her biri iki kez; metrikler modelin **ham** çıktısı üzerinden hesaplanır. Aynı adaptör (SHA-256 `4d62e052…cf96c4d5c`) iki ortamda ölçüldü: Colab (CUDA, 4-bit NF4, `artifacts/llm/eval_report_colab.json`) ve teslim edilen kodla bu Mac (Apple M5, MPS, bf16, `artifacts/llm/eval_report_local.json`). Demo Mac yolunu kullanır. Ayrıntı: `roadmap/TASK_5_RAPOR_TASLAGI.md`.
+12 soru (6'sı eğitimde hiç görülmemiş hisselerle), her biri iki kez; metrikler modelin **ham** çıktısı üzerinden hesaplanır. Aynı adaptör (SHA-256 `4d62e052…cf96c4d5c`) iki ortamda ölçüldü: Colab (CUDA, 4-bit NF4, `reports/evidence/eval_report_colab.json`) ve teslim edilen kodla bu Mac (Apple M5, MPS, bf16, `reports/evidence/eval_report_local.json`). Demo Mac yolunu kullanır. Ayrıntı: `roadmap/TASK_5_RAPOR_TASLAGI.md`.
 
 | Metrik | Base (Colab) | Adaptör (Colab) | Base (Mac) | Adaptör (Mac) |
 |---|---|---|---|---|

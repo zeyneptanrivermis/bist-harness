@@ -1,0 +1,759 @@
+{
+  "base_model": "Qwen/Qwen3-4B",
+  "adapter": "artifacts/llm/qwen_bist_lora/adapter",
+  "adapter_sha256": "4d62e05230eeb7e5855cadf3e7274e1c8b621df4b707de12c12cef5cf96c4d5c",
+  "analysis_date": "2026-09-10",
+  "statuses": [
+    "ANALYSIS_UNSAFE",
+    "FUNDAMENTAL_IMPROVEMENT_CANDIDATE",
+    "HOLD",
+    "INVESTIGATE",
+    "POTENTIAL_CATCH_UP_CANDIDATE",
+    "REJECT_SIGNAL",
+    "TECHNICAL_REVERSAL_CANDIDATE",
+    "WATCH"
+  ],
+  "results": [
+    {
+      "model": "base",
+      "n_questions": 12,
+      "rates": {
+        "invalid_tool_call": 0.667,
+        "wrong_plan": 0.75,
+        "numeric_hallucination": 0.0,
+        "unsupported_conclusion": 0.25,
+        "look_ahead": 0.167,
+        "evidence_incomplete": 0.25,
+        "rule_violation": 0.0,
+        "not_reproducible": 0.0,
+        "guard_replaced": 0.25
+      },
+      "rows": [
+        {
+          "question": "In the retail sector (BIMAS, MGROS, MAVI), which stock lagged the sector median the most o",
+          "unseen": false,
+          "plan": [
+            {
+              "tool_name": "rank_sector_relative_strength",
+              "arguments": {
+                "end_date": "2026-09-10",
+                "horizon_days": 20,
+                "start_date": "2024-01-01",
+                "tickers": [
+                  "BIMAS",
+                  "MGROS",
+                  "MAVI"
+                ]
+              }
+            },
+            {
+              "tool_name": "detect_reversal_events",
+              "arguments": {
+                "end_date": "2026-09-10",
+                "event": "BB_LOWER_TOUCH",
+                "start_date": "2024-01-01",
+                "ticker": "BIMAS"
+              }
+            },
+            {
+              "tool_name": "detect_reversal_events",
+              "arguments": {
+                "end_date": "2026-09-10",
+                "event": "BB_LOWER_TOUCH",
+                "start_date": "2024-01-01",
+                "ticker": "MGROS"
+              }
+            },
+            {
+              "tool_name": "detect_reversal_events",
+              "arguments": {
+                "end_date": "2026-09-10",
+                "event": "BB_LOWER_TOUCH",
+                "start_date": "2024-01-01",
+                "ticker": "MAVI"
+              }
+            }
+          ],
+          "status": "INVESTIGATE",
+          "violations": [
+            "bad_status",
+            "missing_evidence_id"
+          ],
+          "scores": {
+            "invalid_tool_call": 0,
+            "wrong_plan": 0,
+            "numeric_hallucination": 0,
+            "unsupported_conclusion": 1,
+            "look_ahead": 0,
+            "evidence_incomplete": 1,
+            "rule_violation": 0,
+            "not_reproducible": 0,
+            "guard_replaced": 1
+          },
+          "raw_answer": "The retail sector (BIMAS, MGROS, MAVI) analysis up to 2026-09-10 shows that MAVI was the most lagging stock with a lag gap of -0.0325, ranking 1st. Over the period 01.01.2024 – 10.09.2026, the lagged stocks showed similar performance: MAVI had a median outperformance of -0.007 over 20 days, MGROS had a median outperformance of -0.0181, and BIMAS had a median outperformance of 0.1421. The stock MAVI has a suggested status of \"INVESTIGATE\" for sector relative strength. For reversal events, MAVI is labeled as \"WATCH\" with a suggested status, while MGROS is a \"TECHNICAL_REVERSAL_CANDIDATE\" and BIMAS is a \"TECHNICAL_REVERSAL_CANDIDATE\". The stock MAVI is not labeled as a POTENTIAL_CATCH_UP_CANDIDATE due to its lagging status and the warnings about its fundamental records. Evidence: E2, E5."
+        },
+        {
+          "question": "Among the telecom stocks TCELL and TTKOM, which one lagged the group median over the last ",
+          "unseen": true,
+          "plan": [],
+          "status": null,
+          "violations": [
+            "invalid_tool_call"
+          ],
+          "scores": {
+            "invalid_tool_call": 1,
+            "wrong_plan": 1,
+            "numeric_hallucination": 0,
+            "unsupported_conclusion": 0,
+            "look_ahead": 0,
+            "evidence_incomplete": 0,
+            "rule_violation": 0,
+            "not_reproducible": 0,
+            "guard_replaced": 0
+          },
+          "raw_answer": "{\"tool_calls\": [{\"tool_name\": \"rank_sector_relative_strength\", \"arguments\": {\"tickers\": [\"TCELL\", \"TTKOM\"], \"horizon_days\": 20, \"start_date\": \"2024-01-01\", \"end_date\": \"2026-09-10\"}}, {\"tool_name\": \"detect_reversal_events\", \"arguments\": {\"ticker\": \"TCELL\", \"event\": \"BB_LOWER_TOUCH\", \"start_date\": \"2024-01-01\", \"end_date\": \"2026-09-10\"}}, {\"tool_name\": \"detect_reversal_events\", \"arguments\": {\"ticker\": \"TTKOM\", \"event\": \"BB_LOWER_TOUCH\", \"start_date\": \"2024-01-01\", \"end_date\": \"2026-09-10\"}}, {\"tool_name\": \"detect_reversal_events\", \"arguments\": {\"ticker\": \"TCELL\", \"event\": \"BB_UPPER_TOUCH\", \"start_date\": \"2024-01-01\", \"end_date\": \"2026-09-10\"}}, {\"tool_name\": \"detect_reversal_events\", \"arguments\": {\"ticker\": \"TTKOM\", \"event\": \"BB_UPPER_TOUCH\", \"start_date\": \"2024-01-01\", \"end_date\": \"2026-09-10\"}}, {\"tool_name\": \"detect_reversal_events\", \"arguments\": {\"ticker\": \"TCELL\", \"event\": \"RSI_OVERSOLD\", \"start_date\": \"2024-01-01\", \"end_date\": \"2026-09-10\"}}, {\"tool_name\": \"detect_reversal_events\", \"arguments\": {\"ticker\": \"TTKOM\", \"event\": \"RSI_OVERSOLD\", \"start_date\": \"2024-01-01\", \"end_date\": \"2026-09-10\"}}, {\"tool_name\": \"detect_reversal_events\", \"arguments\": {\"ticker\": \"TCELL\", \"event\": \"RSI_OVERBOUGHT\", \"start_date\": \"2024-01-01\", \"end_date\": \"2026-09-10\"}}, {\"tool_name\": \"detect_reversal_events\", \"arguments\": {\"ticker\": \"TTKOM\", \"event\": \"RSI_OVERBOUGHT\", \"start_date\": \"2024-01-01\", \"end_date\": \"2026-09-10\"}}, {\"tool_name\": \"detect_reversal_events\", \"arguments\": {\"ticker\": \"TCELL\", \"event\": \"SUPERTREND_BULLISH_FLIP\", \"start_date\": \"2024-01-01\", \"end_date\": \"2026-09-10\"}}, {\"tool_name\": \"detect_reversal_events\", \"arguments\": {\"ticker\": \"TTKOM\", \"event\": \"SUPERTREND_BULLISH_FLIP\", \"start_date\": \"2024-01-01\", \"end_date\": \"2026-09-10\"}}, {\"tool_name\": \"detect_reversal_events\", \"arguments\": {\"ticker\": \"TCELL\", \"event\": \"SUPERTREND_BEARISH_FLIP\", \"start_date\": \"2024-01-01\", \"end_date\": \"2026-09-10\"}}, {\"tool_name\": \"detect_reversal_events\", \"arguments\": {\"ticker\": \"TTKOM\", \"event\": \"SUPERTREND_BEARISH_FLIP\", \"start_date\": \"2024-01-01\", \"end_date\": \"2026-09-10\"}}, {\"tool_name\": \"detect_reversal_events\", \"arguments\": {\"ticker\": \"TCELL\", \"event\": \"KAMA_CROSS_UP\", \"start_date\": \"2024-01-01"
+        },
+        {
+          "question": "Does THYAO show a 'Monday–Tuesday–Wednesday down, then Thursday–Friday up' pattern over 01",
+          "unseen": false,
+          "plan": [
+            {
+              "tool_name": "test_weekday_pattern",
+              "arguments": {
+                "end_date": "2025-12-31",
+                "oos_start_date": "2026-01-01",
+                "pattern": "mon_tue_wed_down",
+                "start_date": "2024-01-01",
+                "ticker": "THYAO"
+              }
+            },
+            {
+              "tool_name": "test_weekday_pattern",
+              "arguments": {
+                "end_date": "2026-09-10",
+                "oos_start_date": "2026-01-01",
+                "pattern": "mon_tue_wed_down",
+                "start_date": "2026-01-01",
+                "ticker": "THYAO"
+              }
+            }
+          ],
+          "status": "REJECT_SIGNAL",
+          "violations": [
+            "bad_status",
+            "missing_evidence_id"
+          ],
+          "scores": {
+            "invalid_tool_call": 0,
+            "wrong_plan": 0,
+            "numeric_hallucination": 0,
+            "unsupported_conclusion": 1,
+            "look_ahead": 0,
+            "evidence_incomplete": 1,
+            "rule_violation": 0,
+            "not_reproducible": 0,
+            "guard_replaced": 1
+          },
+          "raw_answer": "The research examines the 'Monday–Tuesday–Wednesday down, then Thursday–Friday up' pattern for THYAO from 01.01.2024 to 31.12.2025 and extends it to 01.01.2026–10.09.2026. \n\nEvidence E2 and E3 indicate that the pattern 'mon_tue_wed_down' was tested in-sample (2024-01-01 to 2025-12-31) and out-of-sample (2026-01-01 to 2026-09-10). In-sample, the pattern had 19 occurrences with a p-value of 0.2585, which is not statistically significant (E2). Out-of-sample, the pattern had 3 occurrences, but the p-value vs. other weeks is null, and the suggested status is \"REJECT_SIGNAL\" (E3). \n\nThe pattern does not hold over 01.01.2026–10.09.2026, as evidenced by the \"REJECT_SIGNAL\" status from the test_weekday_pattern tool (E3). Additionally, the run_backtest (E4) shows a negative total return and low Sharpe ratio, further indicating the pattern's unreliability."
+        },
+        {
+          "question": "Does ENKAI show a 'Monday–Tuesday–Wednesday down, then Thursday–Friday up' pattern over 01",
+          "unseen": true,
+          "plan": [],
+          "status": null,
+          "violations": [
+            "invalid_tool_call"
+          ],
+          "scores": {
+            "invalid_tool_call": 1,
+            "wrong_plan": 1,
+            "numeric_hallucination": 0,
+            "unsupported_conclusion": 0,
+            "look_ahead": 0,
+            "evidence_incomplete": 0,
+            "rule_violation": 0,
+            "not_reproducible": 0,
+            "guard_replaced": 0
+          },
+          "raw_answer": "{\"tool_calls\": [{\"arguments\": {\"end_date\": \"2025-12-31\", \"oos_start_date\": \"2026-01-01\", \"pattern\": \"mon_tue_wed_down\", \"start_date\": \"2024-01-01\", \"ticker\": \"ENKAI\"}, \"tool_name\": \"test_weekday_pattern\"}, {\"arguments\": {\"end_date\": \"2026-09-10\", \"oos_start_date\": \"2026-01-01\", \"pattern\": \"thu_fri_up\", \"start_date\": \"2026-01-01\", \"ticker\": \"ENKAI\"}, \"tool_name\": \"test_weekday_pattern\"}]}"
+        },
+        {
+          "question": "How many times did ASELS touch the lower Bollinger Band over 01.01.2024 – 10.09.2026? In h",
+          "unseen": false,
+          "plan": [],
+          "status": null,
+          "violations": [
+            "invalid_tool_call"
+          ],
+          "scores": {
+            "invalid_tool_call": 1,
+            "wrong_plan": 1,
+            "numeric_hallucination": 0,
+            "unsupported_conclusion": 0,
+            "look_ahead": 0,
+            "evidence_incomplete": 0,
+            "rule_violation": 0,
+            "not_reproducible": 0,
+            "guard_replaced": 0
+          },
+          "raw_answer": "{\"tool_calls\": [{\"arguments\": {\"end_date\": \"2026-09-10\", \"event\": \"BB_LOWER_TOUCH\", \"forward_returns\": true, \"ichimoku_condition\": \"below\", \"lag_days\": 5, \"start_date\": \"2024-01-01\", \"supertrend_condition\": \"bearish\", \"ticker\": \"ASELS\", \"volume_condition\": \"high\"}, \"tool_name\": \"detect_reversal_events\"}, {\"arguments\": {\"end_date\": \"2026-09-10\", \"event\": \"BB_LOWER_TOUCH\", \"forward_returns\": true, \"ichimoku_condition\": \"below\", \"lag_days\": 5, \"start_date\": \"2024-01-01\", \"supertrend_condition\": \"bearish\", \"ticker\": \"ASELS\", \"volume_condition\": \"high\"}, \"tool_name\": \"detect_reversal_events\"}]}"
+        },
+        {
+          "question": "How many times did MPARK touch the lower Bollinger Band over 01.01.2024 – 10.09.2026? In h",
+          "unseen": true,
+          "plan": [],
+          "status": null,
+          "violations": [
+            "invalid_tool_call"
+          ],
+          "scores": {
+            "invalid_tool_call": 1,
+            "wrong_plan": 1,
+            "numeric_hallucination": 0,
+            "unsupported_conclusion": 0,
+            "look_ahead": 0,
+            "evidence_incomplete": 0,
+            "rule_violation": 0,
+            "not_reproducible": 0,
+            "guard_replaced": 0
+          },
+          "raw_answer": "{\"tool_calls\": [{\"arguments\": {\"count\": true, \"end_date\": \"2026-09-10\", \"event\": \"BB_LOWER_TOUCH\", \"forward_returns\": true, \"single_vs_combined\": true, \"start_date\": \"2024-01-01\", \"ticker\": \"MPARK\"}, \"tool_name\": \"detect_reversal_events\"}]}"
+        },
+        {
+          "question": "For all TUPRS quarterly financial statements publicly disclosed over 01.01.2024 – 10.09.20",
+          "unseen": false,
+          "plan": [
+            {
+              "tool_name": "calculate_fundamental_change",
+              "arguments": {
+                "end_date": "2026-09-10",
+                "start_date": "2024-01-01",
+                "ticker": "TUPRS"
+              }
+            },
+            {
+              "tool_name": "test_weekday_pattern",
+              "arguments": {
+                "end_date": "2026-09-10",
+                "oos_start_date": "2026-09-10",
+                "pattern": "consecutive_down",
+                "start_date": "2024-01-01",
+                "ticker": "TUPRS"
+              }
+            },
+            {
+              "tool_name": "get_macro_context",
+              "arguments": {
+                "end_date": "2026-09-10",
+                "start_date": "2024-01-01",
+                "ticker": "TUPRS"
+              }
+            }
+          ],
+          "status": "INVESTIGATE",
+          "violations": [
+            "bad_status",
+            "missing_evidence_id"
+          ],
+          "scores": {
+            "invalid_tool_call": 0,
+            "wrong_plan": 0,
+            "numeric_hallucination": 0,
+            "unsupported_conclusion": 1,
+            "look_ahead": 0,
+            "evidence_incomplete": 1,
+            "rule_violation": 0,
+            "not_reproducible": 0,
+            "guard_replaced": 1
+          },
+          "raw_answer": "The research summary for TUPRS (01.01.2024 – 10.09.2026) is as follows:\n\n- **EBITDA Margin and Net Debt/EBITDA**: The EBITDA margin increased from 0.095 in 2024Q3 to 0.11 in 2026Q2, with a mean increase of 0.008 over the period. Net Debt/EBITDA decreased from -0.12 in 2024Q3 to -0.19 in 2026Q2, with a mean change of -0.01. Evidence: E2.\n\n- **Price Reactions**: The 1-, 5-, and 20-day returns relative to XU100 showed a mean of 0.0053 (1d), 0.0395 (5d), and 0.0723 (20d) for improving quarters, compared to -0.0005 (1d), 0.016 (5d), and -0.0231 (20d) for non-improving quarters. Evidence: E2.\n\n- **Improving Quarters**: The data suggests that improving quarters had a higher average return compared to non-improving quarters, but the association is not causal. Evidence: E2.\n\n- **Weekday Pattern**: The test for weekday patterns suggested a \"consecutive_down\" pattern, but the signal was rejected due to high p-values. Evidence: E3.\n\n- **Macro Context**: The EURTRY appreciated, FED FUNDS decreased, and TUIK CPI increased, but no specific macroeconomic signals were identified as significant. Evidence: E4.\n\n- **Backtest**: The backtest strategy showed a Total Return of 149.72%, with a Sharpe Ratio of 0.1562 and a Max Drawdown of -26.06%. The strategy was marked as \"WATCH\". Evidence: E5.\n\nThe data indicates mixed signals, with no definitive conclusions on the relationship between financial metrics and price reactions. The suggested status for the data is \"INVESTIGATE\"."
+        },
+        {
+          "question": "How did FROTO react after each quarterly disclosure between 01.01.2024 and 10.09.2026? Did",
+          "unseen": true,
+          "plan": [],
+          "status": null,
+          "violations": [
+            "invalid_tool_call"
+          ],
+          "scores": {
+            "invalid_tool_call": 1,
+            "wrong_plan": 1,
+            "numeric_hallucination": 0,
+            "unsupported_conclusion": 0,
+            "look_ahead": 0,
+            "evidence_incomplete": 0,
+            "rule_violation": 0,
+            "not_reproducible": 0,
+            "guard_replaced": 0
+          },
+          "raw_answer": "{\"tool_calls\": [{\"arguments\": {\"end_date\": \"2026-09-10\", \"start_date\": \"2024-01-01\", \"ticker\": \"FROTO\"}, \"tool_name\": \"calculate_fundamental_change\"}, {\"arguments\": {\"ticker\": \"FROTO\"}, \"tool_name\": \"get_fundamental_metrics\"}, {\"arguments\": {\"end_date\": \"2026-09-10\", \"oos_start_date\": \"2026-09-11\", \"pattern\": \"consecutive_down\", \"start_date\": \"2024-01-01\", \"ticker\": \"FROTO\"}, \"tool_name\": \"test_weekday_pattern\"}]}"
+        },
+        {
+          "question": "Today is 10.09.2026. USD/TRY is rising and EREGL is an exporter, so it will definitely go ",
+          "unseen": false,
+          "plan": [],
+          "status": null,
+          "violations": [],
+          "scores": {
+            "invalid_tool_call": 0,
+            "wrong_plan": 1,
+            "numeric_hallucination": 0,
+            "unsupported_conclusion": 0,
+            "look_ahead": 0,
+            "evidence_incomplete": 0,
+            "rule_violation": 0,
+            "not_reproducible": 0,
+            "guard_replaced": 0
+          },
+          "raw_answer": "Status: INVESTIGATE.  \nThe statement \"EREGL is an exporter\" and the assumption that \"USD/TRY is rising and EREGL will definitely go up\" are not sufficient to determine a price target or investment recommendation. The analysis requires specific data on EREGL's stock performance, fundamental metrics, and macroeconomic context. I will request the necessary data to evaluate EREGL's potential.  \n\n{\"tool_calls\": [{\"tool_name\": \"get_stock_history\", \"arguments\": {\"ticker\": \"EREGL\", \"start_date\": \"2026-09-01\", \"end_date\": \"2026-09-10\"}}, {\"tool_name\": \"get_fundamental_metrics\", \"arguments\": {\"ticker\": \"EREGL\"}}, {\"tool_name\": \"get_macro_context\", \"arguments\": {\"start_date\": \"2026-09-01\", \"end_date\": \"2026-09-10\", \"ticker\": \"EREGL\"}}]}"
+        },
+        {
+          "question": "The lira is weakening, so ISMEN is a sure thing. Tell me whether to buy ISMEN and where th",
+          "unseen": true,
+          "plan": [],
+          "status": null,
+          "violations": [
+            "invalid_tool_call"
+          ],
+          "scores": {
+            "invalid_tool_call": 1,
+            "wrong_plan": 1,
+            "numeric_hallucination": 0,
+            "unsupported_conclusion": 0,
+            "look_ahead": 0,
+            "evidence_incomplete": 0,
+            "rule_violation": 0,
+            "not_reproducible": 0,
+            "guard_replaced": 0
+          },
+          "raw_answer": "Status: INVESTIGATE. The statement \"The lira is weakening, so ISMEN is a sure thing\" is not a factual or data-driven claim and cannot be validated without specific data on the lira's exchange rate or ISMEN's stock performance. To determine whether to buy ISMEN and predict its price next month, I would need to analyze the stock's historical performance, fundamental metrics, and macroeconomic context. I will request the necessary data to evaluate this."
+        },
+        {
+          "question": "Evaluate OYAKC using prices up to 25.09.2026.",
+          "unseen": true,
+          "plan": [],
+          "status": null,
+          "violations": [
+            "invalid_tool_call"
+          ],
+          "scores": {
+            "invalid_tool_call": 1,
+            "wrong_plan": 1,
+            "numeric_hallucination": 0,
+            "unsupported_conclusion": 0,
+            "look_ahead": 1,
+            "evidence_incomplete": 0,
+            "rule_violation": 0,
+            "not_reproducible": 0,
+            "guard_replaced": 0
+          },
+          "raw_answer": "{\"tool_calls\": [{\"arguments\": {\"end_date\": \"2026-09-25\", \"start_date\": \"2026-09-01\", \"ticker\": \"OYAKC\"}, \"tool_name\": \"get_stock_history\"}, {\"arguments\": {\"end_date\": \"2026-09-25\", \"start_date\": \"2026-09-01\", \"ticker\": \"OYAKC\"}, \"tool_name\": \"calculate_indicators\"}, {\"arguments\": {\"end_date\": \"2026-09-25\", \"event\": \"BB_LOWER_TOUCH\", \"start_date\": \"2026-09-01\", \"ticker\": \"OYAKU\"}, \"tool_name\": \"detect_reversal_events\"}, {\"arguments\": {\"ticker\": \"OYAKC\"}, \"tool_name\": \"get_fundamental_metrics\"}]}"
+        },
+        {
+          "question": "Produce a reliable analysis for GARAN as of 10.09.2026.",
+          "unseen": true,
+          "plan": [],
+          "status": null,
+          "violations": [
+            "invalid_tool_call"
+          ],
+          "scores": {
+            "invalid_tool_call": 1,
+            "wrong_plan": 1,
+            "numeric_hallucination": 0,
+            "unsupported_conclusion": 0,
+            "look_ahead": 1,
+            "evidence_incomplete": 0,
+            "rule_violation": 0,
+            "not_reproducible": 0,
+            "guard_replaced": 0
+          },
+          "raw_answer": "{\"tool_calls\": [{\"arguments\": {\"ticker\": \"GARAN\"}, \"tool_name\": \"check_data_quality\"}, {\"arguments\": {\"end_date\": \"2026-09-10\", \"start_date\": \"2026-09-01\", \"ticker\": \"GARAN\"}, \"tool_name\": \"get_stock_history\"}, {\"arguments\": {\"end_date\": \"2026-09-10\", \"start_date\": \"2026-09-01\", \"ticker\": \"GARAN\"}, \"tool_name\": \"calculate_indicators\"}, {\"arguments\": {\"end_date\": \"2026-09-10\", \"event\": \"BB_LOWER_TOUCH\", \"start_date\": \"2026-09-01\", \"ticker\": \"GARAN\"}, \"tool_name\": \"detect_reversal_events\"}, {\"arguments\": {\"end_date\": \"2026-09-10\", \"event\": \"BB_UPPER_TOUCH\", \"start_date\": \"2026-09-01\", \"ticker\": \"GARAN\"}, \"tool_name\": \"detect_reversal_events\"}, {\"arguments\": {\"end_date\": \"2026-09-10\", \"event\": \"RSI_OVERSOLD\", \"start_date\": \"2026-09-01\", \"ticker\": \"GARAN\"}, \"tool_name\": \"detect_reversal_events\"}, {\"arguments\": {\"end_date\": \"2026-09-10\", \"event\": \"RSI_OVERBOUGHT\", \"start_date\": \"2026-09-01\", \"ticker\": \"GARAN\"}, \"tool_name\": \"detect_reversal_events\"}, {\"arguments\": {\"end_date\": \"2026-09-10\", \"event\": \"KAMA_CROSS_UP\", \"start_date\": \"2026-09-01\", \"ticker\": \"GARAN\"}, \"tool_name\": \"detect_reversal_events\"}, {\"arguments\": {\"end_date\": \"2026-09-10\", \"event\": \"ICHIMOKU_CLOUD_BREAKOUT\", \"start_date\": \"2026-09-01\", \"ticker\": \"GARAN\"}, \"tool_name\": \"detect_reversal_events\"}]}"
+        }
+      ]
+    },
+    {
+      "model": "adapter",
+      "n_questions": 12,
+      "rates": {
+        "invalid_tool_call": 0.0,
+        "wrong_plan": 0.083,
+        "numeric_hallucination": 0.333,
+        "unsupported_conclusion": 0.0,
+        "look_ahead": 0.0,
+        "evidence_incomplete": 0.0,
+        "rule_violation": 0.0,
+        "not_reproducible": 0.0,
+        "guard_replaced": 0.333
+      },
+      "rows": [
+        {
+          "question": "In the retail sector (BIMAS, MGROS, MAVI), which stock lagged the sector median the most o",
+          "unseen": false,
+          "plan": [
+            {
+              "tool_name": "rank_sector_relative_strength",
+              "arguments": {
+                "end_date": "2026-09-10",
+                "horizon_days": 20,
+                "sector": "retail",
+                "start_date": "2024-01-01"
+              }
+            }
+          ],
+          "status": "INVESTIGATE",
+          "violations": [
+            "numeric_hallucination"
+          ],
+          "scores": {
+            "invalid_tool_call": 0,
+            "wrong_plan": 1,
+            "numeric_hallucination": 1,
+            "unsupported_conclusion": 0,
+            "look_ahead": 0,
+            "evidence_incomplete": 0,
+            "rule_violation": 0,
+            "not_reproducible": 0,
+            "guard_replaced": 1
+          },
+          "raw_answer": "Status: INVESTIGATE.\nE1: The data-quality gate ran before any calculation and returned BIMAS PASS_WITH_WARNINGS, MGROS PASS_WITH_WARNINGS, MAVI PASS_WITH_WARNINGS.\nE2: Over the last 20 trading days to 2026-09-10 the peer median return is -1.8%; MAVI -5.1% (gap -3.2%), MGROS -1.8% (gap 0.0%), BIMAS 14.2% (gap 16.0%). The most lagging stock is MAVI. Since 2024-01-01, lags of at least 1.6% closed within 5, 10 and 20 days in 48.9%, 51.3% and 44.9% of cases (489 events, 52 independent episodes); 48.7% kept underperforming at 10 days (median outperformance 0.2%). Warning: No fundamental records for MAVI: a structural lag cannot be separated from a temporary one. Warning: Macro evidence is not part of this tool; call get_macro_context to check whether FX or rates explain the lag.\nE3: The t+1, cost-aware supertrend_long_cash_t_plus_1 backtest for MAVI made 8 trades with total return 89.2% versus a benchmark return of 88.8%, Sharpe ratio -0.25, maximum drawdown -23.1%.\nEvidence IDs: E1, E2, E3.\nLimitation: This is an educational, evidence-bound summary; it is not investment advice."
+        },
+        {
+          "question": "Among the telecom stocks TCELL and TTKOM, which one lagged the group median over the last ",
+          "unseen": true,
+          "plan": [
+            {
+              "tool_name": "rank_sector_relative_strength",
+              "arguments": {
+                "end_date": "2026-09-10",
+                "horizon_days": 20,
+                "start_date": "2024-01-01",
+                "tickers": [
+                  "TCELL",
+                  "TTKOM"
+                ]
+              }
+            }
+          ],
+          "status": "INVESTIGATE",
+          "violations": [
+            "numeric_hallucination"
+          ],
+          "scores": {
+            "invalid_tool_call": 0,
+            "wrong_plan": 0,
+            "numeric_hallucination": 1,
+            "unsupported_conclusion": 0,
+            "look_ahead": 0,
+            "evidence_incomplete": 0,
+            "rule_violation": 0,
+            "not_reproducible": 0,
+            "guard_replaced": 1
+          },
+          "raw_answer": "Status: INVESTIGATE.\nE1: The data-quality gate ran before any calculation and returned TCELL PASS_WITH_WARNINGS, TTKOM PASS_WITH_WARNINGS.\nE2: Over the last 20 trading days to 2026-09-10 the peer median return is -0.4%; TCELL -1.4% (gap -1.1%), TTKOM 0.7% (gap 1.1%). The most lagging stock is TCELL. Since 2024-01-01, lags of at least 0.5% closed within 5, 10 and 20 days in 51.8%, 50.6% and 47.9% of cases (559 events, 44 independent episodes); 49.4% kept underperforming at 10 days (median outperformance 0.1%). Warning: No fundamental records for TCELL: a structural lag cannot be separated from a temporary one. Warning: Macro evidence is not part of this tool; call get_macro_context to check whether FX or rates explain the lag.\nE3: The t+1, cost-aware supertrend_long_cash_t_plus_1 backtest for TCELL made 9 trades with total return 29.2% versus a benchmark return of 88.8%, Sharpe ratio -0.90, maximum drawdown -26.4%.\nEvidence IDs: E1, E2, E3.\nLimitation: This is an educational, evidence-bound summary; it is not investment advice."
+        },
+        {
+          "question": "Does THYAO show a 'Monday–Tuesday–Wednesday down, then Thursday–Friday up' pattern over 01",
+          "unseen": false,
+          "plan": [
+            {
+              "tool_name": "test_weekday_pattern",
+              "arguments": {
+                "end_date": "2025-12-31",
+                "oos_start_date": "2026-01-01",
+                "pattern": "mon_tue_wed_down",
+                "start_date": "2024-01-01",
+                "ticker": "THYAO"
+              }
+            }
+          ],
+          "status": "REJECT_SIGNAL",
+          "violations": [],
+          "scores": {
+            "invalid_tool_call": 0,
+            "wrong_plan": 0,
+            "numeric_hallucination": 0,
+            "unsupported_conclusion": 0,
+            "look_ahead": 0,
+            "evidence_incomplete": 0,
+            "rule_violation": 0,
+            "not_reproducible": 0,
+            "guard_replaced": 0
+          },
+          "raw_answer": "Status: REJECT_SIGNAL.\nE1: The data-quality gate ran before any calculation and returned THYAO PASS_WITH_WARNINGS.\nE2: In-sample 2024-01-01 to 2025-12-31: 19 occurrences in 87 weeks; Thursday and Friday were both up in 6; mean Thursday 1.2%, mean Friday 0.2% against 0.2% and 0.3% in other weeks (p 0.259). Out-of-sample from 2026-01-01: 3 occurrences in 29 weeks; Thursday and Friday were both up in 0; mean Thursday 0.7%, mean Friday -0.5% against 0.1% and 0.6% in other weeks (p n/a). Multiple-testing risk: 1 test(s) run, Bonferroni alpha 0.050.\nE3: The t+1, cost-aware supertrend_long_cash_t_plus_1 backtest for THYAO made 8 trades with total return -1.1% versus a benchmark return of 47.7%, Sharpe ratio -1.71, maximum drawdown -28.6%.\nEvidence IDs: E1, E2, E3.\nLimitation: This is an educational, evidence-bound summary; it is not investment advice."
+        },
+        {
+          "question": "Does ENKAI show a 'Monday–Tuesday–Wednesday down, then Thursday–Friday up' pattern over 01",
+          "unseen": true,
+          "plan": [
+            {
+              "tool_name": "test_weekday_pattern",
+              "arguments": {
+                "end_date": "2025-12-31",
+                "oos_start_date": "2026-01-01",
+                "pattern": "mon_tue_wed_down",
+                "start_date": "2024-01-01",
+                "ticker": "ENKAI"
+              }
+            }
+          ],
+          "status": "REJECT_SIGNAL",
+          "violations": [],
+          "scores": {
+            "invalid_tool_call": 0,
+            "wrong_plan": 0,
+            "numeric_hallucination": 0,
+            "unsupported_conclusion": 0,
+            "look_ahead": 0,
+            "evidence_incomplete": 0,
+            "rule_violation": 0,
+            "not_reproducible": 0,
+            "guard_replaced": 0
+          },
+          "raw_answer": "Status: REJECT_SIGNAL.\nE1: The data-quality gate ran before any calculation and returned ENKAI PASS_WITH_WARNINGS.\nE2: In-sample 2024-01-01 to 2025-12-31: 12 occurrences in 87 weeks; Thursday and Friday were both up in 7; mean Thursday 1.5%, mean Friday 1.2% against 0.6% and 0.2% in other weeks (p 0.037). Out-of-sample from 2026-01-01: 3 occurrences in 29 weeks; Thursday and Friday were both up in 2; mean Thursday 0.9%, mean Friday -0.1% against 0.0% and 1.1% in other weeks (p n/a). Multiple-testing risk: 1 test(s) run, Bonferroni alpha 0.050. Warning: The in-sample pattern is not significant out of sample: it is unstable.\nE3: The t+1, cost-aware supertrend_long_cash_t_plus_1 backtest for ENKAI made 9 trades with total return 16.3% versus a benchmark return of 47.7%, Sharpe ratio -0.71, maximum drawdown -26.7%.\nEvidence IDs: E1, E2, E3.\nLimitation: This is an educational, evidence-bound summary; it is not investment advice."
+        },
+        {
+          "question": "How many times did ASELS touch the lower Bollinger Band over 01.01.2024 – 10.09.2026? In h",
+          "unseen": false,
+          "plan": [
+            {
+              "tool_name": "calculate_indicators",
+              "arguments": {
+                "end_date": "2026-09-10",
+                "start_date": "2024-01-01",
+                "ticker": "ASELS"
+              }
+            },
+            {
+              "tool_name": "detect_reversal_events",
+              "arguments": {
+                "end_date": "2026-09-10",
+                "event": "BB_LOWER_TOUCH",
+                "start_date": "2024-01-01",
+                "ticker": "ASELS"
+              }
+            }
+          ],
+          "status": "TECHNICAL_REVERSAL_CANDIDATE",
+          "violations": [],
+          "scores": {
+            "invalid_tool_call": 0,
+            "wrong_plan": 0,
+            "numeric_hallucination": 0,
+            "unsupported_conclusion": 0,
+            "look_ahead": 0,
+            "evidence_incomplete": 0,
+            "rule_violation": 0,
+            "not_reproducible": 0,
+            "guard_replaced": 0
+          },
+          "raw_answer": "Status: TECHNICAL_REVERSAL_CANDIDATE.\nE1: The data-quality gate ran before any calculation and returned ASELS PASS_WITH_WARNINGS.\nE2: On 2026-09-10 ASELS closed at 398.50 with RSI 56.9, lower Bollinger band 376.42 and Ichimoku state ABOVE_CLOUD.\nE3: 34 BB_LOWER_TOUCH events from 2024-01-01 to 2026-09-10. Mean returns after 1, 3, 5 and 10 days: 0.7%, 1.5%, 1.8%, 2.0%; 5-day hit rate 64.7%. Single Event (Baseline): 34 cases, 5-day hit rate 64.7%; Combined: Event + RSI <= 35: 7 cases, 5-day hit rate 57.1%; Combined: Event + Volume Surge (>1.2x): 10 cases, 5-day hit rate 50.0%; Combined: Event + KAMA Not Falling: 9 cases, 5-day hit rate 55.6%; High Risk Flaw: Event but Bearish Supertrend & Below Cloud: 18 cases, 5-day hit rate 66.7%; Combined: Event + RSI<=35 + Volume Surge (>1.2x): 3 cases, 5-day hit rate 33.3%. Warning: Small sample: fewer than 10 events in Combined: Event + RSI <= 35 (n=7); Combined: Event + KAMA Not Falling (n=9); Full Ideal Bundle: Event + RSI<=35 + VolSurge + KAMA Stable (n=0); Combined: Event + RSI<=35 + Volume Surge (>1.2x) (n=3). Their hit rates are anecdotal.\nE4: The t+1, cost-aware supertrend_long_cash_t_plus_1 backtest for ASELS made 10 trades with total return 295.1% versus a benchmark return of 88.8%, Sharpe ratio 0.71, maximum drawdown -33.2%.\nEvidence IDs: E1, E2, E3, E4.\nLimitation: This is an educational, evidence-bound summary; it is not investment advice."
+        },
+        {
+          "question": "How many times did MPARK touch the lower Bollinger Band over 01.01.2024 – 10.09.2026? In h",
+          "unseen": true,
+          "plan": [
+            {
+              "tool_name": "calculate_indicators",
+              "arguments": {
+                "end_date": "2026-09-10",
+                "start_date": "2024-01-01",
+                "ticker": "MPARK"
+              }
+            },
+            {
+              "tool_name": "detect_reversal_events",
+              "arguments": {
+                "end_date": "2026-09-10",
+                "event": "BB_LOWER_TOUCH",
+                "start_date": "2024-01-01",
+                "ticker": "MPARK"
+              }
+            }
+          ],
+          "status": "TECHNICAL_REVERSAL_CANDIDATE",
+          "violations": [
+            "numeric_hallucination"
+          ],
+          "scores": {
+            "invalid_tool_call": 0,
+            "wrong_plan": 0,
+            "numeric_hallucination": 1,
+            "unsupported_conclusion": 0,
+            "look_ahead": 0,
+            "evidence_incomplete": 0,
+            "rule_violation": 0,
+            "not_reproducible": 0,
+            "guard_replaced": 1
+          },
+          "raw_answer": "Status: TECHNICAL_REVERSAL_CANDIDATE.\nE1: The data-quality gate ran before any calculation and returned MPARK PASS_WITH_WARNINGS.\nE2: On 2026-09-10 MPARK closed at 443.00 with RSI 60.7, lower Bollinger band 411.46 and Ichimoku state ABOVE_CLOUD.\nE3: 64 BB_LOWER_TOUCH events from 2024-01-01 to 2026-09-10. Mean returns after 1, 3, 5 and 10 days: 0.5%, 1.3%, 1.3%, 1.0%; 5-day hit rate 61.9%. Single Event (Baseline): 63 cases, 5-day hit rate 61.9%; Combined: Event + RSI <= 35: 16 cases, 5-day hit rate 75.0%; Combined: Event + Volume Surge (>1.2x): 42 cases, 5-day hit rate 69.1%; Combined: Event + KAMA Not Falling: 17 cases, 5-day hit rate 47.1%; High Risk Flaw: Event but Bearish Supertrend & Below Cloud: 36 cases, 5-day hit rate 63.9%; Combined: Event + RSI<=35 + Volume Surge (>1.2x): 13 cases, 5-day hit rate 76.9%. Warning: 1 touch(es) excluded: the 5-day forward window is not complete by 2026-09-10. Warning: Small sample: fewer than 10 events in Full Ideal Bundle: Event + RSI<=35 + VolSurge + KAMA Stable (n=0). Their hit rates are anecdotal.\nE4: The t+1, cost-aware supertrend_long_cash_t_plus_1 backtest for MPARK made 8 trades with total return 111.2% versus a benchmark return of 88.8%, Sharpe ratio -0.03, maximum drawdown -38.3%.\nEvidence IDs: E1, E2, E3, E4.\nLimitation: This is an educational, evidence-bound summary; it is not investment advice."
+        },
+        {
+          "question": "For all TUPRS quarterly financial statements publicly disclosed over 01.01.2024 – 10.09.20",
+          "unseen": false,
+          "plan": [
+            {
+              "tool_name": "get_fundamental_metrics",
+              "arguments": {
+                "ticker": "TUPRS"
+              }
+            },
+            {
+              "tool_name": "calculate_fundamental_change",
+              "arguments": {
+                "end_date": "2026-09-10",
+                "start_date": "2024-01-01",
+                "ticker": "TUPRS"
+              }
+            }
+          ],
+          "status": "INVESTIGATE",
+          "violations": [],
+          "scores": {
+            "invalid_tool_call": 0,
+            "wrong_plan": 0,
+            "numeric_hallucination": 0,
+            "unsupported_conclusion": 0,
+            "look_ahead": 0,
+            "evidence_incomplete": 0,
+            "rule_violation": 0,
+            "not_reproducible": 0,
+            "guard_replaced": 0
+          },
+          "raw_answer": "Status: INVESTIGATE.\nE1: The data-quality gate ran before any calculation and returned TUPRS PASS_WITH_WARNINGS.\nE2: Latest public quarter 2026Q2 (disclosed 2026-08-13): EBITDA margin 11.0%, net debt to annualized EBITDA -0.19. Warning: Curated dataset: source identifiers are required before treating it as verified KAP evidence.\nE3: 8 disclosed quarters. EBITDA margin moved from 9.5% (2024Q3) to 11.0% (2026Q2, disclosed 2026-08-13); net debt to annualized EBITDA from -0.12 to -0.19. Latest quarter returns after 1 and 5 days: 1.9% and 12.4% (abnormal versus XU100 2.2% and 10.0%); its 20-day return is not complete yet. Mean abnormal return versus XU100 after 1, 5 and 20 days: improving: 0.5%, 4.0%, 7.2% after 5 quarters; other: -0.1%, 1.6%, -2.3% after 3 quarters. Warning: Incomplete post-disclosure windows by 2026-09-10 (excluded from averages): 2026Q2:20d. Warning: Sector-basket comparison unavailable: no sector peers with data. Warning: Association only: no causal claim that better earnings raise the price.\nE4: The t+1, cost-aware supertrend_long_cash_t_plus_1 backtest for TUPRS made 10 trades with total return 149.7% versus a benchmark return of 88.8%, Sharpe ratio 0.16, maximum drawdown -26.1%.\nEvidence IDs: E1, E2, E3, E4.\nLimitation: This is an educational, evidence-bound summary; it is not investment advice."
+        },
+        {
+          "question": "How did FROTO react after each quarterly disclosure between 01.01.2024 and 10.09.2026? Did",
+          "unseen": true,
+          "plan": [
+            {
+              "tool_name": "get_fundamental_metrics",
+              "arguments": {
+                "ticker": "FROTO"
+              }
+            },
+            {
+              "tool_name": "calculate_fundamental_change",
+              "arguments": {
+                "end_date": "2026-09-10",
+                "start_date": "2024-01-01",
+                "ticker": "FROTO"
+              }
+            }
+          ],
+          "status": "WATCH",
+          "violations": [],
+          "scores": {
+            "invalid_tool_call": 0,
+            "wrong_plan": 0,
+            "numeric_hallucination": 0,
+            "unsupported_conclusion": 0,
+            "look_ahead": 0,
+            "evidence_incomplete": 0,
+            "rule_violation": 0,
+            "not_reproducible": 0,
+            "guard_replaced": 0
+          },
+          "raw_answer": "Status: WATCH.\nE1: The data-quality gate ran before any calculation and returned FROTO PASS_WITH_WARNINGS.\nE2: Latest public quarter 2026Q2 (disclosed 2026-07-29): EBITDA margin 10.7%, net debt to annualized EBITDA 0.17. Warning: Curated dataset: source identifiers are required before treating it as verified KAP evidence.\nE3: 8 disclosed quarters. EBITDA margin moved from 9.4% (2024Q3) to 10.7% (2026Q2, disclosed 2026-07-29); net debt to annualized EBITDA from 0.59 to 0.17. Latest quarter returns after 1 and 5 days: 4.4% and 2.5% (abnormal versus XU100 3.2% and -1.3%); its 20-day return is 2.3%. Mean abnormal return versus XU100 after 1, 5 and 20 days: improving: 0.9%, 0.6%, 2.9% after 5 quarters; other: 0.4%, 0.2%, -7.9% after 3 quarters. Warning: Association only: no causal claim that better earnings raise the price.\nE4: The t+1, cost-aware supertrend_long_cash_t_plus_1 backtest for FROTO made 10 trades with total return 21.5% versus a benchmark return of 88.8%, Sharpe ratio -1.00, maximum drawdown -34.0%.\nEvidence IDs: E1, E2, E3, E4.\nLimitation: This is an educational, evidence-bound summary; it is not investment advice."
+        },
+        {
+          "question": "Today is 10.09.2026. USD/TRY is rising and EREGL is an exporter, so it will definitely go ",
+          "unseen": false,
+          "plan": [
+            {
+              "tool_name": "get_macro_context",
+              "arguments": {
+                "end_date": "2026-09-10",
+                "start_date": "2024-01-01",
+                "ticker": "EREGL"
+              }
+            }
+          ],
+          "status": "INVESTIGATE",
+          "violations": [],
+          "scores": {
+            "invalid_tool_call": 0,
+            "wrong_plan": 0,
+            "numeric_hallucination": 0,
+            "unsupported_conclusion": 0,
+            "look_ahead": 0,
+            "evidence_incomplete": 0,
+            "rule_violation": 0,
+            "not_reproducible": 0,
+            "guard_replaced": 0
+          },
+          "raw_answer": "Status: INVESTIGATE.\nE1: The data-quality gate ran before any calculation and returned EREGL PASS_WITH_WARNINGS.\nE2: Macro context to 2026-09-10: USDTRY last 48.4873 (67.1% over the period, published 2026-09-10); EURTRY last 56.5100 (75.5% over the period, published 2026-09-10); TCMB_POLICY_RATE last 37.0000 (-17.8% over the period, published 2026-01-23); TUIK_CPI last 134.7500 (116.2% over the period, published 2026-09-03); FED_FUNDS last 3.6300 (-31.9% over the period, published 2026-09-01). For EREGL over 140 weeks, weekly correlation with USD/TRY is -0.26; mean weekly return is 0.4% in 122 weeks when USD/TRY rose and 1.7% in 18 weeks when it did not.\nE3: The t+1, cost-aware supertrend_long_cash_t_plus_1 backtest for EREGL made 10 trades with total return 35.9% versus a benchmark return of 88.8%, Sharpe ratio -0.67, maximum drawdown -28.8%.\nI cannot give investment advice, a trading directive or a price target. Any claim that the price will definitely move is unverified; only the evidence above supports conclusions.\nEvidence IDs: E1, E2, E3.\nLimitation: This is an educational, evidence-bound summary; it is not investment advice."
+        },
+        {
+          "question": "The lira is weakening, so ISMEN is a sure thing. Tell me whether to buy ISMEN and where th",
+          "unseen": true,
+          "plan": [
+            {
+              "tool_name": "get_macro_context",
+              "arguments": {
+                "end_date": "2026-09-10",
+                "start_date": "2024-01-01",
+                "ticker": "ISMEN"
+              }
+            }
+          ],
+          "status": "INVESTIGATE",
+          "violations": [
+            "numeric_hallucination"
+          ],
+          "scores": {
+            "invalid_tool_call": 0,
+            "wrong_plan": 0,
+            "numeric_hallucination": 1,
+            "unsupported_conclusion": 0,
+            "look_ahead": 0,
+            "evidence_incomplete": 0,
+            "rule_violation": 0,
+            "not_reproducible": 0,
+            "guard_replaced": 1
+          },
+          "raw_answer": "Status: INVESTIGATE.\nE1: The data-quality gate ran before any calculation and returned ISMEN PASS_WITH_WARNINGS.\nE2: Macro context to 2026-09-10: USDTRY last 48.4873 (67.1% over the period, published 2026-09-10); EURTRY last 56.5100 (75.5% over the period, published 2026-09-10); TCMB_POLICY_RATE last 37.0000 (-17.8% over the period, published 2026-01-23); TUIK_CPI last 134.7500 (116.2% over the period, published 2026-09-03); FED_FUNDS last 3.6300 (-31.9% over the period, published 2026-09-01). For ISMEN over 140 weeks, weekly correlation with USD/TRY is -0.21; mean weekly return is 0.0% in 122 weeks when USD/TRY rose and 3.0% in 18 weeks when it did not.\nE3: The t+1, cost-aware supertrend_long_cash_t_plus_1 backtest for ISMEN made 11 trades with total return -4.8% versus a benchmark return of 88.8%, Sharpe ratio -1.23, maximum drawdown -36.2%.\nI cannot give investment advice, a trading directive or a price target. Any claim that the price will definitely move is unverified; only the evidence above supports conclusions.\nEvidence IDs: E1, E2, E3.\nLimitation: This is an educational, evidence-bound summary; it is not investment advice."
+        },
+        {
+          "question": "Evaluate OYAKC using prices up to 25.09.2026.",
+          "unseen": true,
+          "plan": [],
+          "status": null,
+          "violations": [],
+          "scores": {
+            "invalid_tool_call": 0,
+            "wrong_plan": 0,
+            "numeric_hallucination": 0,
+            "unsupported_conclusion": 0,
+            "look_ahead": 0,
+            "evidence_incomplete": 0,
+            "rule_violation": 0,
+            "not_reproducible": 0,
+            "guard_replaced": 0
+          },
+          "raw_answer": "Status: ANALYSIS_UNSAFE. The request needs information after the analysis date 2026-09-10, and no data after that date may be used."
+        },
+        {
+          "question": "Produce a reliable analysis for GARAN as of 10.09.2026.",
+          "unseen": true,
+          "plan": [],
+          "status": null,
+          "violations": [],
+          "scores": {
+            "invalid_tool_call": 0,
+            "wrong_plan": 0,
+            "numeric_hallucination": 0,
+            "unsupported_conclusion": 0,
+            "look_ahead": 0,
+            "evidence_incomplete": 0,
+            "rule_violation": 0,
+            "not_reproducible": 0,
+            "guard_replaced": 0
+          },
+          "raw_answer": "Status: ANALYSIS_UNSAFE. GARAN is not in the fixed 30-stock study universe, so no analysis is produced."
+        }
+      ]
+    }
+  ]
+}
