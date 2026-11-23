@@ -1,5 +1,6 @@
 """The written deliverables must not drift from the code and data they describe."""
 
+import re
 import unittest
 from pathlib import Path
 
@@ -39,6 +40,30 @@ class DataDictionaryTest(unittest.TestCase):
         except Exception:
             self.skipTest("no local price cache")
         self.assertEqual(undocumented(calculate_all_indicators(frame).columns), [])
+
+
+class SubmissionCleanupTest(unittest.TestCase):
+    draft = (ROOT / "roadmap" / "TASK_5_RAPOR_TASLAGI.md").read_text(encoding="utf-8")
+
+    def test_task5_draft_has_no_placeholders_and_one_dataset_name(self) -> None:
+        self.assertNotIn("[ ]", self.draft)
+        self.assertNotIn("[yapıldı", self.draft)
+        self.assertNotIn("v4 üretimi", self.draft)
+
+    def test_task5_limitations_are_lettered_once_each(self) -> None:
+        letters = re.findall(r"\(([a-z])\) ", self.draft.split("6. **Bilinen")[1])
+        self.assertEqual(letters, sorted(set(letters)))
+
+    def test_ollama_route_is_described_in_one_place(self) -> None:
+        notebooks = (ROOT / "notebooks" / "README.md").read_text(encoding="utf-8")
+        self.assertIn("Route A", notebooks)
+        self.assertIn("Route B", notebooks)
+        self.assertNotIn("not run in this repo", notebooks)
+
+    def test_test_results_show_the_current_adapter(self) -> None:
+        text = (ROOT / "reports" / "test_sonuclari.md").read_text(encoding="utf-8")
+        self.assertIn("r=32", text)
+        self.assertNotIn("0,583 | 0,000", text)  # the old adapter's guard rate
 
 
 if __name__ == "__main__":

@@ -34,14 +34,38 @@ Macro data: FX comes from Yahoo (`python -m src.macro --download`). TCMB policy 
    python -m src.llm.agent --adapter artifacts/llm/qwen_bist_lora/adapter
    ```
    With no question it opens an interactive session (the model loads once). `--as-of` defaults to 2026-09-10, `--json` prints the audit trail. Without CUDA the model loads in bf16 on the Apple GPU (MPS) or CPU; `BIST_LLM_DEVICE=cpu` forces CPU. 4-bit loading and training are CUDA-only.
-4. Optional, faster Ollama/llama.cpp route:
+4. Optional, faster Ollama route (the Transformers route above stays the reference for all reported numbers). Merge the adapter first:
    ```bash
    python -m src.llm.export_local --adapter artifacts/llm/qwen_bist_lora/adapter --out artifacts/llm/merged
+   ```
+   **Route A, tested (macOS, Apple M5, Ollama 0.40, `brew install ollama` and `brew services start ollama`).** Ollama imports the merged folder and quantizes it itself:
+   ```bash
+   cd artifacts/llm
+   cat > Modelfile <<'EOF'
+   FROM ./merged
+   TEMPLATE """{{- range .Messages }}<|im_start|>{{ .Role }}
+   {{ .Content }}<|im_end|>
+   {{ end }}<|im_start|>assistant
+   <think>
+
+   </think>
+
+   """
+   PARAMETER temperature 0
+   PARAMETER stop "<|im_end|>"
+   EOF
+   ollama create bist-qwen -q int8 -f Modelfile
+   cd ../.. && python -m src.llm.agent --backend ollama
+   ```
+   Measured on the five sample questions: 17-23 s per question instead of 31-57 s with Transformers; the plan and the raw answer matched Transformers on 4 of 5 questions (on question 4 Ollama called only `calculate_fundamental_change`). `-q int4` was faster (13-21 s) but differed from Transformers on 3 of 5 plans, so it is not recommended. Qwen3 writes an empty `<think></think>` block through Ollama; `ollama_chat_fn` removes it. The 12-question evaluation was **not** run on this route.
+
+   **Route B, not tested here (for an Ollama version without `-q int8`, for example on Windows).** Convert to GGUF with llama.cpp, then register it:
+   ```bash
    python llama.cpp/convert_hf_to_gguf.py artifacts/llm/merged --outfile artifacts/llm/bist-qwen.gguf --outtype q8_0
    printf 'FROM ./artifacts/llm/bist-qwen.gguf\nPARAMETER temperature 0\n' > Modelfile && ollama create bist-qwen -f Modelfile
    python -m src.llm.agent --backend ollama
    ```
-   Ollama only listens on localhost. The GGUF steps need llama.cpp checked out and were not run in this repo.
+   This needs llama.cpp checked out (the Homebrew package does not include `convert_hf_to_gguf.py`). Ollama only listens on localhost.
 
 ## Demo-day checklist (the day before, on the demo machine)
 

@@ -7,7 +7,7 @@ Evidence IDs: E1, E2, E3.
 Limitation: This is an educational, evidence-bound summary; it is not investment advice.
 > Status: REJECT_SIGNAL.
 E1: The data-quality gate ran before any calculation and returned THYAO PASS_WITH_WARNINGS.
-E2: In-sample 2024-01-01 to 2025-12-31: 19 occurrences in 87 weeks; Thursday and Friday were both up in 6; mean Thursday 1.2% and Friday 0.2% (p 0.2585); out-of-sample from 2026-01-01: 3 occurrences in 30 weeks; Thursday and Friday were both up in 0; mean Thursday 0.7% and Friday -0.5% (p n/a); multiple-testing risk: 1 test(s) run, Bonferroni alpha 0.050.
+E2: In-sample 2024-01-01 to 2025-12-31: 19 occurrences in 87 weeks; Thursday and Friday were both up in 6; mean Thursday 1.2%, mean Friday 0.2% against 0.2% and 0.3% in other weeks (p 0.259). Out-of-sample from 2026-01-01: 3 occurrences in 30 weeks; Thursday and Friday were both up in 0; mean Thursday 0.7%, mean Friday -0.5% against 0.1% and 0.6% in other weeks (p n/a). Multiple-testing risk: 1 test(s) run, Bonferroni alpha 0.050.
 E3: The t+1, cost-aware supertrend_long_cash_t_plus_1 backtest for THYAO made 8 trades with total return -1.1% versus a benchmark return of 47.7%, Sharpe ratio -1.71, maximum drawdown -28.6%.
 Evidence IDs: E1, E2, E3.
 Limitation: This is an educational, evidence-bound summary; it is not investment advice.
@@ -19,9 +19,10 @@ Evidence IDs: E1, E2, E3.
 Limitation: This is an educational, evidence-bound summary; it is not investment advice.
 > Status: INVESTIGATE.
 E1: The data-quality gate ran before any calculation and returned TUPRS PASS_WITH_WARNINGS.
-E2: 8 disclosed quarters. EBITDA margin moved from 9.5% (2024Q3) to 11.0% (2026Q2, disclosed 2026-08-13); net debt to annualized EBITDA from -0.12 to -0.19. Latest quarter returns after 1 and 5 days: 1.9% and 12.4% (abnormal versus XU100 2.2% and 10.0%); its 20-day return is not complete yet. Mean abnormal return versus XU100 after 1, 5 and 20 days: improving: 0.5%, 4.0%, 7.2% after 5 quarters; other: -0.1%, 1.6%, -1.9% after 3 quarters. Warning: Incomplete post-disclosure windows by 2026-09-10 (excluded from averages): 2026Q2:20d. Warning: Sector-basket comparison unavailable: no sector peers with data. Warning: Association only: no causal claim that better earnings raise the price.
-E3: The t+1, cost-aware supertrend_long_cash_t_plus_1 backtest for TUPRS made 10 trades with total return 149.7% versus a benchmark return of 88.8%, Sharpe ratio 0.15, maximum drawdown -26.1%.
-Evidence IDs: E1, E2, E3.
+E2: Latest public quarter 2026Q2 (disclosed 2026-08-13): EBITDA margin 11.0%, net debt to annualized EBITDA -0.19. Warning: Curated dataset: source identifiers are required before treating it as verified KAP evidence.
+E3: 8 disclosed quarters. EBITDA margin moved from 9.5% (2024Q3) to 11.0% (2026Q2, disclosed 2026-08-13); net debt to annualized EBITDA from -0.12 to -0.19. Latest quarter returns after 1 and 5 days: 1.9% and 12.4% (abnormal versus XU100 2.2% and 10.0%); its 20-day return is not complete yet. Mean abnormal return versus XU100 after 1, 5 and 20 days: improving: 0.5%, 4.0%, 7.2% after 5 quarters; other: -0.1%, 1.6%, -1.9% after 3 quarters. Warning: Incomplete post-disclosure windows by 2026-09-10 (excluded from averages): 2026Q2:20d. Warning: Sector-basket comparison unavailable: no sector peers with data. Warning: Association only: no causal claim that better earnings raise the price.
+E4: The t+1, cost-aware supertrend_long_cash_t_plus_1 backtest for TUPRS made 10 trades with total return 149.7% versus a benchmark return of 88.8%, Sharpe ratio 0.15, maximum drawdown -26.1%.
+Evidence IDs: E1, E2, E3, E4.
 Limitation: This is an educational, evidence-bound summary; it is not investment advice.
 > Status: INVESTIGATE.
 E1: The data-quality gate ran before any calculation and returned EREGL PASS_WITH_WARNINGS.
@@ -30,4 +31,3 @@ E3: The t+1, cost-aware supertrend_long_cash_t_plus_1 backtest for EREGL made 10
 I cannot give investment advice, a trading directive or a price target. Any claim that the price will definitely move is unverified; only the evidence above supports conclusions.
 Evidence IDs: E1, E2, E3.
 Limitation: This is an educational, evidence-bound summary; it is not investment advice.
-> 
