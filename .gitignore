@@ -39,6 +39,8 @@ data/llm/*
 !data/llm/README.md
 # Small official macro series (FX, TCMB, TUIK, Fed) are tracked so a clone has them.
 !data/macro/
+# Empty template for the news context layer (fill with legally obtained metadata only).
+!data/news/
 *.parquet
 *.sqlite
 *.db
