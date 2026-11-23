@@ -200,4 +200,7 @@ src/mcp_tools/          the tools the model may call
 src/harness/            quality gate, states, replay log
 src/scenarios/          sector, weekday, reversal, fundamentals scenarios
 roadmap/                project plans and the report draft
+reports/01-09            written deliverables (data dictionary, four scenario reports, replay demo, backtests, A-E report, final report)
+reports/evidence/       raw tool outputs behind every number; rebuild with scripts/make_report_evidence.py
+scripts/                evidence, strategy-variant and replay-demo scripts
 ```
