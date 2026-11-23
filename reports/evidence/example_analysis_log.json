@@ -1,0 +1,145 @@
+{
+  "action": "REJECT_SIGNAL",
+  "analysis_id": "5c73d9562b4a01c8",
+  "answer": "Status: REJECT_SIGNAL.\nE1: The data-quality gate ran before any calculation and returned THYAO PASS_WITH_WARNINGS.\nE2: In-sample 2024-01-01 to 2025-12-31: 19 occurrences in 87 weeks; Thursday and Friday were both up in 6; mean Thursday 1.2%, mean Friday 0.2% against 0.2% and 0.3% in other weeks (p 0.259). Out-of-sample from 2026-01-01: 3 occurrences in 30 weeks; Thursday and Friday were both up in 0; mean Thursday 0.7%, mean Friday -0.5% against 0.1% and 0.6% in other weeks (p n/a). Multiple-testing risk: 1 test(s) run, Bonferroni alpha 0.050.\nE3: The t+1, cost-aware supertrend_long_cash_t_plus_1 backtest for THYAO made 8 trades with total return -1.1% versus a benchmark return of 47.7%, Sharpe ratio -1.71, maximum drawdown -28.6%.\nEvidence IDs: E1, E2, E3.\nLimitation: This is an educational, evidence-bound summary; it is not investment advice.",
+  "evidence": [
+    {
+      "as_of_date": "2026-09-10",
+      "claim": "check_data_quality output at the cutoff.",
+      "evidence_id": "E1",
+      "source_tool": "check_data_quality",
+      "values": {
+        "available": true,
+        "gate": {
+          "THYAO": "PASS_WITH_WARNINGS"
+        },
+        "tool": "check_data_quality",
+        "warnings": []
+      }
+    },
+    {
+      "as_of_date": "2026-09-10",
+      "claim": "test_weekday_pattern output at the cutoff.",
+      "evidence_id": "E2",
+      "source_tool": "test_weekday_pattern",
+      "values": {
+        "as_of_date": "2026-09-10",
+        "available": true,
+        "in_sample": {
+          "fri": {
+            "mean": 0.0016,
+            "median": 0.0,
+            "n": 19
+          },
+          "occurrences": 19,
+          "p_value_vs_other_weeks": 0.2585,
+          "tests_run": 1,
+          "thu": {
+            "mean": 0.0121,
+            "median": 0.0097,
+            "n": 19
+          },
+          "thu_fri_both_up": 6,
+          "unconditional_fri_mean": 0.0033,
+          "unconditional_thu_mean": 0.002,
+          "weeks": 87
+        },
+        "multiple_testing": {
+          "bonferroni_alpha": 0.05,
+          "note": "Searching many weekday/pattern combinations produces false positives by chance.",
+          "tests_run": 1
+        },
+        "out_of_sample": {
+          "fri": {
+            "mean": -0.0054,
+            "median": -0.0128,
+            "n": 3
+          },
+          "occurrences": 3,
+          "p_value_vs_other_weeks": null,
+          "period": {
+            "end": "2026-09-10",
+            "start": "2026-01-01"
+          },
+          "tests_run": 1,
+          "thu": {
+            "mean": 0.0068,
+            "median": 0.0058,
+            "n": 3
+          },
+          "thu_fri_both_up": 0,
+          "unconditional_fri_mean": 0.0056,
+          "unconditional_thu_mean": 0.0009,
+          "weeks": 30
+        },
+        "pattern": "mon_tue_wed_down",
+        "period": {
+          "end": "2025-12-31",
+          "start": "2024-01-01"
+        },
+        "suggested_status": "REJECT_SIGNAL",
+        "ticker": "THYAO",
+        "tool": "test_weekday_pattern",
+        "warnings": []
+      }
+    },
+    {
+      "as_of_date": "2026-09-10",
+      "claim": "run_backtest output at the cutoff.",
+      "evidence_id": "E3",
+      "source_tool": "run_backtest",
+      "values": {
+        "as_of_date": "2026-09-10",
+        "available": true,
+        "metrics": {
+          "Alpha_vs_Benchmark": -0.4878,
+          "Benchmark_Total_Return": 0.4771,
+          "Max_Drawdown": -0.2857,
+          "Sharpe_Ratio": -1.7135,
+          "Total_Return": -0.0107,
+          "Total_Trades": 8.0,
+          "Win_Rate": 0.5
+        },
+        "period": {
+          "end": "2025-12-31",
+          "start": "2024-01-01"
+        },
+        "strategy": "supertrend_long_cash_t_plus_1",
+        "suggested_status": "WATCH",
+        "ticker": "THYAO",
+        "tool": "run_backtest",
+        "warnings": []
+      }
+    }
+  ],
+  "plan": [
+    {
+      "arguments": {
+        "end_date": "2025-12-31",
+        "oos_start_date": "2026-01-01",
+        "pattern": "mon_tue_wed_down",
+        "start_date": "2024-01-01",
+        "ticker": "THYAO"
+      },
+      "tool_name": "test_weekday_pattern"
+    }
+  ],
+  "raw_answer": "Status: REJECT_SIGNAL.\nE1: The data-quality gate ran before any calculation and returned THYAO PASS_WITH_WARNINGS.\nE2: In-sample 2024-01-01 to 2025-12-31: 19 occurrences in 87 weeks; Thursday and Friday were both up in 6; mean Thursday 1.2%, mean Friday 0.2% against 0.2% and 0.3% in other weeks (p 0.259). Out-of-sample from 2026-01-01: 3 occurrences in 30 weeks; Thursday and Friday were both up in 0; mean Thursday 0.7%, mean Friday -0.5% against 0.1% and 0.6% in other weeks (p n/a). Multiple-testing risk: 1 test(s) run, Bonferroni alpha 0.050.\nE3: The t+1, cost-aware supertrend_long_cash_t_plus_1 backtest for THYAO made 8 trades with total return -1.1% versus a benchmark return of 47.7%, Sharpe ratio -1.71, maximum drawdown -28.6%.\nEvidence IDs: E1, E2, E3.\nLimitation: This is an educational, evidence-bound summary; it is not investment advice.",
+  "replay_sha256": "892a294162558415237bf433f581ca1ca6194fc9f84b4a6152abe686ba308de8",
+  "request": {
+    "as_of_date": "2026-09-10",
+    "question": "Does THYAO show a 'Monday-Tuesday-Wednesday down, then Thursday-Friday up' pattern over 01.01.2024 - 31.12.2025? Does the pattern still hold over 01.01.2026 - 10.09.2026?"
+  },
+  "state_history": [
+    "START",
+    "SELECT_UNIVERSE",
+    "LOAD_DATA",
+    "CHECK_DATA_QUALITY",
+    "CALCULATE",
+    "RUN_SCENARIO",
+    "RUN_BACKTEST",
+    "BUILD_EVIDENCE",
+    "LOG_AND_CLOSE"
+  ],
+  "violations": []
+}

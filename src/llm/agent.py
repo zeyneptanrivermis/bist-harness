@@ -195,7 +195,8 @@ def run_agent(question: str, chat_fn: ChatFn, *, as_of_date: str | None = None, 
     if log:
         key = hashlib.sha256(json.dumps([question, as_of, result["plan"]], sort_keys=True).encode()).hexdigest()[:16]  # same question -> same log id
         result["replay_log"] = str(log_decision({"analysis_id": key, "request": {"question": question, "as_of_date": as_of}, "state_history": states, "plan": result["plan"],
-                                                 "evidence": evidence, "action": expected, "answer": result["answer"]}))
+                                                 "evidence": evidence, "action": expected, "answer": result["answer"],
+                                                 "raw_answer": raw, "violations": result["violations"]}))
     return result
 
 
