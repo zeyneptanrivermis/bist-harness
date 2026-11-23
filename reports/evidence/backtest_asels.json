@@ -1,0 +1,33 @@
+{
+ "call": {
+  "tool_name": "run_backtest",
+  "arguments": {
+   "ticker": "ASELS",
+   "start_date": "2024-01-01",
+   "end_date": "2026-09-10"
+  }
+ },
+ "as_of_date": "2026-09-10",
+ "result": {
+  "tool": "run_backtest",
+  "available": true,
+  "as_of_date": "2026-09-10",
+  "period": {
+   "start": "2024-01-01",
+   "end": "2026-09-10"
+  },
+  "warnings": [],
+  "ticker": "ASELS",
+  "strategy": "supertrend_long_cash_t_plus_1",
+  "metrics": {
+   "Total_Return": 2.9514,
+   "Benchmark_Total_Return": 0.8879,
+   "Alpha_vs_Benchmark": 2.0635,
+   "Sharpe_Ratio": 0.7074,
+   "Max_Drawdown": -0.3317,
+   "Win_Rate": 0.7,
+   "Total_Trades": 10.0
+  },
+  "suggested_status": "WATCH"
+ }
+}

@@ -1,0 +1,126 @@
+{
+ "call": {
+  "tool_name": "test_weekday_pattern",
+  "arguments": {
+   "ticker": "THYAO",
+   "start_date": "2024-01-01",
+   "end_date": "2025-12-31",
+   "oos_start_date": "2026-01-01"
+  }
+ },
+ "as_of_date": "2026-09-10",
+ "result": {
+  "tool": "test_weekday_pattern",
+  "available": true,
+  "as_of_date": "2026-09-10",
+  "period": {
+   "start": "2024-01-01",
+   "end": "2025-12-31"
+  },
+  "warnings": [],
+  "ticker": "THYAO",
+  "pattern": "weekday",
+  "in_sample": {
+   "days": [
+    {
+     "day": "Monday",
+     "n": 99,
+     "mean": -0.0005,
+     "median": -0.0035,
+     "p_value": 0.8278,
+     "net_mean": -0.0035
+    },
+    {
+     "day": "Tuesday",
+     "n": 98,
+     "mean": -0.001,
+     "median": -0.0037,
+     "p_value": 0.6004,
+     "net_mean": -0.004
+    },
+    {
+     "day": "Wednesday",
+     "n": 99,
+     "mean": -0.003,
+     "median": -0.0023,
+     "p_value": 0.112,
+     "net_mean": -0.006
+    },
+    {
+     "day": "Thursday",
+     "n": 102,
+     "mean": 0.004,
+     "median": 0.0042,
+     "p_value": 0.0159,
+     "net_mean": 0.001
+    },
+    {
+     "day": "Friday",
+     "n": 101,
+     "mean": 0.0028,
+     "median": 0.0015,
+     "p_value": 0.1458,
+     "net_mean": -0.0002
+    }
+   ],
+   "unconditional_mean": 0.0005,
+   "tests_run": 5
+  },
+  "multiple_testing": {
+   "tests_run": 5,
+   "bonferroni_alpha": 0.01,
+   "note": "Searching many weekday/pattern combinations produces false positives by chance."
+  },
+  "out_of_sample": {
+   "period": {
+    "start": "2026-01-01",
+    "end": "2026-09-10"
+   },
+   "days": [
+    {
+     "day": "Monday",
+     "n": 36,
+     "mean": -0.0012,
+     "median": -0.0034,
+     "p_value": 0.7414,
+     "net_mean": -0.0042
+    },
+    {
+     "day": "Tuesday",
+     "n": 35,
+     "mean": 0.0022,
+     "median": -0.0017,
+     "p_value": 0.5122,
+     "net_mean": -0.0008
+    },
+    {
+     "day": "Wednesday",
+     "n": 35,
+     "mean": -0.0016,
+     "median": -0.004,
+     "p_value": 0.6895,
+     "net_mean": -0.0046
+    },
+    {
+     "day": "Thursday",
+     "n": 35,
+     "mean": -0.0013,
+     "median": 0.0,
+     "p_value": 0.6998,
+     "net_mean": -0.0043
+    },
+    {
+     "day": "Friday",
+     "n": 34,
+     "mean": 0.0062,
+     "median": 0.002,
+     "p_value": 0.0563,
+     "net_mean": 0.0032
+    }
+   ],
+   "unconditional_mean": 0.0007,
+   "tests_run": 5
+  },
+  "suggested_status": "REJECT_SIGNAL"
+ }
+}

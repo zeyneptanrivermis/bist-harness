@@ -1,0 +1,190 @@
+{
+ "call": {
+  "tool_name": "calculate_fundamental_change",
+  "arguments": {
+   "ticker": "TUPRS",
+   "start_date": "2024-01-01",
+   "end_date": "2026-09-10"
+  }
+ },
+ "as_of_date": "2026-09-10",
+ "result": {
+  "tool": "calculate_fundamental_change",
+  "available": true,
+  "as_of_date": "2026-09-10",
+  "period": {
+   "start": "2024-01-01",
+   "end": "2026-09-10"
+  },
+  "warnings": [
+   "Incomplete post-disclosure windows by 2026-09-10 (excluded from averages): 2026Q2:20d.",
+   "Sector-basket comparison unavailable: no sector peers with data.",
+   "Association only: no causal claim that better earnings raise the price."
+  ],
+  "ticker": "TUPRS",
+  "quarters": [
+   {
+    "period": "2024Q3",
+    "disclosed": "2024-11-05",
+    "ebitda_margin": 0.095,
+    "ebitda_margin_change_qoq": null,
+    "net_debt_to_annualized_ebitda": -0.12,
+    "nd_ebitda_change_qoq": null,
+    "improving": false,
+    "ret_1d": 0.0035,
+    "car_xu100_1d": -0.006,
+    "car_sector_1d": null,
+    "ret_5d": 0.0125,
+    "car_xu100_5d": -0.037,
+    "car_sector_5d": null,
+    "ret_20d": 0.0554,
+    "car_xu100_20d": -0.0601,
+    "car_sector_20d": null
+   },
+   {
+    "period": "2024Q4",
+    "disclosed": "2025-03-04",
+    "ebitda_margin": 0.103,
+    "ebitda_margin_change_qoq": 0.008,
+    "net_debt_to_annualized_ebitda": -0.13,
+    "nd_ebitda_change_qoq": -0.01,
+    "improving": true,
+    "ret_1d": 0.0617,
+    "car_xu100_1d": 0.0352,
+    "car_sector_1d": null,
+    "ret_5d": 0.1088,
+    "car_xu100_5d": 0.0704,
+    "car_sector_5d": null,
+    "ret_20d": 0.0963,
+    "car_xu100_20d": 0.1757,
+    "car_sector_20d": null
+   },
+   {
+    "period": "2025Q1",
+    "disclosed": "2025-05-08",
+    "ebitda_margin": 0.105,
+    "ebitda_margin_change_qoq": 0.002,
+    "net_debt_to_annualized_ebitda": -0.15,
+    "nd_ebitda_change_qoq": -0.02,
+    "improving": true,
+    "ret_1d": 0.0451,
+    "car_xu100_1d": 0.0071,
+    "car_sector_1d": null,
+    "ret_5d": 0.0435,
+    "car_xu100_5d": 0.0139,
+    "car_sector_5d": null,
+    "ret_20d": 0.0233,
+    "car_xu100_20d": -0.0082,
+    "car_sector_20d": null
+   },
+   {
+    "period": "2025Q2",
+    "disclosed": "2025-08-14",
+    "ebitda_margin": 0.109,
+    "ebitda_margin_change_qoq": 0.004,
+    "net_debt_to_annualized_ebitda": -0.15,
+    "nd_ebitda_change_qoq": -0.01,
+    "improving": true,
+    "ret_1d": -0.0098,
+    "car_xu100_1d": -0.0153,
+    "car_sector_1d": null,
+    "ret_5d": 0.0615,
+    "car_xu100_5d": 0.0153,
+    "car_sector_5d": null,
+    "ret_20d": 0.0658,
+    "car_xu100_20d": 0.1116,
+    "car_sector_20d": null
+   },
+   {
+    "period": "2025Q3",
+    "disclosed": "2025-11-06",
+    "ebitda_margin": 0.108,
+    "ebitda_margin_change_qoq": -0.001,
+    "net_debt_to_annualized_ebitda": -0.16,
+    "nd_ebitda_change_qoq": -0.01,
+    "improving": false,
+    "ret_1d": -0.0071,
+    "car_xu100_1d": 0.0053,
+    "car_sector_1d": null,
+    "ret_5d": 0.0061,
+    "car_xu100_5d": 0.0389,
+    "car_sector_5d": null,
+    "ret_20d": -0.002,
+    "car_xu100_20d": -0.0096,
+    "car_sector_20d": null
+   },
+   {
+    "period": "2025Q4",
+    "disclosed": "2026-03-05",
+    "ebitda_margin": 0.109,
+    "ebitda_margin_change_qoq": 0.001,
+    "net_debt_to_annualized_ebitda": -0.17,
+    "nd_ebitda_change_qoq": -0.01,
+    "improving": true,
+    "ret_1d": -0.03,
+    "car_xu100_1d": -0.0229,
+    "car_sector_1d": null,
+    "ret_5d": 0.0213,
+    "car_xu100_5d": -0.0021,
+    "car_sector_5d": null,
+    "ret_20d": 0.035,
+    "car_xu100_20d": 0.01,
+    "car_sector_20d": null
+   },
+   {
+    "period": "2026Q1",
+    "disclosed": "2026-05-07",
+    "ebitda_margin": 0.109,
+    "ebitda_margin_change_qoq": 0.0,
+    "net_debt_to_annualized_ebitda": -0.18,
+    "nd_ebitda_change_qoq": -0.01,
+    "improving": false,
+    "ret_1d": 0.0039,
+    "car_xu100_1d": -0.0008,
+    "car_sector_1d": null,
+    "ret_5d": 0.0,
+    "car_xu100_5d": 0.0461,
+    "car_sector_5d": null,
+    "ret_20d": -0.0762,
+    "car_xu100_20d": 0.0114,
+    "car_sector_20d": null
+   },
+   {
+    "period": "2026Q2",
+    "disclosed": "2026-08-13",
+    "ebitda_margin": 0.11,
+    "ebitda_margin_change_qoq": 0.001,
+    "net_debt_to_annualized_ebitda": -0.19,
+    "nd_ebitda_change_qoq": -0.01,
+    "improving": true,
+    "ret_1d": 0.0194,
+    "car_xu100_1d": 0.0222,
+    "car_sector_1d": null,
+    "ret_5d": 0.1244,
+    "car_xu100_5d": 0.1002,
+    "car_sector_5d": null,
+    "ret_20d": null,
+    "car_xu100_20d": null,
+    "car_sector_20d": null
+   }
+  ],
+  "incomplete_windows": [
+   "2026Q2:20d"
+  ],
+  "improving_vs_other": {
+   "improving": {
+    "quarters": 5,
+    "mean_car_xu100_1d": 0.0053,
+    "mean_car_xu100_5d": 0.0395,
+    "mean_car_xu100_20d": 0.0723
+   },
+   "other": {
+    "quarters": 3,
+    "mean_car_xu100_1d": -0.0005,
+    "mean_car_xu100_5d": 0.016,
+    "mean_car_xu100_20d": -0.0194
+   }
+  },
+  "suggested_status": "INVESTIGATE"
+ }
+}
