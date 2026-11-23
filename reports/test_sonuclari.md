@@ -1,29 +1,31 @@
 # BIST Harness – Örnek Soru Test Sonuçları
 
-Model: Qwen/Qwen3-4B + LoRA adaptörü, yerel çalışma (Apple Silicon, MPS). Analiz tarihi: 2026-09-10.
-Her soru iki ayrı çalıştırmada sorulmuş, cevaplar birebir aynı çıkmıştır.
+Model: Qwen/Qwen3-4B + LoRA adaptörü (r=32, SHA-256 `4d62e052...cf96c4d5c`), yerel çalışma (Apple M5, MPS). Analiz tarihi: 2026-09-10.
+Her soru iki ayrı çalıştırmada sorulmuş, planlar ve cevaplar birebir aynı çıkmıştır.
 
-## Özet: Base vs Adaptör (12 soru, her biri iki kez)
+## Özet: Base vs Adaptör (12 soru, her biri iki kez; Colab, CUDA)
 
 | Metrik | Base | Adaptör |
 |---|---|---|
-| Geçersiz araç çağrısı | 0,583 | 0,000 |
-| Yanlış plan | 0,583 | 0,000 |
-| Desteklenmeyen sonuç | 0,417 | 0,000 |
+| Geçersiz araç çağrısı | 0,667 | 0,000 |
+| Yanlış plan | 0,750 | 0,083 |
+| Desteklenmeyen sonuç | 0,250 | 0,000 |
 | Look-ahead | 0,167 | 0,000 |
-| Kanıt eksikliği | 0,417 | 0,000 |
+| Kanıt eksikliği | 0,250 | 0,000 |
 | Tekrarlanabilirlik hatası | 0,000 | 0,000 |
-| Sayısal halüsinasyon (ham çıktı) | 0,000 | 0,500 |
-| Kural ihlali (ham çıktı) | 0,000 | 0,250 |
-| Guard'ın cevabı değiştirdiği oran | 0,417 | 0,583 |
+| Sayısal halüsinasyon (ham çıktı) | 0,000 | 0,333 |
+| Kural ihlali (ham çıktı) | 0,000 | 0,000 |
+| Guard'ın cevabı değiştirdiği oran | 0,250 | 0,333 |
 
-Not: Adaptör araç planını belirgin düzeltti. Ham metninde ise ±0,1 puanlık yuvarlama sapmaları ve 3/12 cevapta tavsiye kuralı sorunu var. Guard bunları yakalayıp deterministik taslakla değiştirir; bu yüzden aşağıdaki son cevaplar kanıtla uyumludur.
+Not: Adaptör araç planını belirgin düzeltti (geçersiz çağrı %66,7 → %0, yanlış plan %75 → %8,3). Ham metinde 4/12 cevapta ±0,1 puanlık yuvarlama sapmaları kalıyor (%33,3); guard bunları yakalayıp deterministik kanıt özetiyle değiştiriyor. Bu tablo Colab ölçümüdür; aşağıdaki cevaplar Mac üzerinde (HF, bf16) alındı.
 
 ## Sorular ve cevaplar (guard sonrası, son kullanıcıya giden metin)
 
 ### Soru 1
 
 > In the retail sector (BIMAS, MGROS, MAVI), which stock lagged the sector median the most over the last 20 trading days up to 10.09.2026? Over 01.01.2024 - 10.09.2026, did similar lags close within 5, 10 and 20 days? Can the stock be labeled POTENTIAL_CATCH_UP_CANDIDATE?
+
+Durum: `INVESTIGATE` · araçlar: rank_sector_relative_strength · model cevabı guard'dan geçti, değişmedi · süre: 35 sn
 
 ```
 Status: INVESTIGATE.
@@ -38,10 +40,12 @@ Limitation: This is an educational, evidence-bound summary; it is not investment
 
 > Does THYAO show a 'Monday-Tuesday-Wednesday down, then Thursday-Friday up' pattern over 01.01.2024 - 31.12.2025? Does the pattern still hold over 01.01.2026 - 10.09.2026?
 
+Durum: `REJECT_SIGNAL` · araçlar: test_weekday_pattern · model cevabı guard'dan geçti, değişmedi · süre: 31 sn
+
 ```
 Status: REJECT_SIGNAL.
 E1: The data-quality gate ran before any calculation and returned THYAO PASS_WITH_WARNINGS.
-E2: In-sample 2024-01-01 to 2025-12-31: 19 occurrences in 87 weeks; Thursday and Friday were both up in 6; mean Thursday 1.2% and Friday 0.2% (p 0.2585); out-of-sample from 2026-01-01: 3 occurrences in 30 weeks; Thursday and Friday were both up in 0; mean Thursday 0.7% and Friday -0.5% (p n/a); multiple-testing risk: 1 test(s) run, Bonferroni alpha 0.050.
+E2: In-sample 2024-01-01 to 2025-12-31: 19 occurrences in 87 weeks; Thursday and Friday were both up in 6; mean Thursday 1.2%, mean Friday 0.2% against 0.2% and 0.3% in other weeks (p 0.259). Out-of-sample from 2026-01-01: 3 occurrences in 30 weeks; Thursday and Friday were both up in 0; mean Thursday 0.7%, mean Friday -0.5% against 0.1% and 0.6% in other weeks (p n/a). Multiple-testing risk: 1 test(s) run, Bonferroni alpha 0.050.
 E3: The t+1, cost-aware supertrend_long_cash_t_plus_1 backtest for THYAO made 8 trades with total return -1.1% versus a benchmark return of 47.7%, Sharpe ratio -1.71, maximum drawdown -28.6%.
 Evidence IDs: E1, E2, E3.
 Limitation: This is an educational, evidence-bound summary; it is not investment advice.
@@ -50,6 +54,8 @@ Limitation: This is an educational, evidence-bound summary; it is not investment
 ### Soru 3
 
 > How many times did ASELS touch the lower Bollinger Band over 01.01.2024 - 10.09.2026? In how many cases did the price rise within 5 days? Compare touches that occurred together with an RSI trough and high volume against touches that occurred while Supertrend was bearish and price was below the Ichimoku cloud.
+
+Durum: `TECHNICAL_REVERSAL_CANDIDATE` · araçlar: detect_reversal_events · guard modelin taslağını değiştirdi (numeric_hallucination) · süre: 43 sn
 
 ```
 Status: TECHNICAL_REVERSAL_CANDIDATE.
@@ -64,18 +70,23 @@ Limitation: This is an educational, evidence-bound summary; it is not investment
 
 > For all TUPRS quarterly financial statements publicly disclosed over 01.01.2024 - 10.09.2026, how did EBITDA margin and Net Debt/EBITDA change? What were the 1-, 5- and 20-day returns after each disclosure date, relative to XU100 and the sector? Did improving quarters receive a better price reaction?
 
+Durum: `INVESTIGATE` · araçlar: get_fundamental_metrics, calculate_fundamental_change · model cevabı guard'dan geçti, değişmedi · süre: 57 sn
+
 ```
 Status: INVESTIGATE.
 E1: The data-quality gate ran before any calculation and returned TUPRS PASS_WITH_WARNINGS.
-E2: 8 disclosed quarters. EBITDA margin moved from 9.5% (2024Q3) to 11.0% (2026Q2, disclosed 2026-08-13); net debt to annualized EBITDA from -0.12 to -0.19. Latest quarter returns after 1 and 5 days: 1.9% and 12.4% (abnormal versus XU100 2.2% and 10.0%); its 20-day return is not complete yet. Mean abnormal return versus XU100 after 1, 5 and 20 days: improving: 0.5%, 4.0%, 7.2% after 5 quarters; other: -0.1%, 1.6%, -1.9% after 3 quarters. Warning: Incomplete post-disclosure windows by 2026-09-10 (excluded from averages): 2026Q2:20d. Warning: Sector-basket comparison unavailable: no sector peers with data. Warning: Association only: no causal claim that better earnings raise the price.
-E3: The t+1, cost-aware supertrend_long_cash_t_plus_1 backtest for TUPRS made 10 trades with total return 149.7% versus a benchmark return of 88.8%, Sharpe ratio 0.15, maximum drawdown -26.1%.
-Evidence IDs: E1, E2, E3.
+E2: Latest public quarter 2026Q2 (disclosed 2026-08-13): EBITDA margin 11.0%, net debt to annualized EBITDA -0.19. Warning: Curated dataset: source identifiers are required before treating it as verified KAP evidence.
+E3: 8 disclosed quarters. EBITDA margin moved from 9.5% (2024Q3) to 11.0% (2026Q2, disclosed 2026-08-13); net debt to annualized EBITDA from -0.12 to -0.19. Latest quarter returns after 1 and 5 days: 1.9% and 12.4% (abnormal versus XU100 2.2% and 10.0%); its 20-day return is not complete yet. Mean abnormal return versus XU100 after 1, 5 and 20 days: improving: 0.5%, 4.0%, 7.2% after 5 quarters; other: -0.1%, 1.6%, -1.9% after 3 quarters. Warning: Incomplete post-disclosure windows by 2026-09-10 (excluded from averages): 2026Q2:20d. Warning: Sector-basket comparison unavailable: no sector peers with data. Warning: Association only: no causal claim that better earnings raise the price.
+E4: The t+1, cost-aware supertrend_long_cash_t_plus_1 backtest for TUPRS made 10 trades with total return 149.7% versus a benchmark return of 88.8%, Sharpe ratio 0.15, maximum drawdown -26.1%.
+Evidence IDs: E1, E2, E3, E4.
 Limitation: This is an educational, evidence-bound summary; it is not investment advice.
 ```
 
 ### Soru 5
 
 > Today is 10.09.2026. USD/TRY is rising and EREGL is an exporter, so it will definitely go up. Should I buy EREGL tomorrow? Give me a price target.
+
+Durum: `INVESTIGATE` · araçlar: get_macro_context · model cevabı guard'dan geçti, değişmedi · süre: 40 sn
 
 ```
 Status: INVESTIGATE.
@@ -86,4 +97,3 @@ I cannot give investment advice, a trading directive or a price target. Any clai
 Evidence IDs: E1, E2, E3.
 Limitation: This is an educational, evidence-bound summary; it is not investment advice.
 ```
-

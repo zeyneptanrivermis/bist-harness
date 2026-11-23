@@ -76,6 +76,23 @@ class AgentLoopTests(unittest.TestCase):
         self.assertEqual(router.ran, ["check_data_quality", "test_weekday_pattern", "run_backtest"])
         self.assertEqual(result["action"], "REJECT_SIGNAL")
 
+    @unittest.skipUnless((PROCESSED_DATA_DIR / "MAVI.parquet").exists(), "needs the price cache")
+    def test_sector_plan_gets_macro_context_and_pattern_reports_costs(self) -> None:
+        sector = [("rank_sector_relative_strength", {"tickers": ["BIMAS", "MGROS", "MAVI"], "horizon_days": 20, "start_date": "2024-01-01", "end_date": AS_OF})]
+        run = execute_plan(sector, AS_OF, SafeProjectToolRouter())
+        self.assertIn("LOAD_CONTEXT", run["states"])
+        self.assertEqual([e["source_tool"] for e in run["evidence"]], ["check_data_quality", "rank_sector_relative_strength", "get_macro_context", "run_backtest"])
+        self.assertEqual(run["evidence"][2]["values"]["fx_relationship"]["ticker"], "MAVI")
+        pattern = SafeProjectToolRouter().execute("test_weekday_pattern", {"ticker": "THYAO", "pattern": "mon_tue_wed_down", "start_date": "2024-01-01", "end_date": "2025-12-31", "oos_start_date": "2026-01-01"}, as_of_date=AS_OF)
+        p = pattern["in_sample"]
+        self.assertAlmostEqual(p["wed_fri_net_mean"], p["wed_fri_mean"] - 0.003, places=3)
+        self.assertEqual(pattern["multiple_testing"]["tests_run"], 32)
+        evidence = [{"evidence_id": "E1", "values": pattern}]
+        text = draft_summary("REJECT_SIGNAL", evidence)
+        self.assertIn("round-trip cost", text)
+        self.assertIn("median", text)
+        self.assertEqual(check_answer(text, evidence, "REJECT_SIGNAL", AS_OF), [])  # the template must survive its own guard
+
     def test_good_answer_is_kept_and_bad_answer_is_replaced_but_raw_is_kept(self) -> None:
         run = execute_plan(StubRouter().validate_plan(PLAN, as_of_date=AS_OF), AS_OF, StubRouter())
         good = draft_summary(run["expected"], run["evidence"], "Does THYAO show the pattern?")
@@ -98,11 +115,11 @@ class AgentLoopTests(unittest.TestCase):
                       '{"tool_calls": [{"tool_name": "test_weekday_pattern", "arguments": {"ticker": "THYAO", "end_date": "2026-09-11"}}]}'):
             router = StubRouter()
             result = self._run(_model("x", first=reply), router)
-            self.assertEqual((result["tool_valid"], result["violations"], router.ran), (False, ["invalid_tool_call"], []))
+            self.assertEqual((result["tool_valid"], result["violations"], router.ran, result["action"]), (False, ["invalid_tool_call"], [], "ANALYSIS_UNSAFE"))
 
     def test_prose_refusal_is_allowed_and_is_not_a_tool_call(self) -> None:
         result = self._run(_model("x", first="Status: ANALYSIS_UNSAFE. The request needs data after the analysis date."))
-        self.assertEqual((result["tool_valid"], result["violations"]), (None, []))
+        self.assertEqual((result["tool_valid"], result["violations"], result["action"]), (None, [], "ANALYSIS_UNSAFE"))
 
     def test_advice_question_needs_the_refusal_sentence(self) -> None:
         result = self._run(_model("Status: REJECT_SIGNAL. E1 E2 E3"), question="Should I buy THYAO tomorrow? Give me a price target.")

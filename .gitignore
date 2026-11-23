@@ -51,3 +51,6 @@ data/llm/*.json
 artifacts/llm/
 checkpoints/
 .venv-llm/
+
+# Matplotlib font cache
+.matplotlib/

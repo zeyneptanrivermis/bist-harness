@@ -1,0 +1,98 @@
+{
+ "call": {
+  "tool_name": "detect_reversal_events",
+  "arguments": {
+   "ticker": "ASELS",
+   "start_date": "2024-01-01",
+   "end_date": "2026-09-10"
+  }
+ },
+ "as_of_date": "2026-09-10",
+ "result": {
+  "tool": "detect_reversal_events",
+  "available": true,
+  "as_of_date": "2026-09-10",
+  "period": {
+   "start": "2024-01-01",
+   "end": "2026-09-10"
+  },
+  "warnings": [
+   "Small sample: fewer than 10 events in Combined: Event + RSI <= 35 (n=7); Full Ideal Bundle: Event + RSI<=35 + VolSurge + KAMA Stable (n=0); Combined: Event + RSI<=35 + Volume Surge (>1.2x) (n=3). Their hit rates are anecdotal."
+  ],
+  "ticker": "ASELS",
+  "event": "BB_LOWER_TOUCH",
+  "event_count": 34,
+  "excluded_incomplete_5d": 0,
+  "by_horizon": {
+   "1d": {
+    "n": 34,
+    "mean": 0.0055,
+    "median": 0.0077,
+    "hit_rate": 0.5588
+   },
+   "3d": {
+    "n": 34,
+    "mean": 0.0145,
+    "median": 0.0113,
+    "hit_rate": 0.5588
+   },
+   "5d": {
+    "n": 34,
+    "mean": 0.0204,
+    "median": 0.0178,
+    "hit_rate": 0.6765
+   },
+   "10d": {
+    "n": 34,
+    "mean": 0.0187,
+    "median": 0.0072,
+    "hit_rate": 0.5588
+   }
+  },
+  "combined_conditions": [
+   {
+    "condition": "1. Single Event (Baseline)",
+    "n": 34,
+    "hit_rate_5d": 0.6765,
+    "mean_5d": 0.0204
+   },
+   {
+    "condition": "2. Combined: Event + RSI <= 35",
+    "n": 7,
+    "hit_rate_5d": 0.5714,
+    "mean_5d": 0.001
+   },
+   {
+    "condition": "3. Combined: Event + Volume Surge (>1.2x)",
+    "n": 11,
+    "hit_rate_5d": 0.5455,
+    "mean_5d": 0.0009
+   },
+   {
+    "condition": "4. Combined: Event + KAMA Not Falling",
+    "n": 10,
+    "hit_rate_5d": 0.6,
+    "mean_5d": 0.019
+   },
+   {
+    "condition": "5. Full Ideal Bundle: Event + RSI<=35 + VolSurge + KAMA Stable",
+    "n": 0,
+    "hit_rate_5d": null,
+    "mean_5d": null
+   },
+   {
+    "condition": "6. High Risk Flaw: Event but Bearish Supertrend & Below Cloud",
+    "n": 18,
+    "hit_rate_5d": 0.6667,
+    "mean_5d": 0.0315
+   },
+   {
+    "condition": "7. Combined: Event + RSI<=35 + Volume Surge (>1.2x)",
+    "n": 3,
+    "hit_rate_5d": 0.3333,
+    "mean_5d": -0.0079
+   }
+  ],
+  "suggested_status": "TECHNICAL_REVERSAL_CANDIDATE"
+ }
+}

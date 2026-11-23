@@ -58,7 +58,7 @@ pip install -r requirements-llm.txt
 The price cache is not in Git. Pick **one**:
 
 **A. Use the shipped data (recommended; gives exactly the same numbers as the report).**
-Unzip the delivered data so these folders exist:
+Unzip the delivered `bist_data.zip` in the repository root (`unzip bist_data.zip`). Every file in it ends on 2026-09-10, so no price after the analysis date is shipped. These folders must exist:
 ```
 data/processed/    (AKBNK.parquet ... XU100.parquet, 31 tickers)
 data/macro/        (USDTRY.csv, EURTRY.csv, and TCMB_POLICY_RATE.csv, TUIK_CPI.csv, FED_FUNDS.csv if provided)
@@ -186,8 +186,8 @@ python -m unittest discover -s tests
 | Out-of-memory on GPU | Use the 1.7B model and its own adapter, or run on CPU with `BIST_LLM_DEVICE=cpu`. |
 | Very slow answers | CPU only. Use a CUDA GPU, or the 1.7B model. |
 
-## Optional: Ollama / llama.cpp route
-`python -m src.llm.export_local` merges the adapter into the base model, and `python -m src.llm.agent --backend ollama` talks to a local Ollama on localhost. The GGUF conversion steps (in `notebooks/README.md`) were **not tested** in this repo. Use the Transformers route above for the demo.
+## Optional: Ollama route
+`python -m src.llm.export_local` merges the adapter into the base model, and `python -m src.llm.agent --backend ollama` talks to a local Ollama on localhost. Two routes are described in `notebooks/README.md` step 4: **Route A** (`ollama create -q int8`, tested on macOS, about twice as fast) and **Route B** (GGUF q8_0 through llama.cpp, not tested here). The reported evaluation numbers come from the Transformers route; use it as the reference for the demo.
 
 ## Layout
 ```
@@ -200,4 +200,7 @@ src/mcp_tools/          the tools the model may call
 src/harness/            quality gate, states, replay log
 src/scenarios/          sector, weekday, reversal, fundamentals scenarios
 roadmap/                project plans and the report draft
+reports/01-09            written deliverables (data dictionary, four scenario reports, replay demo, backtests, A-E report, final report)
+reports/evidence/       raw tool outputs behind every number; rebuild with scripts/make_report_evidence.py
+scripts/                evidence, strategy-variant and replay-demo scripts
 ```

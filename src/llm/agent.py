@@ -148,11 +148,15 @@ def execute_plan(plan: list[tuple[str, dict[str, Any]]], as_of: str, router: Saf
     states += ["CALCULATE", "RUN_SCENARIO"]
     outputs = [router.execute(name, args, as_of_date=as_of) for name, args in plan]
     evidence += [_item(len(evidence) + i + 1, out, as_of) for i, out in enumerate(outputs)]
-    states.append("RUN_BACKTEST")
     ticker = _primary_ticker(plan, outputs)
-    if ticker and not any(n == "run_backtest" for n, _ in plan):  # the backtest state is mandatory, so the harness runs it if the plan did not
-        first = next((a for _, a in plan if "start_date" in a), {})
-        window = {k: v for k, v in first.items() if k in ("start_date", "end_date")}
+    first = next((a for _, a in plan if "start_date" in a), {})
+    window = {k: v for k, v in first.items() if k in ("start_date", "end_date")}
+    names = {n for n, _ in plan}
+    if ticker and "rank_sector_relative_strength" in names and "get_macro_context" not in names:  # a lag is only structural vs temporary with macro context
+        states.append("LOAD_CONTEXT")
+        evidence.append(_item(len(evidence) + 1, router.execute("get_macro_context", {"ticker": ticker, **window}, as_of_date=as_of), as_of))
+    states.append("RUN_BACKTEST")
+    if ticker and "run_backtest" not in names:  # the backtest state is mandatory, so the harness runs it if the plan did not
         evidence.append(_item(len(evidence) + 1, router.execute("run_backtest", {"ticker": ticker, **window}, as_of_date=as_of), as_of))
     return {"states": [*states, "BUILD_EVIDENCE", "LOG_AND_CLOSE"], "evidence": evidence, "expected": _expected_status(evidence), "blocked_answer": None}
 
@@ -173,8 +177,10 @@ def run_agent(question: str, chat_fn: ChatFn, *, as_of_date: str | None = None, 
         status = _STATUS.match(reply)
         if status and status.group(1) in STATUSES and not _ADVICE.search(reply):
             result["answer"] = reply  # a prose refusal is allowed and is not a tool call
+            result["action"] = status.group(1)
         else:
             result["tool_valid"] = False
+            result["action"] = "ANALYSIS_UNSAFE"  # the router blocked the plan, which is what the answer says
             result["violations"] = ["invalid_tool_call"]
             result["answer"] = f"{refusal_text('INVALID_TOOL_REQUEST')} ({exc})"
         return result
@@ -195,7 +201,8 @@ def run_agent(question: str, chat_fn: ChatFn, *, as_of_date: str | None = None, 
     if log:
         key = hashlib.sha256(json.dumps([question, as_of, result["plan"]], sort_keys=True).encode()).hexdigest()[:16]  # same question -> same log id
         result["replay_log"] = str(log_decision({"analysis_id": key, "request": {"question": question, "as_of_date": as_of}, "state_history": states, "plan": result["plan"],
-                                                 "evidence": evidence, "action": expected, "answer": result["answer"]}))
+                                                 "evidence": evidence, "action": expected, "answer": result["answer"],
+                                                 "raw_answer": raw, "violations": result["violations"]}))
     return result
 
 

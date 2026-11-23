@@ -116,6 +116,7 @@ Aşağıdaki 6 ana dosya oluşturulmuş ve her biri tek tek doğrulanmıştır:
   * 5 Günlük Arayı Kapatma Başarı Oranı: **%52.41**.
   * 10 Günlük Arayı Kapatma Başarı Oranı: **%53.75**.
   * 20 Günlük Arayı Kapatma Başarı Oranı: **%55.83**.
+  * **Düzeltme (2026-11):** bu sayılar fiyat önbelleğindeki 2026-09-30'a kadar olan veriyle üretilmişti; son sinyal günü 2026-09-11'e uzanıyor, yani analiz tarihinden (2026-09-10) sonraki fiyatlar kullanılmıştı. Veri 2026-09-10'da kesilince: 743 olay, 5/10/20 günlük isabet %52,7 / %54,1 / %55,9. Güncel rakamlar ve araç tabanlı (494 olay) sayının neden farklı olduğu `reports/03_sektor_geride_kalanlar_raporu.md` içinde.
 
 ---
 
