@@ -178,6 +178,27 @@ class EvaluateTests(unittest.TestCase):
             rates = E.evaluate(oracle, "oracle")["rates"]
         self.assertEqual(sum(rates.values()), 0, rates)
 
+    @unittest.skipUnless((PROCESSED_DATA_DIR / "KCHOL.parquet").exists(), "needs the cached prices")
+    def test_only_the_gated_versions_block_broken_data_and_a_has_no_plan(self) -> None:
+        def planner(messages):
+            user = messages[1]["content"]
+            if "Committed evidence (JSON):" in user:
+                return "Status: WATCH. E1"
+            item = next(i for i in E.CORRUPT_ITEMS if i["q"] in user)
+            return json.dumps({"tool_calls": item["expect"]})
+
+        for item in E.CORRUPT_ITEMS:
+            with self.subTest(item["corrupt"]):
+                status = {v: E._ask(item, planner, v).get("action") for v in "BDE"}
+                self.assertEqual(status["D"], "ANALYSIS_UNSAFE")
+                self.assertEqual(status["E"], "ANALYSIS_UNSAFE")
+                self.assertNotEqual(status["B"], "ANALYSIS_UNSAFE")  # without the gate the broken data is analysed
+        a = run_agent(E.CORRUPT_ITEMS[0]["q"], lambda m: "Status: WATCH. E1", log=False, version="A")
+        self.assertEqual((a["tool_call"], [e["source_tool"] for e in a["evidence"]]), (None, ["get_stock_history"]))
+        self.assertIsNone(a["human_review"])
+        self.assertEqual(run_agent(E.EVAL_ITEMS[2]["q"], lambda m: json.dumps({"tool_calls": E.EVAL_ITEMS[2]["expect"]}) if "Committed evidence" not in m[1]["content"] else "x",
+                                   log=False, version="E")["human_review"]["status"], "PENDING")
+
 
 class OllamaTests(unittest.TestCase):
     def test_ollama_chat_fn_posts_to_localhost_and_returns_the_message(self) -> None:
