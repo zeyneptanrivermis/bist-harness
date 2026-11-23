@@ -74,6 +74,9 @@ class HarnessTests(unittest.TestCase):
         self.assertGreaterEqual(len(session.evidence), 2)
         self.assertIn(session.action, {"TECHNICAL_REVERSAL_CANDIDATE", "WATCH"})
 
+        session.generate_explanation()
+        self.assertIn("PREVIEW_STRATEGIES", session.transitions)
+        self.assertIn("RISK_GATE", session.transitions)
         session.submit_human_review(HumanReview(decision="APPROVED", reviewer="test-reviewer", rationale="Evidence and quality gate were reviewed."))
         with patch("src.harness.harness.log_decision", return_value=Path("test-replay.json")):
             path = session.log_and_close()

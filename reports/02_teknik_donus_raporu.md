@@ -65,14 +65,21 @@ Yorum: baz grubun %67,6'sı, hissenin genel eğilimi olan %59,2'nin üzerinde am
 
 Sistemin verdiği durum `TECHNICAL_REVERSAL_CANDIDATE`; ancak birleşik grupların çoğu 10 olaydan az olduğu için araç küçük örneklem uyarısı veriyor: *"Small sample: fewer than 10 events in … (n=7) … (n=0) … (n=3). Their hit rates are anecdotal."*
 
-## 6. Eksik kalanlar (bilinçli olarak yapılmadı)
+## 6. Sonradan eklenen olay aileleri ve rejimler
 
-Şartnamedeki olay ailelerinden şunlar uygulanmadı:
-- Destek ve direnç temasları (`find_support_resistance` bir gösterge/araç olarak var, olay ailesi olarak yok).
-- RSI tepe ve dip noktalarının tespiti (şu an yalnızca RSI ≤ 30 aşırı satım, ≥ 70 aşırı alım eşiği).
-- KAMA aşağı kesişimi (yalnızca yukarı kesişim `KAMA_CROSS_UP` var).
-- Ichimoku bulut reddi (yalnızca bulut kırılımı `ICHIMOKU_CLOUD_BREAKOUT` var).
-- Volatilite rejimleri: hiç uygulanmadı. Bollinger bant genişliği (`BB_Bandwidth`) ve `ATR_14` göstergeleri var ama olayları rejime göre ayırmıyoruz.
+Şartnamenin zorunlu olay aileleri tamamlandı (`src/scenarios/technical_reversals.py`): RSI yerel dip/tepe (bir bar sonra teyitli, ileri bakış yok), KAMA aşağı kesişim ve eğim dönüşleri, Ichimoku bulut reddi (yukarı/aşağı) ve buluta dönüş, destek/direnç teması (seviyeler yalnızca önceki 20 bardan hesaplanır, tolerans %0,5). Her olay `Volatility_Regime` (20 günlük oynaklık, kendi genişleyen medyanına göre `HIGH_VOL`/`LOW_VOL`) ve `Reversal_Strength_{1,3,5,10}d` (olayın öngördüğü yönde getiri) taşır. `summarize_reversals_by_regime` olay, piyasa rejimi (XU100 yükselen/düşen) ve oynaklık rejimi kırılımında isabet ve güç verir. Kanıt: `reports/evidence/reversal_families_asels.json` (ASELS, 2026-09-10'a kesik).
+
+| Aile (ASELS) | Olay | 5g isabet* |
+|---|---|---|
+| `RSI_LOCAL_TROUGH` | 17 | %70,6 |
+| `RSI_LOCAL_PEAK` | 85 | %37,6 |
+| `KAMA_CROSS_DOWN` | 57 | %47,4 |
+| `ICHIMOKU_CLOUD_REJECTION_UP` / `_DOWN` | 34 / 27 | %45,5 / %44,4 |
+| `ICHIMOKU_RETURN_INTO_CLOUD` | 23 | %78,3 |
+| `SUPPORT_TOUCH` | 45 | %75,6 |
+| `RESISTANCE_TOUCH` | 172 | %36,0 |
+
+\*İsabet, yükseliş yanlı olaylarda 5 günde pozitif, düşüş yanlı olaylarda negatif getiridir. ASELS 2024-2026'da güçlü yükseldiği için genel eğilim %59,2'dir; düşüş yanlı olaylar (tepe, direnç) bu yüzden düşük isabet verir ve yükseliş yanlı olaylarla doğrudan karşılaştırılmamalıdır. Rejim kırılımında bazı hücreler çok küçüktür. 17 olaylık `RSI_LOCAL_TROUGH` iki rejimde bölününce anekdottur. Çoklu test düzeltmesi yine uygulanmadı.
 
 ## 7. Sınırlamalar
 

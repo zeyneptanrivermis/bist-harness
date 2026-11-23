@@ -11,7 +11,7 @@ Analiz tarihi 2026-09-10. Sayılar `reports/evidence/fundamental_change_tuprs.js
 ## 2. Yöntem
 
 - Bir çeyrek, yalnızca `kap_disclosure_date` gününden sonra bilinir. Giriş, açıklama gününü izleyen **işlem günü (t+1)**; getiri bu girişten 1, 5 ve 20 işlem günü sonra ölçülür.
-- Anormal getiri (`car_xu100_*`): hissenin aynı pencerede XU100'e göre fazla getirisi.
+- Anormal getiri (`car_xu100_*`): hissenin aynı pencerede XU100'e göre fazla getirisi. Sektör sepetine göre fark (`car_sector_*`, `Fwd_{h}d_Sector_CAR`) akranı olan hisselerde hesaplanır; sepet, aynı giriş gününden başlayan akran getirilerinin ortalamasıdır ve analiz tarihinden sonrasına bakmaz. Akranı olmayan hissede alan boş kalır, uydurulmaz. Bu raporun örneği TUPRS'tir; sektörde tek hisse olduğu için sektör alanları boştur (bkz. §3).
 - `improving` = FAVÖK marjı önceki çeyreğe göre **arttı** ve Net Borç/FAVÖK **azaldı** (ikisi de kesin eşitsizlik).
 - Açıklamadan sonra yeterli işlem günü geçmemiş pencereler ortalamalardan çıkarılır (2026Q2'nin 20 günlüğü, 2026-09-10 itibarıyla tamamlanmamış).
 

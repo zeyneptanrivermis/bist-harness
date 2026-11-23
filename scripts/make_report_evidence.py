@@ -24,6 +24,20 @@ CALLS = {
 }
 
 
+def write_new_family_evidence() -> None:
+    """Event counts and regime splits for the families added after the first report (ASELS, cut at the analysis date)."""
+    from src.data_pipeline import load_ticker_data
+    from src.scenarios.technical_reversals import detect_reversal_events, summarize_reversals_by_regime
+
+    cut = lambda f: f.loc[f.index <= A]
+    events = detect_reversal_events(cut(load_ticker_data("ASELS")), market_df=cut(load_ticker_data("XU100")))
+    summary = summarize_reversals_by_regime(events, target_horizon=5)
+    payload = {"as_of_date": A, "ticker": "ASELS", "event_counts": events["Event_Name"].value_counts().to_dict(),
+               "by_regime_5d": summary.to_dict(orient="records")}
+    (OUT / "reversal_families_asels.json").write_text(json.dumps(payload, default=str, ensure_ascii=False, indent=1), encoding="utf-8")
+    print("reversal_families_asels ok")
+
+
 def main() -> None:
     OUT.mkdir(parents=True, exist_ok=True)
     router = SafeProjectToolRouter()
@@ -35,6 +49,7 @@ def main() -> None:
             result = {"error": f"{type(exc).__name__}: {exc}"}
         (OUT / f"{name}.json").write_text(json.dumps({"call": call, "as_of_date": A, "result": result}, default=str, ensure_ascii=False, indent=1), encoding="utf-8")
         print(name, "ERROR" if "error" in result else "ok", len(json.dumps(result, default=str)))
+    write_new_family_evidence()
 
 
 if __name__ == "__main__":
