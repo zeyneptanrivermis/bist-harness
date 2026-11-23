@@ -23,7 +23,7 @@
   },
   "warnings": [
    "No fundamental records for MAVI: a structural lag cannot be separated from a temporary one.",
-   "Macro evidence is not part of this tool; call get_macro_context to check whether FX or rates explain the lag."
+   "Macro evidence is not part of this tool; the get_macro_context evidence shows whether FX or rates may explain the lag."
   ],
   "peers": [
    "BIMAS",

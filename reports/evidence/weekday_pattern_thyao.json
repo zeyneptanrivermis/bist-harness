@@ -1,0 +1,79 @@
+{
+ "call": {
+  "tool_name": "test_weekday_pattern",
+  "arguments": {
+   "ticker": "THYAO",
+   "pattern": "mon_tue_wed_down",
+   "start_date": "2024-01-01",
+   "end_date": "2025-12-31",
+   "oos_start_date": "2026-01-01"
+  }
+ },
+ "as_of_date": "2026-09-10",
+ "result": {
+  "tool": "test_weekday_pattern",
+  "available": true,
+  "as_of_date": "2026-09-10",
+  "period": {
+   "start": "2024-01-01",
+   "end": "2025-12-31"
+  },
+  "warnings": [],
+  "ticker": "THYAO",
+  "pattern": "mon_tue_wed_down",
+  "in_sample": {
+   "occurrences": 19,
+   "weeks": 87,
+   "thu_fri_both_up": 6,
+   "thu": {
+    "n": 19,
+    "mean": 0.0121,
+    "median": 0.0097
+   },
+   "fri": {
+    "n": 19,
+    "mean": 0.0016,
+    "median": 0.0
+   },
+   "unconditional_thu_mean": 0.002,
+   "unconditional_fri_mean": 0.0033,
+   "thu_fri_mean": 0.0137,
+   "thu_fri_net_mean": 0.0107,
+   "roundtrip_cost": 0.003,
+   "p_value_vs_other_weeks": 0.2585,
+   "tests_run": 32
+  },
+  "multiple_testing": {
+   "tests_run": 32,
+   "bonferroni_alpha": 0.0016,
+   "note": "Searching many weekday/pattern combinations produces false positives by chance."
+  },
+  "out_of_sample": {
+   "period": {
+    "start": "2026-01-01",
+    "end": "2026-09-10"
+   },
+   "occurrences": 3,
+   "weeks": 30,
+   "thu_fri_both_up": 0,
+   "thu": {
+    "n": 3,
+    "mean": 0.0068,
+    "median": 0.0058
+   },
+   "fri": {
+    "n": 3,
+    "mean": -0.0054,
+    "median": -0.0128
+   },
+   "unconditional_thu_mean": 0.0009,
+   "unconditional_fri_mean": 0.0056,
+   "thu_fri_mean": 0.0014,
+   "thu_fri_net_mean": -0.0016,
+   "roundtrip_cost": 0.003,
+   "p_value_vs_other_weeks": null,
+   "tests_run": 32
+  },
+  "suggested_status": "REJECT_SIGNAL"
+ }
+}

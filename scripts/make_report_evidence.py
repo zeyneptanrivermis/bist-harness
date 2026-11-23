@@ -15,6 +15,7 @@ CALLS = {
     "sector_retail": {"tool_name": "rank_sector_relative_strength", "arguments": {"tickers": ["BIMAS", "MGROS", "MAVI"], "horizon_days": 20, "start_date": "2024-01-01", "end_date": A}},
     "sector_banking": {"tool_name": "rank_sector_relative_strength", "arguments": {"sector": "Banking", "horizon_days": 20, "start_date": "2024-01-01", "end_date": A}},
     "weekday_thyao": {"tool_name": "test_weekday_pattern", "arguments": {"ticker": "THYAO", "start_date": "2024-01-01", "end_date": "2025-12-31", "oos_start_date": "2026-01-01"}},
+    "weekday_pattern_thyao": {"tool_name": "test_weekday_pattern", "arguments": {"ticker": "THYAO", "pattern": "mon_tue_wed_down", "start_date": "2024-01-01", "end_date": "2025-12-31", "oos_start_date": "2026-01-01"}},
     "reversal_asels": {"tool_name": "detect_reversal_events", "arguments": {"ticker": "ASELS", "start_date": "2024-01-01", "end_date": A}},
     "fundamental_metrics_tuprs": {"tool_name": "get_fundamental_metrics", "arguments": {"ticker": "TUPRS"}},
     "fundamental_change_tuprs": {"tool_name": "calculate_fundamental_change", "arguments": {"ticker": "TUPRS", "start_date": "2024-01-01", "end_date": A}},

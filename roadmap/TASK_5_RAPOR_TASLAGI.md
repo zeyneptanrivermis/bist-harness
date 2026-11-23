@@ -2,7 +2,7 @@
 
 Hocanın istediği 6 madde, güncel adaptörün (r=32) gerçek sonuçlarıyla doldurulmuştur. Ölçümlerin kaynağı `artifacts/llm/eval_report.json` (Colab) ve `reports/test_sonuclari.md` (Mac).
 
-1. **Temel model ve gerekçe.** Qwen3-[1.7B | 4B]. Gerekçe: 1–8B aralığında, T4 üzerinde QLoRA ile eğitilebilir, chat şablonu ve JSON/araç çıktısı için uygun, açık lisans. Seçilen model: Qwen/Qwen3-4B. (1.7B denenmedi; 4B seçildi çünkü araç planı ve kanıta bağlı özet için daha fazla kapasite beklendi, bu varsayım 1.7B ile ölçülerek doğrulanmadı.)
+1. **Temel model ve gerekçe.** Qwen/Qwen3-4B. Gerekçe: 1–8B aralığında, T4 üzerinde QLoRA ile eğitilebilir, chat şablonu ve JSON/araç çıktısı için uygun, açık lisans. Seçilen model: Qwen/Qwen3-4B. (1.7B denenmedi; 4B seçildi çünkü araç planı ve kanıta bağlı özet için daha fazla kapasite beklendi, bu varsayım 1.7B ile ölçülerek doğrulanmadı.)
 2. **Veri.** Dört zorunlu senaryodan (sektör geride kalanlar, gün/çok günlük desenler, teknik dönüşler, çeyreklik temel + fiyat tepkisi) ve makro/tavsiye güvenlik sorularından üretilmiş kayıtlar (`python -m src.llm.dataset`): soru -> JSON araç planı, soru + kanıt -> kanıta bağlı İngilizce özet, görülmemiş veri/bilinmeyen hisse için ret.
    - Toplam kayıt (Colab'da `python -m src.llm.dataset --output-dir data/llm/dataset_v3 --per-family 120 --reports-per-family 90`): 1230 (araç planı 660, kanıt raporu 510, ret 60); manifest: `data/llm/dataset_v3/manifest.json`.
    - Hedefler gerçek araç çıktılarından ve `summaries.py` şablonlarından deterministik üretilir; modelin ürettiği metin eğitim hedefi değildir. İnsan incelemesi: **yapılmadı**; 1230 kaydın hepsinde `human_reviewed=false` (satır bazında insan incelemesi yapıldığına dair kayıt yok).

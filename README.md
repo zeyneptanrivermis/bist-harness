@@ -58,7 +58,7 @@ pip install -r requirements-llm.txt
 The price cache is not in Git. Pick **one**:
 
 **A. Use the shipped data (recommended; gives exactly the same numbers as the report).**
-Unzip the delivered data so these folders exist:
+Unzip the delivered `bist_data.zip` in the repository root (`unzip bist_data.zip`). Every file in it ends on 2026-09-10, so no price after the analysis date is shipped. These folders must exist:
 ```
 data/processed/    (AKBNK.parquet ... XU100.parquet, 31 tickers)
 data/macro/        (USDTRY.csv, EURTRY.csv, and TCMB_POLICY_RATE.csv, TUIK_CPI.csv, FED_FUNDS.csv if provided)
