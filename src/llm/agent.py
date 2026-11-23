@@ -177,8 +177,10 @@ def run_agent(question: str, chat_fn: ChatFn, *, as_of_date: str | None = None, 
         status = _STATUS.match(reply)
         if status and status.group(1) in STATUSES and not _ADVICE.search(reply):
             result["answer"] = reply  # a prose refusal is allowed and is not a tool call
+            result["action"] = status.group(1)
         else:
             result["tool_valid"] = False
+            result["action"] = "ANALYSIS_UNSAFE"  # the router blocked the plan, which is what the answer says
             result["violations"] = ["invalid_tool_call"]
             result["answer"] = f"{refusal_text('INVALID_TOOL_REQUEST')} ({exc})"
         return result

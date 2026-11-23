@@ -72,24 +72,27 @@ A–E strateji varyantları 30 hissede, t+1 zamanlaması ve maliyetlerle çalı�
 
 ## 5. Yerel model ve harness değerlendirmesi
 
-12 soru (6'sı eğitimde hiç görülmemiş hisselerle), her biri iki kez; metrikler modelin **ham** çıktısı üzerinden hesaplanır (Colab, CUDA, adaptör SHA-256 `4d62e052…cf96c4d5c`; ayrıntı `roadmap/TASK_5_RAPOR_TASLAGI.md`).
+12 soru (6'sı eğitimde hiç görülmemiş hisselerle), her biri iki kez; metrikler modelin **ham** çıktısı üzerinden hesaplanır. Aynı adaptör (SHA-256 `4d62e052…cf96c4d5c`) iki ortamda ölçüldü: Colab (CUDA, 4-bit NF4, `artifacts/llm/eval_report_colab.json`) ve teslim edilen kodla bu Mac (Apple M5, MPS, bf16, `artifacts/llm/eval_report_local.json`). Demo Mac yolunu kullanır. Ayrıntı: `roadmap/TASK_5_RAPOR_TASLAGI.md`.
 
-| Metrik | Base | Adaptör |
-|---|---|---|
-| Geçersiz araç çağrısı | %66,7 | %0 |
-| Yanlış plan | %75,0 | %8,3 |
-| Sayısal halüsinasyon (ham taslak) | %0 | %33,3 |
-| Desteklenmeyen sonuç | %25,0 | %0 |
-| Look-ahead | %16,7 | %0 |
-| Kanıt eksikliği | %25,0 | %0 |
-| Kural ihlali (tavsiye) | %0 | %0 |
-| Tekrarlanabilirlik hatası | %0 | %0 |
-| Guard'ın taslağı değiştirdiği oran | %25,0 | %33,3 |
+| Metrik | Base (Colab) | Adaptör (Colab) | Base (Mac) | Adaptör (Mac) |
+|---|---|---|---|---|
+| Geçersiz araç çağrısı | %66,7 | %0 | %58,3 | %16,7 |
+| Yanlış plan | %75,0 | %8,3 | %58,3 | %25,0 |
+| Sayısal halüsinasyon (ham taslak) | %0 | %33,3 | %0 | %33,3 |
+| Desteklenmeyen sonuç | %25,0 | %0 | %41,7 | %0 |
+| Look-ahead (plan tarihi) | %16,7 | %0 | %16,7 | %16,7 |
+| Kanıt eksikliği | %25,0 | %0 | %41,7 | %0 |
+| Kural ihlali (tavsiye) | %0 | %0 | %0 | %0 |
+| Tekrarlanabilirlik hatası | %0 | %0 | %0 | %0 |
+| Guard'ın taslağı değiştirdiği oran | %25,0 | %33,3 | %41,7 | %33,3 |
 
 Okuma:
 - İnce ayar araç planını düzeltti. Base 12 sorunun 8'inde geçerli plan üretemediği için özet aşamasına en fazla 4 soruda ulaşıyor; bu yüzden onun %0 sayısal halüsinasyonu adil bir kıyas değildir.
 - Adaptörün ham taslağı 4 cevapta kanıttan sapıyor (çoğunlukla ±0,1 puanlık yuvarlama farkı). Guard bunları yakalayıp deterministik özetle değiştiriyor; yani kullanıcıya giden cevapların üçte birinde metin modelin değil şablonun.
 - Mac'te (HF, bf16) 5 örnek soru iki turda birebir aynı çıktı; soru başına 31–57 sn. Ollama int8 yolunda 17–23 sn, 5 sorunun 4'ünde HF ile aynı (`notebooks/README.md`).
+- **Colab ve Mac farkı.** 4-bit (Colab) ve bf16 (Mac) sayısal olarak farklı olduğu için greedy çözümleme bazı sorularda başka token seçiyor. Mac'te iki tuzak soruda (25.09.2026 tarihi, evrende olmayan GARAN) model metinle reddetmek yerine bir araç planı yazdı; router planı reddetti ve kullanıcıya `ANALYSIS_UNSAFE` döndü. Bu yüzden Mac'te geçersiz araç çağrısı %16,7 ve look-ahead %16,7 görünüyor: model 2026-09-10 sonrası tarihi istedi, ama hiçbir araç çalışmadı ve analiz tarihinden sonraki veri kullanılmadı. Mac'in yanlış plan oranındaki fark ayrıca perakende sorusundan geliyor: model `tickers` yerine `sector="retail"` yazdı; aynı üç hisseyi seçtiği için sonuç aynı, ama ölçüt birebir argüman beklediği için yanlış sayıldı.
+- **Veri anlık görüntüsü.** Colab koşusu daha eski bir fiyat önbelleğiyle yapıldı (ör. perakende 489 olay, ASELS 5 günlük isabet %64,7, THYAO örnek dışı 29 hafta). Mac koşusu teslim edilen `bist_data.zip` ile birebir aynı veriyi kullanır ve rapordaki sayıları (494 olay, %67,6, 30 hafta) verir.
+- **Sektör sorularında guard.** Harness artık sektör planlarına makro kanıtı (E3) ekliyor, backtest E4 oldu. Adaptör üç kanıtlı düzende eğitildiği için taslağı E4'ü atlarsa guard `missing_evidence_id` ile şablona geçer; Mac koşusunda perakende taslağı guard'dan geçti, telekom taslağı sayı sapması yüzünden değiştirildi. Yeniden eğitimde `src/llm/dataset.py` aynı `execute_plan` akışını kullandığı için yeni düzen kendiliğinden eğitim verisine girer.
 - Önceki adaptöre (r=16) göre sayısal halüsinasyon %50 → %33, kural ihlali %25 → %0, guard devreye girme %58 → %33.
 
 ### 5.1 A–E harness deneyi (`08`)
@@ -98,7 +101,7 @@ Repodaki A–E karşılaştırması **simüle edilmiş bir sağlayıcıdan** gel
 
 ## 6. Tartışma
 
-**Ne çalışıyor.** Hesabı araçlara, denetimi guard'a bırakmak işe yarıyor: ince ayarlı model geçersiz araç çağrısını ve ileri bakışı sıfıra indirdi, 12 soruluk değerlendirmede tavsiye kuralı ihlali vermedi ve sonuçlar tekrarlanabilir (greedy çözümleme). Sistem "bilmiyorum" demeyi biliyor: küçük örneklem, temel verisi olmayan hisse, boş haber dosyası ve tavsiye istekleri `INVESTIGATE` ya da uyarıyla sonuçlanıyor.
+**Ne çalışıyor.** Hesabı araçlara, denetimi guard'a bırakmak işe yarıyor: ince ayarlı model geçersiz araç çağrısını Colab'da %66,7'den %0'a, Mac'te %58,3'ten %16,7'ye indirdi (Mac'teki iki hatalı planı router durdurdu), 12 soruluk değerlendirmede tavsiye kuralı ihlali vermedi ve sonuçlar tekrarlanabilir (greedy çözümleme). Sistem "bilmiyorum" demeyi biliyor: küçük örneklem, temel verisi olmayan hisse, boş haber dosyası ve tavsiye istekleri `INVESTIGATE` ya da uyarıyla sonuçlanıyor.
 
 **Ne çalışmıyor ya da kanıtlanmadı.** Dört senaryodan hiçbiri sağlam bir işlem sinyali bulmadı: perakende grubunda yakalama %46–52, hafta içi örüntüsü reddedildi, teknik dönüşün birleşik koşulları anekdot, bilanço tepkisi 8 çeyrekte ayırt edilemiyor. Stratejiler al-tut'u geçemedi. Bu bir başarısızlık değil, dürüst bulgudur: 2024–2026'da güçlü yükselen bir piyasada basit kurallar al-tut'un gerisinde kalıyor ve guard'ın amacı tam olarak bu sonuçların fazla iddialı sunulmamasını sağlamak.
 

@@ -115,11 +115,11 @@ class AgentLoopTests(unittest.TestCase):
                       '{"tool_calls": [{"tool_name": "test_weekday_pattern", "arguments": {"ticker": "THYAO", "end_date": "2026-09-11"}}]}'):
             router = StubRouter()
             result = self._run(_model("x", first=reply), router)
-            self.assertEqual((result["tool_valid"], result["violations"], router.ran), (False, ["invalid_tool_call"], []))
+            self.assertEqual((result["tool_valid"], result["violations"], router.ran, result["action"]), (False, ["invalid_tool_call"], [], "ANALYSIS_UNSAFE"))
 
     def test_prose_refusal_is_allowed_and_is_not_a_tool_call(self) -> None:
         result = self._run(_model("x", first="Status: ANALYSIS_UNSAFE. The request needs data after the analysis date."))
-        self.assertEqual((result["tool_valid"], result["violations"]), (None, []))
+        self.assertEqual((result["tool_valid"], result["violations"], result["action"]), (None, [], "ANALYSIS_UNSAFE"))
 
     def test_advice_question_needs_the_refusal_sentence(self) -> None:
         result = self._run(_model("Status: REJECT_SIGNAL. E1 E2 E3"), question="Should I buy THYAO tomorrow? Give me a price target.")
