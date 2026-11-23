@@ -76,6 +76,21 @@ class AgentLoopTests(unittest.TestCase):
         self.assertEqual(router.ran, ["check_data_quality", "test_weekday_pattern", "run_backtest"])
         self.assertEqual(result["action"], "REJECT_SIGNAL")
 
+    @unittest.skipUnless((PROCESSED_DATA_DIR / "MAVI.parquet").exists(), "needs the price cache")
+    def test_sector_plan_gets_macro_context_and_pattern_reports_costs(self) -> None:
+        sector = [("rank_sector_relative_strength", {"tickers": ["BIMAS", "MGROS", "MAVI"], "horizon_days": 20, "start_date": "2024-01-01", "end_date": AS_OF})]
+        run = execute_plan(sector, AS_OF, SafeProjectToolRouter())
+        self.assertIn("LOAD_CONTEXT", run["states"])
+        self.assertEqual([e["source_tool"] for e in run["evidence"]], ["check_data_quality", "rank_sector_relative_strength", "get_macro_context", "run_backtest"])
+        self.assertEqual(run["evidence"][2]["values"]["fx_relationship"]["ticker"], "MAVI")
+        pattern = SafeProjectToolRouter().execute("test_weekday_pattern", {"ticker": "THYAO", "pattern": "mon_tue_wed_down", "start_date": "2024-01-01", "end_date": "2025-12-31", "oos_start_date": "2026-01-01"}, as_of_date=AS_OF)
+        p = pattern["in_sample"]
+        self.assertAlmostEqual(p["thu_fri_net_mean"], p["thu_fri_mean"] - 0.003, places=3)
+        self.assertEqual(pattern["multiple_testing"]["tests_run"], 32)
+        text = draft_summary("REJECT_SIGNAL", [{"evidence_id": "E1", "values": pattern}])
+        self.assertIn("round-trip cost", text)
+        self.assertIn("median", text)
+
     def test_good_answer_is_kept_and_bad_answer_is_replaced_but_raw_is_kept(self) -> None:
         run = execute_plan(StubRouter().validate_plan(PLAN, as_of_date=AS_OF), AS_OF, StubRouter())
         good = draft_summary(run["expected"], run["evidence"], "Does THYAO show the pattern?")

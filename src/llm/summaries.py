@@ -54,14 +54,18 @@ def fact_line(item: dict[str, Any]) -> str:
             if "thu_fri_both_up" in p:
                 if not p["occurrences"]:
                     return f"{label}: the pattern never occurred."
-                return (f"{label}: {p['occurrences']} occurrences in {p['weeks']} weeks; Thursday and Friday were both up in {p['thu_fri_both_up']}; mean Thursday {_p(p['thu']['mean'])}, "
-                        f"mean Friday {_p(p['fri']['mean'])} against {_p(p['unconditional_thu_mean'])} and {_p(p['unconditional_fri_mean'])} in other weeks (p {_n(p['p_value_vs_other_weeks'], 3)}).")
+                text = (f"{label}: {p['occurrences']} occurrences in {p['weeks']} weeks; Thursday and Friday were both up in {p['thu_fri_both_up']}; "
+                        f"mean Thursday {_p(p['thu']['mean'])} (median {_p(p['thu']['median'])}), mean Friday {_p(p['fri']['mean'])} (median {_p(p['fri']['median'])}) "
+                        f"against {_p(p['unconditional_thu_mean'])} and {_p(p['unconditional_fri_mean'])} in other weeks (p {_n(p['p_value_vs_other_weeks'], 3)}).")
+                if "thu_fri_net_mean" in p:
+                    text += (f" Holding Thursday to Friday gave a mean {_p(p['thu_fri_mean'])}, or {_p(p['thu_fri_net_mean'])} after a {_p(p['roundtrip_cost'])} round-trip cost.")
+                return text
             return f"{label}: {p['occurrences']} occurrences."
         text = f"{eid}: " + block(f"In-sample {v['period']['start']} to {v['period']['end']}", v["in_sample"])
         if "out_of_sample" in v:
             text += " " + block(f"Out-of-sample from {v['out_of_sample']['period']['start']}", v["out_of_sample"])
         m = v["multiple_testing"]
-        return text + f" Multiple-testing risk: {m['tests_run']} test(s) run, Bonferroni alpha {_n(m['bonferroni_alpha'], 3)}." + _warn(v)
+        return text + f" Multiple-testing risk: corrected for {m['tests_run']} candidate tests, Bonferroni alpha {_n(m['bonferroni_alpha'], 4)}. {m.get('note', '')}".rstrip() + _warn(v)
     if tool == "detect_reversal_events":
         b = v["by_horizon"]
         combos = "; ".join(f"{c['condition'].split('. ', 1)[1]}: {c['n']} cases, 5-day hit rate {_p(c['hit_rate_5d'])}" for c in v["combined_conditions"] if c["n"])

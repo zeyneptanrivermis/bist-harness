@@ -25,6 +25,9 @@ from src.mcp_tools.serialization import json_safe
 from src.scenarios.fundamental_reaction import align_financial_disclosure_dates, calculate_quarterly_changes
 from src.scenarios.technical_reversals import compare_single_vs_combined_reversals, detect_reversal_events
 from src.universe import get_universe_df
+from src.config import DEFAULT_COMMISSION_RATE, DEFAULT_SLIPPAGE_RATE
+
+ROUNDTRIP_COST = 2.0 * (DEFAULT_COMMISSION_RATE + DEFAULT_SLIPPAGE_RATE)
 
 SMALL_SAMPLE = 30  # below this many events a hit rate is anecdotal
 MIN_EPISODES = 10  # below this many independent episodes nothing may be labelled a candidate
@@ -121,9 +124,13 @@ def _weekday_period(df: pd.DataFrame, pattern: str) -> dict[str, Any]:
         hit, rest = t[t["cond"]], t[~t["cond"]]
         both_up = int(((hit["thu"] > 0) & (hit["fri"] > 0)).sum())
         p = stats.ttest_ind(hit["thu"] + hit["fri"], rest["thu"] + rest["fri"], equal_var=False).pvalue if len(hit) >= 5 and len(rest) > 1 else None
+        thu_fri = hit["thu"] + hit["fri"]
         return {"occurrences": int(len(hit)), "weeks": int(len(t)), "thu_fri_both_up": both_up, "thu": _stat(hit["thu"]), "fri": _stat(hit["fri"]),
                 "unconditional_thu_mean": _r(rest["thu"].mean()), "unconditional_fri_mean": _r(rest["fri"].mean()),
-                "p_value_vs_other_weeks": _r(p) if p is not None else None, "tests_run": 1}
+                # hold Thursday open to Friday close once: one round trip of commission + slippage
+                "thu_fri_mean": _r(thu_fri.mean()), "thu_fri_net_mean": _r(thu_fri.mean() - ROUNDTRIP_COST), "roundtrip_cost": ROUNDTRIP_COST,
+                "p_value_vs_other_weeks": _r(p) if p is not None else None,
+                "tests_run": 32}  # the pattern is one of 2^5 possible Mon-Fri up/down sequences, so correct for all 32
     from src.scenarios.weekday_patterns import detect_multiday_patterns, summarize_pattern_performance
 
     events = detect_multiday_patterns(df, pattern_type=pattern, forward_horizons=[1, 2, 5])
@@ -216,7 +223,7 @@ def rank_sector_relative_strength_summary(as_of: str, tickers: Optional[list[str
     out["most_lagging_has_fundamental_records"] = has_fund
     if not has_fund:
         out["warnings"].append(f"No fundamental records for {worst}: a structural lag cannot be separated from a temporary one.")
-    out["warnings"].append("Macro evidence is not part of this tool; call get_macro_context to check whether FX or rates explain the lag.")
+    out["warnings"].append("Macro evidence is not part of this tool; the get_macro_context evidence shows whether FX or rates may explain the lag.")
     h10 = stats_by_h["10d"]
     if h10["independent_episodes"] < MIN_EPISODES:
         out["warnings"].append(f"Small sample: {h10['independent_episodes']} independent episodes.")
