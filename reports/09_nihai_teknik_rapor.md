@@ -97,7 +97,16 @@ Okuma:
 
 ### 5.1 A–E harness deneyi (`08`)
 
-Repodaki A–E karşılaştırması **simüle edilmiş bir sağlayıcıdan** gelir ve model kalitesini ölçmez; gerçek model koşusu beş doğrulanmış engel yüzünden yapılmadı (11/12 vakada boş sayısal kanıt, araç adı uyuşmazlığı, 2025 tarihleri, sentetik veri tuzakları, insan onayı). Hocanın altı ölçütünü gerçek model üzerinde veren ölçüm §5'teki tablodur; kontrol katmanlarının tek tek katkısı ölçülmedi.
+Gerçek model, aynı 15 soruyu (12 normal, 3 bozuk veri) beş kontrol düzeyinde çalıştırdı; her soru iki kez soruldu (Colab, T4). Sonuç `reports/evidence/eval_ae_colab.json` içinde, ayrıntısı `08` §4.1'de.
+
+| Ölçüt | A | B | C | D | E |
+|---|---|---|---|---|---|
+| Yanlış plan | 86,7% | 6,7% | 6,7% | 6,7% | 6,7% |
+| Sayısal halüsinasyon (son cevap) | 0% | 20% | 26,7% | 0% | 0% |
+| Kalite kapısı atlandı (bozuk veri) | 20% | 20% | 20% | 0% | 0% |
+| Guard'ın cevabı değiştirdiği | 0% | 0% | 0% | 26,7% | 26,7% |
+
+Okuma: kalite kapısı (D) üç bozuk veri sorusunun üçünü de durdurdu; kapı olmadan (B, C) bozuk veri analiz edildi. Guard, D ve E'nin cevaplarının %26,7'sini değiştirdi. A'da araç planı olmadığı için yanlış plan ölçütü anlamsız. 15 soru, sürüm başına tek ölçüm: sonuçlar eğilim gösterir, kanıt değildir. Simüle deney (`08` §2) yalnızca boru hattı testidir.
 
 ## 6. Tartışma
 

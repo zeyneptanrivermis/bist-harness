@@ -44,29 +44,41 @@ Bu tablo **"daha çok kontrol, daha az hata" diye okunamaz**: A'nın %100 hata v
 
 Bu beş engel kapatılmadan alınan "gerçek model A–E" sayıları yanıltıcı olurdu.
 
-## 4. Gerçek model için elimizdeki ölçüm
+## 4. Gerçek model için ölçüm
 
-Aynı altı ölçütü gerçek yerel model üzerinde ölçen ayrı bir değerlendirme var (`python -m src.llm.evaluate`, 12 soru, her biri 2 kez, Colab'da CUDA; ayrıntı `roadmap/TASK_5_RAPOR_TASLAGI.md`). Bu **A–E değil, base ve ince ayarlı adaptör karşılaştırmasıdır**; her ikisi de araçlı harness içinde çalışır:
+### 4.1 Gerçek A–E koşusu (Colab, T4, Qwen3-4B + adaptör)
 
-| Metrik | Base | Adaptör |
-|---|---|---|
-| Geçersiz araç çağrısı | %66,7 | %0 |
-| Yanlış plan | %75,0 | %8,3 |
-| Sayısal halüsinasyon (ham taslak) | %0 | %33,3 |
-| Desteklenmeyen sonuç | %25,0 | %0 |
-| Look-ahead | %16,7 | %0 |
-| Kanıt eksikliği | %25,0 | %0 |
-| Kural ihlali (tavsiye) | %0 | %0 |
-| Guard'ın taslağı değiştirdiği oran | %25,0 | %33,3 |
+Simüle edilmiş tablonun yerine, aynı 15 soruyu (12 normal, 3 bozuk veri) gerçek model ile beş sürümde çalıştıran ölçüm geçti. Her soru iki kez soruldu. Sonuç: `reports/evidence/eval_ae_colab.json` (adaptör SHA-256 `4d62e052…cf96c4d5c`). Komut: `python -m src.llm.evaluate --ae --adapter <dizin>`.
 
-Neyi gösterir: ince ayar araç planını düzeltir; ham taslakta kalan sayısal sapmaları guard yakalayıp deterministik kanıt özetiyle değiştirir. Neyi **göstermez**: kontrol katmanlarının (araç, durum makinesi, kapı, kanıt, replay) tek tek katkısı. Bu, A–E'nin asıl sorusudur.
+| Ölçüt | A | B | C | D | E |
+|---|---|---|---|---|---|
+| Yanlış plan | 86,7% | 6,7% | 6,7% | 6,7% | 6,7% |
+| Sayısal halüsinasyon (kullanıcıya giden cevap) | 0% | 20% | 26,7% | 0% | 0% |
+| Desteklenmeyen sonuç | 6,7% | 0% | 0% | 0% | 0% |
+| Kural ihlali (tavsiye) | 13,3% | 13,3% | 0% | 0% | 0% |
+| Kanıt eksikliği | 0% | 0% | 6,7% | 0% | 0% |
+| Guard'ın cevabı değiştirdiği | 0% | 0% | 0% | 26,7% | 26,7% |
+| Kalite kapısı atlandı (bozuk veri) | 20% | 20% | 20% | 0% | 0% |
+| Geçersiz araç çağrısı, ileri bakış, çökme, tekrarlanabilirlik hatası | 0% | 0% | 0% | 0% | 0% |
 
-## 5. A–E'yi gerçek modelle çalıştırmak için yapılması gerekenler
+Okuma:
+- **Kalite kapısı (D):** Üç bozuk veri sorusunun üçünü de D ve E `ANALYSIS_UNSAFE` ile durdurdu. B ve C bozuk veriyi analiz etti; tekrarlayan tarihli ARCLK sorusunda ikisi de `WATCH` verdi.
+- **Guard (D'ye ekleme):** D ve E soruların %26,7'sinde modelin taslağını değiştirdi. Yani bu iki sürümde kullanıcıya giden cevapların dörtte birinden fazlası modelin değil şablonun metni.
+- **A'nın yanlış planı:** A'da araç planı yok; bu bir hata değil, tasarım gereği. A için kalite kapısı ölçütü de anlamsız.
+- **Sınır:** 15 soru ve her sürüm için tek ölçüm. Sonuçlar eğilim gösterir, kanıt değildir. Ayrıca A–E sırasında model yalnızca adaptörle çalıştı; base model A–E'de ölçülmedi.
 
-1. Her vaka için kanıttaki izinli sayıları (`known_numeric_values`) gerçek araç çıktısından otomatik doldurmak.
-2. Deney araç adlarını gerçek yönlendirici adlarına eşlemek ve vaka tarihlerini 2026-09-10'a taşımak.
-3. Eksik veri, tekrarlayan tarih ve kısa geçmiş vakaları için bozuk veri kopyaları üretip bunları gerçek kalite kapısına vermek.
-4. Yerel model için bir `ExperimentProvider` yazmak (`providers.py` arayüzü hazır): A modelsiz araçsız, B araçlı, C + durum makinesi, D + kapı ve kanıt, E + replay.
-5. Sürüm E'nin insan onayını açık biçimde "bekliyor" bırakmak ya da gerçek bir onay adımı eklemek.
+### 4.2 Base ve adaptör karşılaştırması (`09` §5)
 
-Her çalıştırma ~20–60 sn sürer (12 vaka × 5 sürüm ≈ 20–60 dk); donanım engeli değildir, tasarım işidir.
+Önceki base-adaptör ölçümü ayrı bir değerlendirmedir (12 soru, araçlı harness içinde, ham taslak üzerinden). Colab ve Mac sonuçları `09` §5'te; Colab'ın sonuçları `reports/evidence/eval_report_colab.json` içinde.
+
+## 5. Yapılanlar
+
+Önceki sürümde listelenen beş engel kapatıldı:
+
+1. Kanıttaki izinli sayılar: gerçek araç çıktısından otomatik alınıyor (`evaluate.py`, `unsupported_numbers`).
+2. Araç adları: gerçek yönlendiricinin adları kullanılıyor; sorular 2026-09-10 analiz tarihine göre.
+3. Bozuk veri: üç vaka (KCHOL eksik veri, ARCLK tekrarlayan tarih, PGSUS kısa geçmiş) bellekte bozulup gerçek kalite kapısına veriliyor; diskteki dosyalar değişmiyor.
+4. Yerel model sürümleri: `run_agent(..., version="A".."E")`. E varsayılandır ve bugünkü ajan ile aynıdır.
+5. İnsan onayı: E'de `PENDING` bırakılıyor ve "otomatik doldurulmadı" diye kaydediliyor. Gerçek onay yapılmadı.
+
+Bu sayfadaki eski simüle tablo (§2) yalnızca deney hattının çalıştığını gösteren bir **boru hattı testi**dir; model kalitesi ölçmez.
