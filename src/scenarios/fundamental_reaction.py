@@ -13,7 +13,8 @@ import numpy as np
 import pandas as pd
 
 from src.fundamentals import get_fundamental_metrics
-from src.data_pipeline import get_stock_history, get_index_history
+from src.backtest.sector_benchmark import benchmark_peers
+from src.data_pipeline import get_stock_history, get_index_history, load_ticker_data
 from src.config import DEFAULT_COMMISSION_RATE, DEFAULT_SLIPPAGE_RATE
 
 
@@ -38,6 +39,13 @@ def calculate_quarterly_changes(fund_df: pd.DataFrame) -> pd.DataFrame:
     df["Net_Income_Growth_YoY"] = df["net_income"].pct_change(4)
     df["EBITDA_Margin_Change_YoY"] = df["ebitda_margin"].diff(4)
 
+    # Margin, leverage, liquidity and valuation changes (columns may be NaN until real data is added)
+    for col in ("net_margin", "net_debt_ebitda", "current_ratio", "quick_ratio", "debt_equity", "roa", "pe", "pb", "ev_ebitda"):
+        if col in df.columns:
+            df[f"{col}_Change_QoQ"] = df[col].diff(1)
+    if "cash_conversion" in df.columns:
+        df["Cash_Conversion_Change_QoQ"] = df["cash_conversion"].diff(1)
+
     # Fundamental classification
     # Strong improvement: Both Revenue and EBITDA growing > 10% QoQ
     conditions = [
@@ -50,19 +58,39 @@ def calculate_quarterly_changes(fund_df: pd.DataFrame) -> pd.DataFrame:
     return df
 
 
+def _peer_basket_return(peer_prices: Dict[str, pd.DataFrame], entry_date: pd.Timestamp, horizon: int, last_date: pd.Timestamp) -> float:
+    """Mean h-day return of the sector peers from the same entry date (NaN when no peer has the window)."""
+    rets = []
+    for frame in peer_prices.values():
+        px = frame["Adj Close"].sort_index().loc[:last_date]  # never look past the analysis cutoff
+        i = px.index.get_indexer([entry_date])[0]
+        if i != -1 and i + horizon < len(px):
+            rets.append(px.iloc[i + horizon] / px.iloc[i] - 1.0)
+    return float(np.mean(rets)) if rets else float("nan")
+
+
 def align_financial_disclosure_dates(
     ticker: str,
     price_df: Optional[pd.DataFrame] = None,
     market_df: Optional[pd.DataFrame] = None,
     forward_horizons: List[int] = [1, 5, 20],
     signal_shift: int = 1,  # Strict t+1 execution (disclosed after close -> traded next day)
+    peer_prices: Optional[Dict[str, pd.DataFrame]] = None,
 ) -> pd.DataFrame:
     """
     Syllabus Section 32 function:
     Aligns each quarterly financial disclosure with market prices starting from
     the next trading session (t+1) to strictly eliminate look-ahead bias.
-    Computes Cumulative Abnormal Returns (CAR) versus XU100.
+    Computes Cumulative Abnormal Returns (CAR) versus XU100 and, when sector peers
+    have data, versus the equal-weight peer basket (``Fwd_{h}d_Sector_CAR``, NaN otherwise).
     """
+    if peer_prices is None:
+        peer_prices = {}
+        for peer in benchmark_peers(ticker):
+            try:
+                peer_prices[peer] = load_ticker_data(peer)
+            except FileNotFoundError:
+                continue
     fund_df = get_fundamental_metrics(ticker)
     fund_metrics = calculate_quarterly_changes(fund_df)
 
@@ -141,11 +169,16 @@ def align_financial_disclosure_dates(
                 record[f"Fwd_{h}d_Stock_Return"] = stock_ret
                 record[f"Fwd_{h}d_Benchmark_Return"] = bench_ret
                 record[f"Fwd_{h}d_CAR"] = car
+                sector_ret = _peer_basket_return(peer_prices, entry_date, h, price_df.index[-1])
+                record[f"Fwd_{h}d_Sector_Return"] = sector_ret
+                record[f"Fwd_{h}d_Sector_CAR"] = stock_ret - sector_ret if not np.isnan(sector_ret) else np.nan
                 record[f"Fwd_{h}d_Outperformed_Benchmark"] = int(car > 0)
             else:
                 record[f"Fwd_{h}d_Stock_Return"] = np.nan
                 record[f"Fwd_{h}d_Benchmark_Return"] = np.nan
                 record[f"Fwd_{h}d_CAR"] = np.nan
+                record[f"Fwd_{h}d_Sector_Return"] = np.nan
+                record[f"Fwd_{h}d_Sector_CAR"] = np.nan
                 record[f"Fwd_{h}d_Outperformed_Benchmark"] = np.nan
 
         events.append(record)

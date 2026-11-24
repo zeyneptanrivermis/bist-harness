@@ -138,6 +138,12 @@ Hepsi araç çıktılarından hesaplanır ve `reports/evidence/*.json` içinde s
 | `Fwd_5d_CatchUp_Hit`, `Fwd_10d_CatchUp_Hit`, `Fwd_20d_CatchUp_Hit` | Fark kapandıysa 1 |
 | `Volume_Ratio` | O günkü hacim / 20 günlük hacim ortalaması (sıçrama eşiği 1,2) |
 | `Volume_Regime` | `HIGH` (oran ≥ 1,2), `LOW` (< 0,8), aksi halde `NORMAL` |
+| `Volatility_Regime` | 20 günlük getiri oynaklığı, kendi genişleyen medyanının üstündeyse `HIGH_VOL`, değilse `LOW_VOL` (ilk 40 gün `UNKNOWN`) |
+| `Reversal_Strength_1d`, `_3d`, `_5d`, `_10d` | Olayın öngördüğü yönde ileri getiri (düşüş yanlı olayda işareti çevrilmiş) |
+| `net_margin` | Net kâr / hasılat (türetilmiş) |
+| `net_debt_ebitda` | Net borç / son dört çeyrek FAVÖK toplamı; banka, sigorta ve aracı kurumlarda `NaN` |
+| `roa`, `debt_equity`, `current_ratio`, `quick_ratio`, `pe`, `pb`, `ev_ebitda`, `operating_cash_flow`, `cash_conversion` | Şartname §9 ölçütleri. Gerçek (Fintables) veri eklenene kadar boştur, uydurulmaz |
+| `Sector_Benchmark_Return`, `Alpha_vs_Sector` | Akran sepeti getirisi ve stratejinin sepete göre farkı (`run_backtest` çıktısı) |
 | `hit_rate_5d` | Olaydan sonra 5 gün içinde fiyatın yükseldiği olay oranı |
 | `ebitda_margin_change_qoq` | FAVÖK marjının çeyreklik değişimi |
 | `net_debt_to_annualized_ebitda` | Net borç / yıllıklandırılmış FAVÖK |

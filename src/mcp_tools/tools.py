@@ -7,6 +7,7 @@ from typing import Dict, Iterable, Optional
 import pandas as pd
 
 from src.backtest.engine import calculate_performance, run_backtest
+from src.backtest.sector_benchmark import benchmark_peers, build_sector_benchmark, sector_benchmark_metrics
 from src.context.news import get_news_events
 from src.strategies.variants import compare_strategy_variants
 from src.data_pipeline import get_index_history, get_stock_history, load_ticker_data
@@ -174,7 +175,14 @@ def run_backtest_tool(ticker: str, as_of_date: str, signals: Optional[list[int]]
             raise ValueError("signals length must equal the cached price history length after as_of filtering")
         signal_series = pd.Series(signals, index=price.index)
     result = run_backtest(signal_series, price, benchmark_df=market)
-    return ToolResponse(tool_name="run_backtest", as_of_date=as_of_date, data={"metrics": json_safe(result.metrics), "trade_count": len(result.trades)})
+    peers = {}
+    for peer in benchmark_peers(ticker):
+        try:
+            peers[peer] = load_ticker_data(peer)
+        except FileNotFoundError:
+            continue
+    metrics = {**result.metrics, **sector_benchmark_metrics(result.equity_curve, build_sector_benchmark(ticker, peers, as_of_date))}
+    return ToolResponse(tool_name="run_backtest", as_of_date=as_of_date, data={"metrics": json_safe(metrics), "trade_count": len(result.trades)})
 
 
 def get_news_events_tool(as_of_date: str, ticker: Optional[str] = None, topic: Optional[str] = None,

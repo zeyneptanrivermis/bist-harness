@@ -20,6 +20,7 @@ from src.config import ANALYSIS_AS_OF_DATE
 from src.harness.replay import log_decision
 from src.llm.infer import first_json
 from src.llm.summaries import advice_requested, draft_summary
+from src.harness.permissions import assert_tool_allowed
 from src.llm.tool_loop import SafeProjectToolRouter, ToolRequestError
 from src.llm.training_data import DEFAULT_SYSTEM_PROMPT, STATUSES, refusal_text, report_prompt, tool_prompt, tool_system_prompt
 from src.mcp_tools import research as R
@@ -144,6 +145,7 @@ def execute_plan(plan: list[tuple[str, dict[str, Any]]], as_of: str, router: Saf
     evidence: list[dict[str, Any]] = []
     tickers = _plan_tickers(plan)
     if gate and tickers:  # the mandatory gate runs in code, before any calculation, for every stock in the plan
+        assert_tool_allowed("CHECK_DATA_QUALITY", "check_data_quality")
         gates = {t: router.execute("check_data_quality", {"ticker": t}, as_of_date=as_of) for t in tickers}
         status = {t: g.get("gate_status", "ANALYSIS_UNSAFE") for t, g in gates.items()}
         blocking = [s for s in status.values() if s in _BLOCKING]
@@ -151,6 +153,8 @@ def execute_plan(plan: list[tuple[str, dict[str, Any]]], as_of: str, router: Saf
             return {"states": [*states, "BLOCKED"], "evidence": [], "expected": "ANALYSIS_UNSAFE", "blocked_answer": refusal_text(blocking[0] if blocking else "NO_DATA")}
         evidence.append(_item(1, {"tool": "check_data_quality", "available": True, "gate": status, "warnings": []}, as_of))
     states += ["CALCULATE", "RUN_SCENARIO"]
+    for name, _ in plan:
+        assert_tool_allowed("RUN_SCENARIO", name)
     outputs = [router.execute(name, args, as_of_date=as_of) for name, args in plan]
     evidence += [_item(len(evidence) + i + 1, out, as_of) for i, out in enumerate(outputs)]
     if not states_on:
@@ -160,12 +164,14 @@ def execute_plan(plan: list[tuple[str, dict[str, Any]]], as_of: str, router: Saf
     window = {k: v for k, v in first.items() if k in ("start_date", "end_date")}
     names = {n for n, _ in plan}
     if ticker and "rank_sector_relative_strength" in names and "get_macro_context" not in names:  # a lag is only structural vs temporary with macro context
-        states.append("LOAD_CONTEXT")
+        states.append("LOAD_MACRO_CONTEXT")
+        assert_tool_allowed("LOAD_MACRO_CONTEXT", "get_macro_context")
         evidence.append(_item(len(evidence) + 1, router.execute("get_macro_context", {"ticker": ticker, **window}, as_of_date=as_of), as_of))
-    states.append("RUN_BACKTEST")
+    states += ["PREVIEW_STRATEGIES", "RUN_BACKTEST", "RISK_GATE"]
+    assert_tool_allowed("RUN_BACKTEST", "run_backtest")
     if ticker and "run_backtest" not in names:  # the backtest state is mandatory, so the harness runs it if the plan did not
         evidence.append(_item(len(evidence) + 1, router.execute("run_backtest", {"ticker": ticker, **window}, as_of_date=as_of), as_of))
-    return {"states": [*states, "BUILD_EVIDENCE", "LOG_AND_CLOSE"], "evidence": evidence, "expected": _expected_status(evidence), "blocked_answer": None}
+    return {"states": [*states, "BUILD_EVIDENCE", "GENERATE_EXPLANATION", "LOG_AND_CLOSE"], "evidence": evidence, "expected": _expected_status(evidence), "blocked_answer": None}
 
 
 VERSIONS = ("A", "B", "C", "D", "E")  # A-E ablation: each adds one control layer; E is the real agent

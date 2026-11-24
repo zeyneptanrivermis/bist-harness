@@ -10,6 +10,7 @@ from uuid import uuid4
 import pandas as pd
 
 from src.backtest.engine import run_backtest
+from src.backtest.sector_benchmark import build_sector_benchmark, sector_benchmark_metrics
 from src.context.news import get_news_events
 from src.harness.evidence import build_evidence, evidence_to_dict, select_action
 from src.harness.quality import QualityReport, check_data_quality
@@ -20,6 +21,7 @@ from src.scenarios.fundamental_reaction import align_financial_disclosure_dates
 from src.scenarios.sector_laggard import rank_sector_laggards
 from src.scenarios.technical_reversals import detect_reversal_events
 from src.scenarios.weekday_patterns import test_weekday_pattern
+from src.strategies.variants import compare_strategy_variants
 from src.indicators import calculate_all_indicators
 
 
@@ -30,9 +32,14 @@ class HarnessState(str, Enum):
     CHECK_DATA_QUALITY = "CHECK_DATA_QUALITY"
     CALCULATE = "CALCULATE"
     RUN_SCENARIO = "RUN_SCENARIO"
-    LOAD_CONTEXT = "LOAD_CONTEXT"  # optional: news context
+    LOAD_FUNDAMENTALS = "LOAD_FUNDAMENTALS"  # optional
+    LOAD_MACRO_CONTEXT = "LOAD_MACRO_CONTEXT"  # optional
+    LOAD_CONTEXT = "LOAD_CONTEXT"  # optional: news context (news metadata only)
+    PREVIEW_STRATEGIES = "PREVIEW_STRATEGIES"
     RUN_BACKTEST = "RUN_BACKTEST"
+    RISK_GATE = "RISK_GATE"
     BUILD_EVIDENCE = "BUILD_EVIDENCE"
+    GENERATE_EXPLANATION = "GENERATE_EXPLANATION"
     HUMAN_REVIEW = "HUMAN_REVIEW"
     LOG_AND_CLOSE = "LOG_AND_CLOSE"
     CLOSED = "CLOSED"
@@ -45,10 +52,15 @@ _ALLOWED_TRANSITIONS = {
     HarnessState.LOAD_DATA: {HarnessState.CHECK_DATA_QUALITY},
     HarnessState.CHECK_DATA_QUALITY: {HarnessState.CALCULATE, HarnessState.BLOCKED},
     HarnessState.CALCULATE: {HarnessState.RUN_SCENARIO},
-    HarnessState.RUN_SCENARIO: {HarnessState.LOAD_CONTEXT, HarnessState.RUN_BACKTEST},
-    HarnessState.LOAD_CONTEXT: {HarnessState.RUN_BACKTEST},
-    HarnessState.RUN_BACKTEST: {HarnessState.BUILD_EVIDENCE},
-    HarnessState.BUILD_EVIDENCE: {HarnessState.HUMAN_REVIEW, HarnessState.LOG_AND_CLOSE},
+    HarnessState.RUN_SCENARIO: {HarnessState.LOAD_FUNDAMENTALS, HarnessState.LOAD_MACRO_CONTEXT, HarnessState.LOAD_CONTEXT, HarnessState.PREVIEW_STRATEGIES},
+    HarnessState.LOAD_FUNDAMENTALS: {HarnessState.LOAD_MACRO_CONTEXT, HarnessState.LOAD_CONTEXT, HarnessState.PREVIEW_STRATEGIES},
+    HarnessState.LOAD_MACRO_CONTEXT: {HarnessState.LOAD_CONTEXT, HarnessState.PREVIEW_STRATEGIES},
+    HarnessState.LOAD_CONTEXT: {HarnessState.PREVIEW_STRATEGIES},
+    HarnessState.PREVIEW_STRATEGIES: {HarnessState.RUN_BACKTEST},
+    HarnessState.RUN_BACKTEST: {HarnessState.RISK_GATE},
+    HarnessState.RISK_GATE: {HarnessState.BUILD_EVIDENCE},
+    HarnessState.BUILD_EVIDENCE: {HarnessState.GENERATE_EXPLANATION},
+    HarnessState.GENERATE_EXPLANATION: {HarnessState.HUMAN_REVIEW, HarnessState.LOG_AND_CLOSE},
     HarnessState.HUMAN_REVIEW: {HarnessState.LOG_AND_CLOSE},
     HarnessState.LOG_AND_CLOSE: {HarnessState.CLOSED},
     HarnessState.BLOCKED: set(),
@@ -64,11 +76,15 @@ class HarnessSession:
     transitions: List[str] = field(default_factory=lambda: [HarnessState.START.value])
     price_data: Optional[pd.DataFrame] = None
     benchmark_data: Optional[pd.DataFrame] = None
+    universe_data: Optional[Dict[str, pd.DataFrame]] = None
     quality: Optional[QualityReport] = None
     enriched_data: Optional[pd.DataFrame] = None
     scenario_summary: Dict[str, Any] = field(default_factory=dict)
     backtest_metrics: Dict[str, Any] = field(default_factory=dict)
     context: Dict[str, Any] = field(default_factory=dict)
+    strategy_preview: Dict[str, Any] = field(default_factory=dict)
+    risk_gate: Dict[str, Any] = field(default_factory=dict)
+    explanation: str = ""
     evidence: List[Dict[str, Any]] = field(default_factory=list)
     action: Optional[str] = None
     human_review: Optional[HumanReview] = None
@@ -112,6 +128,7 @@ class HarnessSession:
         if self.enriched_data is None:
             raise RuntimeError("Indicators must be calculated before scenario execution.")
         self._transition(HarnessState.RUN_SCENARIO)
+        self.universe_data = universe_data
         scenario = self.request.scenario
         if scenario == "technical_reversal":
             events = detect_reversal_events(self.enriched_data, market_df=self.benchmark_data)
@@ -137,35 +154,97 @@ class HarnessSession:
             self.scenario_summary = json_safe(row.iloc[0].to_dict())
             self.scenario_summary["rank_in_sector"] = int(row.iloc[0]["Rank_In_Sector"])
 
+    def load_fundamentals(self) -> None:
+        """Optional step: point-in-time fundamentals disclosed by the analysis date (curated, unverified source)."""
+        if self.state != HarnessState.RUN_SCENARIO:
+            raise RuntimeError("Fundamentals can be loaded only right after the scenario step.")
+        self._transition(HarnessState.LOAD_FUNDAMENTALS)
+        from src.fundamentals import get_fundamental_metrics
+        try:
+            frame = get_fundamental_metrics(self.request.ticker)
+            frame = frame[frame["kap_disclosure_date"] <= pd.Timestamp(self.request.as_of_date)]
+            self.context["fundamentals"] = {"rows": int(len(frame)), "latest": json_safe(frame.tail(1))}
+        except ValueError as exc:
+            self.context["fundamentals"] = {"rows": 0, "warnings": [str(exc)]}
+
+    def load_macro_context(self) -> None:
+        """Optional step: macro series by publication date, never by period date."""
+        if self.state not in {HarnessState.RUN_SCENARIO, HarnessState.LOAD_FUNDAMENTALS}:
+            raise RuntimeError("Macro context can be loaded only after the scenario or fundamentals step.")
+        self._transition(HarnessState.LOAD_MACRO_CONTEXT)
+        from src.macro import ALL_SERIES, load_macro_series
+        cutoff, latest = pd.Timestamp(self.request.as_of_date), {}
+        for name in ALL_SERIES:
+            frame = load_macro_series(name)
+            known = frame.loc[frame.index <= cutoff] if frame is not None else None
+            latest[name] = None if known is None or known.empty else {"published": str(known.index[-1].date()), "value": float(known["value"].iloc[-1])}
+        self.context["macro"] = {"latest": latest, "warnings": [f"{n}: no value published by the analysis date" for n, v in latest.items() if v is None]}
+
     def load_context(self, news: Optional[pd.DataFrame] = None) -> None:
         """Optional step: attach timestamped news metadata known by the analysis date.
 
         Context is logged and replayable but is never a committed numeric fact.
         """
-        if self.state != HarnessState.RUN_SCENARIO:
-            raise RuntimeError("Context can be loaded only right after the scenario step.")
+        if self.state not in {HarnessState.RUN_SCENARIO, HarnessState.LOAD_FUNDAMENTALS, HarnessState.LOAD_MACRO_CONTEXT}:
+            raise RuntimeError("News context can be loaded only after the scenario step.")
         self._transition(HarnessState.LOAD_CONTEXT)
         if news is None:
             news = get_news_events(ticker=self.request.ticker, as_of=self.request.as_of_date)
         else:
             news = news[news["effective_date"] <= pd.Timestamp(self.request.as_of_date)]  # same cutoff for supplied records
         self.context = {
+            **self.context,
             "news_count": int(len(news)),
             "news": json_safe(news.tail(5)),
             "warnings": [] if len(news) else ["No timestamped news records: news coverage is sparse (soft warning)."],
         }
 
+    def preview_strategies(self) -> None:
+        """Mandatory: compare strategy variants A-E under identical costs before one backtest is chosen."""
+        if self.enriched_data is None:
+            raise RuntimeError("Indicators must be calculated before strategy preview.")
+        self._transition(HarnessState.PREVIEW_STRATEGIES)
+        if self.benchmark_data is None:
+            self.strategy_preview = {"skipped": "no benchmark series supplied"}
+            return
+        self.strategy_preview = compare_strategy_variants(
+            self.request.ticker, self.request.as_of_date, price=self.price_data, market=self.benchmark_data
+        )
+
     def run_backtest(self) -> None:
         if self.enriched_data is None:
             raise RuntimeError("Indicators must be calculated before backtesting.")
+        if self.state in {HarnessState.RUN_SCENARIO, HarnessState.LOAD_FUNDAMENTALS, HarnessState.LOAD_MACRO_CONTEXT, HarnessState.LOAD_CONTEXT}:
+            self.preview_strategies()  # the preview state cannot be skipped
         self._transition(HarnessState.RUN_BACKTEST)
         signals = (self.enriched_data["Supertrend_Direction"] == 1).astype(int)
         result = run_backtest(signals, self.price_data, benchmark_df=self.benchmark_data)
-        self.backtest_metrics = json_safe(result.metrics)
+        sector_df = build_sector_benchmark(self.request.ticker, self.universe_data or {}, self.request.as_of_date)
+        self.backtest_metrics = json_safe({**result.metrics, **sector_benchmark_metrics(result.equity_curve, sector_df)})
+
+    def risk_gate_check(self) -> Dict[str, Any]:
+        """Mandatory: flag weak samples and benchmark underperformance after the backtest."""
+        self._transition(HarnessState.RISK_GATE)
+        flags: List[str] = []
+        trades = self.backtest_metrics.get("Total_Trades")
+        if trades is not None and trades < 10:
+            flags.append("SMALL_SAMPLE: fewer than 10 trades")
+        alpha = self.backtest_metrics.get("Alpha_vs_Benchmark")
+        if alpha is not None and alpha < 0:
+            flags.append("UNDERPERFORMS_BENCHMARK")
+        sector_alpha = self.backtest_metrics.get("Alpha_vs_Sector")
+        if sector_alpha is not None and sector_alpha < 0:
+            flags.append("UNDERPERFORMS_SECTOR_BENCHMARK")
+        if self.quality is not None and self.quality.status == "INVESTIGATE":
+            flags.append("QUALITY_INVESTIGATE")
+        self.risk_gate = {"status": "PASS_WITH_WARNINGS" if flags else "PASS", "flags": flags}
+        return self.risk_gate
 
     def build_evidence(self) -> None:
         if self.quality is None:
             raise RuntimeError("Quality report is required before evidence can be committed.")
+        if self.state == HarnessState.RUN_BACKTEST:
+            self.risk_gate_check()  # the risk gate cannot be skipped
         self._transition(HarnessState.BUILD_EVIDENCE)
         evidence = build_evidence(
             as_of_date=self.request.as_of_date,
@@ -177,14 +256,27 @@ class HarnessSession:
         self.evidence = evidence_to_dict(evidence)
         self.action = select_action(self.request.scenario, self.scenario_summary)
 
+    def generate_explanation(self) -> str:
+        """Deterministic explanation that cites only committed evidence ids."""
+        self._transition(HarnessState.GENERATE_EXPLANATION)
+        ids = ", ".join(str(e.get("evidence_id", "")) for e in self.evidence if e.get("evidence_id"))
+        flags = "; ".join(self.risk_gate.get("flags", [])) or "none"
+        self.explanation = (
+            f"Educational state {self.action} for {self.request.ticker} as of {self.request.as_of_date}. "
+            f"Committed evidence: {ids or 'none'}. Risk gate flags: {flags}. Historical evidence only; not investment advice."
+        )
+        return self.explanation
+
     def submit_human_review(self, review: HumanReview) -> None:
-        if self.state != HarnessState.BUILD_EVIDENCE:
-            raise RuntimeError("Human review is permitted only after evidence is committed.")
+        if self.state != HarnessState.GENERATE_EXPLANATION:
+            raise RuntimeError("Human review is permitted only after the explanation is generated.")
         self._transition(HarnessState.HUMAN_REVIEW)
         self.human_review = review
 
     def log_and_close(self) -> str:
-        if self.state == HarnessState.BUILD_EVIDENCE and not self.request.require_human_review:
+        if self.state == HarnessState.BUILD_EVIDENCE:
+            self.generate_explanation()
+        if self.state == HarnessState.GENERATE_EXPLANATION and not self.request.require_human_review:
             self._transition(HarnessState.LOG_AND_CLOSE)
         elif self.state == HarnessState.HUMAN_REVIEW:
             self._transition(HarnessState.LOG_AND_CLOSE)
@@ -198,6 +290,9 @@ class HarnessSession:
             "scenario_summary": self.scenario_summary,
             "backtest_metrics": self.backtest_metrics,
             "context": self.context,
+            "strategy_preview": self.strategy_preview,
+            "risk_gate": self.risk_gate,
+            "explanation": self.explanation,
             "evidence": self.evidence,
             "action": self.action,
             "human_review": self.human_review.model_dump() if self.human_review else None,

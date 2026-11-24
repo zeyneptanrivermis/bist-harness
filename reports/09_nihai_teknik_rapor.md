@@ -34,7 +34,7 @@ soru ──▶ yerel model (Qwen3-4B + LoRA) ──▶ JSON araç planı
 Bileşenler:
 - **Veri katmanı** (`src/data_pipeline.py`, `src/fundamentals.py`, `src/macro.py`, `src/context/news.py`): fiyat, çeyreklik temel veri, makro seriler, haber metadata'sı. Her veri kümesinin kaynağı ve yayın tarihi kuralı `reports/01_veri_sozlugu.md` içindedir.
 - **Deterministik araçlar** (`src/mcp_tools/`, `src/scenarios/`, `src/indicators.py`, `src/backtest/`): hesabı yalnızca bunlar yapar. Sinyaller t+1'de uygulanır, her işlemde %0,10 komisyon ve %0,05 kayma uygulanır.
-- **Harness** (`src/harness/`): zorunlu durum makinesi (`START → SELECT_UNIVERSE → LOAD_DATA → CHECK_DATA_QUALITY → CALCULATE → RUN_SCENARIO → [LOAD_CONTEXT] → RUN_BACKTEST → BUILD_EVIDENCE → LOG_AND_CLOSE`), veri kalitesi kapısı (`PASS`, `PASS_WITH_WARNINGS`, `HARD_BLOCK`, `ANALYSIS_UNSAFE`), kanıt kümesi ve karar günlüğü.
+- **Harness** (`src/harness/`): zorunlu durum makinesi (`START → SELECT_UNIVERSE → LOAD_DATA → CHECK_DATA_QUALITY → CALCULATE → RUN_SCENARIO → [LOAD_FUNDAMENTALS] → [LOAD_MACRO_CONTEXT] → [LOAD_CONTEXT (haber)] → PREVIEW_STRATEGIES → RUN_BACKTEST → RISK_GATE → BUILD_EVIDENCE → GENERATE_EXPLANATION → [HUMAN_REVIEW] → LOG_AND_CLOSE`; her durum yalnızca izinli araçları çağırabilir (`src/harness/permissions.py`). Şartnamedeki sıradan tek fark: kanıt, backtest sonucuna bağlı olduğu için `BUILD_EVIDENCE` `RISK_GATE`'ten sonra gelir), veri kalitesi kapısı (`PASS`, `PASS_WITH_WARNINGS`, `HARD_BLOCK`, `ANALYSIS_UNSAFE`), kanıt kümesi ve karar günlüğü.
 - **Yerel model** (`src/llm/`): Qwen/Qwen3-4B + LoRA (QLoRA, 4-bit NF4; r=32, alpha=64, dropout 0,05, 4 epoch, lr 2e-4, etkin batch 8, max_length 4096, seed 481, yalnızca cevap üzerinde kayıp, 1230 kayıt: araç planı 660, kanıt raporu 510, ret 60). **Neden Qwen3-4B:** hocanın önerdiği 1–8B aralığında, tek T4 GPU'da QLoRA ile eğitilebiliyor, açık lisanslı, chat şablonu ve JSON/araç çıktısı için uygun; 4B, araç planı ve kanıta bağlı özet için 1,7B'den fazla kapasite beklendiği için seçildi (1,7B ile karşılaştırma yapılmadı). Eğitim hedefleri araç çıktılarından deterministik şablonla üretilir, modelin ürettiği metin eğitim hedefi değildir. 6 hisse eğitimden dışlanmıştır (ENKAI, FROTO, ISMEN, MPARK, OYAKC, TCELL). Çıkarım Hugging Face Transformers ile yereldedir (Apple M5 MPS ya da CUDA); isteğe bağlı Ollama (int8) yolu vardır.
 - **Guard** (`check_answer`): modelin taslağında kanıtta olmayan sayı, analiz tarihinden sonraki tarih, kanıt kimliği eksikliği, doğrudan al/sat tavsiyesi ya da tavsiye isteğine ret eksikliği bulursa taslağı deterministik özetle değiştirir. Modelin ham taslağı değerlendirme için saklanır ve guard sonucu gizlemez.
 - **Karar günlüğü ve replay** (`reports/06_karar_gunlugu_ve_replay.md`): her analiz SHA-256'lı JSON olarak yazılır; tek karakter değişince replay reddeder. Günlük artık modelin ham taslağını ve guard ihlallerini de saklar.
@@ -53,21 +53,21 @@ Veri hakkında doğrulanmamış noktalar (alt raporlarda yinelenir):
 | Senaryo | Rapor | Ana sonuç | Sistem durumu |
 |---|---|---|---|
 | Sektörde geride kalanlar | `03` | Perakende grubunda MAVI en geride (%−3,25); geçmiş benzer gerilikler 10 günde %51,8 kapandı (494 olay, 53 bağımsız dönem). Yakalama hipotezi desteklenmiyor. | `INVESTIGATE` |
-| Hafta içi kalıplar | `weekday_patterns_report.pdf` | THYAO'da "Pzt-Sal-Çar düşer, Per-Cum yükselir" örüntüsü desteklenmiyor: örnek içinde 87 haftanın 19'unda görüldü ve bunların yalnızca 6'sında Perşembe ile Cuma birlikte yükseldi; örnek dışında 30 haftanın 3'ünde görüldü, hiçbirinde yükselmedi. Örüntünün bilindiği Çarşamba kapanışında alıp Cuma kapanışında satmanın maliyet sonrası (%0,3 gidiş-dönüş) ortalaması örnek içi %1,1, örnek dışı %−0,2; 32 aday haftalık dizi için Bonferroni α 0,0016 ve örnek içi p 0,259. Kaynak: `reports/evidence/weekday_pattern_thyao.json`. | `REJECT_SIGNAL` |
+| Hafta içi kalıplar | `10` (PDF: ilk taslak) | THYAO'da "Pzt-Sal-Çar düşer, Per-Cum yükselir" örüntüsü desteklenmiyor: örnek içinde 87 haftanın 19'unda görüldü ve bunların yalnızca 6'sında Perşembe ile Cuma birlikte yükseldi; örnek dışında 30 haftanın 3'ünde görüldü, hiçbirinde yükselmedi. Örüntünün bilindiği Çarşamba kapanışında alıp Cuma kapanışında satmanın maliyet sonrası (%0,3 gidiş-dönüş) ortalaması örnek içi %1,1, örnek dışı %−0,2; 32 aday haftalık dizi için Bonferroni α 0,0016 ve örnek içi p 0,259. Kaynak: `reports/evidence/weekday_pattern_thyao.json`. | `REJECT_SIGNAL` |
 | Teknik dönüşler | `02` | ASELS'te 34 alt bant teması; 5 günde isabet %67,6 (genel eğilim %59,2). İdeal birleşik koşul hiç oluşmadı (n=0), "RSI dibi + hacim" yalnızca 3 olay. | `TECHNICAL_REVERSAL_CANDIDATE` (küçük örneklem uyarılı) |
 | Bilanço ve fiyat tepkisi | `04` | TUPRS'te iyileşen çeyrekler 20 günde daha iyi görünüyor, ama fark tek çeyreğe dayanıyor ve 5 günde ortadan kalkıyor. Tüm sayılar örnek. | `INVESTIGATE` |
 | Makro bağlam | `05` | USD/TRY %+67,1; EREGL ile haftalık korelasyon −0,26 (zayıf ve ters). "Kur yükselince ihracatçı yükselir" varsayımı desteklenmiyor. | `INVESTIGATE` |
 
 ### 4.1 Backtest ve benchmark (`07`)
 
-A–E strateji varyantları 30 hissede, t+1 zamanlaması ve maliyetlerle çalıştırıldı. **Hiçbir varyant al-tut'u ya da XU100'ü sistematik biçimde geçmedi:** medyan strateji getirisi %12 civarı, medyan al-tut %85,2, XU100 %+88,8; al-tut'u geçen 4/30, XU100'ü geçen 2–3/30. Haber katmanı boş, makro katman hiç sinyal değiştirmedi (USD/TRY'nin 20 günlük en büyük artışı %4,8, eşik %8), bu yüzden D ve E pratikte C ile aynı. Sektör benchmark'ı yok.
+A–E strateji varyantları 30 hissede, t+1 zamanlaması ve maliyetlerle çalıştırıldı. **Hiçbir varyant al-tut'u ya da XU100'ü sistematik biçimde geçmedi:** medyan strateji getirisi %12 civarı, medyan al-tut %85,2, XU100 %+88,8; al-tut'u geçen 4/30, XU100'ü geçen 2–3/30. Haber katmanı boş, makro katman hiç sinyal değiştirmedi (USD/TRY'nin 20 günlük en büyük artışı %4,8, eşik %8), bu yüzden D ve E pratikte C ile aynı. Sektör benchmark'ı yalnızca akranı olan 17 hisse için hesaplanır (bkz. `07`).
 
 ### 4.2 Bu çalışmada bulunan ve düzeltilen hatalar
 
 - **İleri bakış (Task 1 sektör sayısı):** 746 olay ve %52,4/%53,8/%55,8 isabet, analiz tarihinden sonraki fiyatları içeren önbellekle üretilmişti. Kesilince 743 olay, %52,7/%54,1/%55,9. Belge düzeltildi.
 - **Replay günlüğü eksikliği:** günlük yalnızca son cevabı saklıyordu; guard'ın taslağı değiştirip değiştirmediği izlenemiyordu. Ham taslak ve ihlaller eklendi.
 - **Ollama çıktısı:** Qwen3'ün boş `<think></think>` bloğu araç planı ayrıştırıcısını bozuyordu; temizlendi.
-- **Sektör sorusunda makro kanıt eksikti:** model planı `get_macro_context` çağırmıyordu, bu yüzden yapısal ve geçici gerilik ayrılamıyordu. Harness artık sektör planlarında `LOAD_CONTEXT` adımında en geride kalan hisse için makro bağlamı kendisi ekler (zorunlu backtest gibi).
+- **Sektör sorusunda makro kanıt eksikti:** model planı `get_macro_context` çağırmıyordu, bu yüzden yapısal ve geçici gerilik ayrılamıyordu. Harness artık sektör planlarında `LOAD_MACRO_CONTEXT` adımında en geride kalan hisse için makro bağlamı kendisi ekler (zorunlu backtest gibi).
 - **Hafta içi kalıbında maliyet ve çoklu test eksikti:** çıktı yalnızca ortalama veriyordu ve "1 test" diyordu. Artık medyanlar, Çarşamba kapanışında alıp Cuma kapanışında satmanın (bileşik) %0,3 gidiş-dönüş maliyeti sonrası getirisi ve 32 olası haftalık yukarı/aşağı dizisi için Bonferroni düzeltmesi raporlanır.
 
 ## 5. Yerel model ve harness değerlendirmesi
@@ -106,9 +106,9 @@ Repodaki A–E karşılaştırması **simüle edilmiş bir sağlayıcıdan** gel
 **Ne çalışmıyor ya da kanıtlanmadı.** Dört senaryodan hiçbiri sağlam bir işlem sinyali bulmadı: perakende grubunda yakalama %46–52, hafta içi örüntüsü reddedildi, teknik dönüşün birleşik koşulları anekdot, bilanço tepkisi 8 çeyrekte ayırt edilemiyor. Stratejiler al-tut'u geçemedi. Bu bir başarısızlık değil, dürüst bulgudur: 2024–2026'da güçlü yükselen bir piyasada basit kurallar al-tut'un gerisinde kalıyor ve guard'ın amacı tam olarak bu sonuçların fazla iddialı sunulmamasını sağlamak.
 
 **Sınırlamalar (özet):**
-- Evren 30 hisse ve 24 sektör etiketinde yalnızca 6'sında 2 hisse var; sektör karşılaştırması sınırlı, sektör benchmark'ı yok.
+- Evren 30 hisse ve 24 sektör etiketinde yalnızca 6'sında 2 hisse var; sektör karşılaştırması sınırlı; sektör benchmark'ı yalnızca 17 hisse için var ve ilk kelime eşleşmesine dayanır.
 - Temel veri elle girilmiş ve 5 hisselik; haber verisi yok; konuşma yok; TÜFE ve TCMB dosyalarının kaynağı doğrulanmadı.
-- Teknik dönüşte olay aileleri eksik (destek/direnç teması, RSI tepe-dip, KAMA aşağı kesişim, Ichimoku reddi) ve volatilite rejimi yok.
+- Teknik dönüşte yeni olay aileleri ve volatilite rejimi yalnızca ASELS için raporlandı (`02` §6); küçük hücreler anekdottur ve çoklu test düzeltmesi yoktur. Yerel model bu ailelerle yeniden eğitilmedi.
 - Değerlendirme seti 12 soru; istatistiksel güven sınırlı. Guard sayı denetimi 0–20 arası tam sayıları serbest bırakır.
 - Colab ölçümü 4-bit, Mac çalıştırması bf16; iki ortamın küçük sayısal farkları olabilir.
 - Replay karması kaydın yanında saklandığı için kötü niyetli yeniden yazımı değil, yanlışlıkla bozulmayı yakalar.
@@ -116,7 +116,7 @@ Repodaki A–E karşılaştırması **simüle edilmiş bir sağlayıcıdan** gel
 
 ## 7. Sonuç
 
-Sistem, "kanıtsız sayı üretme" riskini mimariyle sınırlıyor: deterministik araçlar, zorunlu kalite kapısı, kanıt kimlikleri, guard ve değiştirilemez günlük. Yerel ince ayarlı model araç planlamayı güvenilir yapıyor; metin kalitesindeki kalan sapmaları guard telafi ediyor. Araştırma bulguları ise sistemin kendi vokabülerine uygun biçimde temkinli: dört senaryoda da işlem sinyali olarak savunulabilir bir sonuç çıkmadı. Eksikler (gerçek haber ve temel veri, A–E'nin gerçek model koşusu, sektör benchmark'ı) §6'da açıkça listelidir.
+Sistem, "kanıtsız sayı üretme" riskini mimariyle sınırlıyor: deterministik araçlar, zorunlu kalite kapısı, kanıt kimlikleri, guard ve değiştirilemez günlük. Yerel ince ayarlı model araç planlamayı güvenilir yapıyor; metin kalitesindeki kalan sapmaları guard telafi ediyor. Araştırma bulguları ise sistemin kendi vokabülerine uygun biçimde temkinli: dört senaryoda da işlem sinyali olarak savunulabilir bir sonuç çıkmadı. Eksikler (gerçek haber ve temel veri, A–E'nin gerçek model koşusu) §6'da açıkça listelidir.
 
 ## Kaynaklar
 
@@ -126,7 +126,7 @@ Sistem, "kanıtsız sayı üretme" riskini mimariyle sınırlıyor: deterministi
 4. Hou, Y. ve ark. *Harness-G: A Graph-Structured Harness for Search Agents.* arXiv:2607.27652, 2026.
 5. Dettmers, T. ve ark. *QLoRA: Efficient Finetuning of Quantized LLMs.* arXiv:2305.14314, 2023.
 6. Hu, E. ve ark. *LoRA: Low-Rank Adaptation of Large Language Models.* arXiv:2106.09685, 2021.
-7. Proje içi belgeler: `reports/01`–`08`, `reports/weekday_patterns_report.pdf`, `roadmap/TASK_1`–`TASK_5`.
+7. Proje içi belgeler: `reports/01`–`08`, `reports/10_hafta_ici_kalip_raporu.md`, `reports/weekday_patterns_report.pdf`, `roadmap/TASK_1`–`TASK_5`.
 
 ## Ek A – Sınıf içi gösterim akışı (yaklaşık 10 dakika)
 

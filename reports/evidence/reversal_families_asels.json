@@ -1,0 +1,747 @@
+{
+ "as_of_date": "2026-09-10",
+ "ticker": "ASELS",
+ "event_counts": {
+  "RESISTANCE_TOUCH": 172,
+  "BB_MIDDLE_TEST": 127,
+  "BB_UPPER_TOUCH": 126,
+  "RSI_OVERBOUGHT": 93,
+  "RSI_LOCAL_PEAK": 85,
+  "KAMA_CROSS_UP": 58,
+  "KAMA_CROSS_DOWN": 57,
+  "SUPPORT_TOUCH": 45,
+  "KAMA_SLOPE_TURN_UP": 37,
+  "KAMA_SLOPE_TURN_DOWN": 37,
+  "BB_LOWER_TOUCH": 34,
+  "ICHIMOKU_CLOUD_REJECTION_UP": 34,
+  "ICHIMOKU_CLOUD_REJECTION_DOWN": 27,
+  "ICHIMOKU_RETURN_INTO_CLOUD": 23,
+  "ICHIMOKU_CLOUD_BREAKOUT": 17,
+  "RSI_LOCAL_TROUGH": 17,
+  "SUPERTREND_BEARISH_FLIP": 10,
+  "SUPERTREND_BULLISH_FLIP": 10,
+  "RSI_OVERSOLD": 1
+ },
+ "by_regime_5d": [
+  {
+   "Event_Name": "BB_LOWER_TOUCH",
+   "Market_Regime": "BEAR_MARKET",
+   "Volatility_Regime": "HIGH_VOL",
+   "Sample_Count": 9,
+   "Win_Rate": 0.5555555555555556,
+   "Mean_Strength": 0.006805498736740856,
+   "Median_Strength": 0.021059782608695565
+  },
+  {
+   "Event_Name": "BB_LOWER_TOUCH",
+   "Market_Regime": "BEAR_MARKET",
+   "Volatility_Regime": "LOW_VOL",
+   "Sample_Count": 11,
+   "Win_Rate": 0.7272727272727273,
+   "Mean_Strength": 0.023060768300831067,
+   "Median_Strength": 0.024031405868489175
+  },
+  {
+   "Event_Name": "BB_LOWER_TOUCH",
+   "Market_Regime": "BULL_MARKET",
+   "Volatility_Regime": "HIGH_VOL",
+   "Sample_Count": 3,
+   "Win_Rate": 1.0,
+   "Mean_Strength": 0.07710058423382904,
+   "Median_Strength": 0.07149493814488062
+  },
+  {
+   "Event_Name": "BB_LOWER_TOUCH",
+   "Market_Regime": "BULL_MARKET",
+   "Volatility_Regime": "LOW_VOL",
+   "Sample_Count": 11,
+   "Win_Rate": 0.5454545454545454,
+   "Mean_Strength": 0.004621574435223193,
+   "Median_Strength": 0.0038125674091558093
+  },
+  {
+   "Event_Name": "BB_MIDDLE_TEST",
+   "Market_Regime": "BEAR_MARKET",
+   "Volatility_Regime": "HIGH_VOL",
+   "Sample_Count": 40,
+   "Win_Rate": 0.925,
+   "Mean_Strength": 0.03218757798041809,
+   "Median_Strength": 0.02630533111852018
+  },
+  {
+   "Event_Name": "BB_MIDDLE_TEST",
+   "Market_Regime": "BEAR_MARKET",
+   "Volatility_Regime": "LOW_VOL",
+   "Sample_Count": 27,
+   "Win_Rate": 0.8148148148148148,
+   "Mean_Strength": 0.02184206602715003,
+   "Median_Strength": 0.017436795178112474
+  },
+  {
+   "Event_Name": "BB_MIDDLE_TEST",
+   "Market_Regime": "BULL_MARKET",
+   "Volatility_Regime": "HIGH_VOL",
+   "Sample_Count": 29,
+   "Win_Rate": 0.9310344827586207,
+   "Mean_Strength": 0.036088544958494735,
+   "Median_Strength": 0.03807473645599013
+  },
+  {
+   "Event_Name": "BB_MIDDLE_TEST",
+   "Market_Regime": "BULL_MARKET",
+   "Volatility_Regime": "LOW_VOL",
+   "Sample_Count": 27,
+   "Win_Rate": 0.7407407407407407,
+   "Mean_Strength": -0.002320849024956571,
+   "Median_Strength": -0.007582118777459845
+  },
+  {
+   "Event_Name": "BB_UPPER_TOUCH",
+   "Market_Regime": "BEAR_MARKET",
+   "Volatility_Regime": "HIGH_VOL",
+   "Sample_Count": 26,
+   "Win_Rate": 0.38461538461538464,
+   "Mean_Strength": -0.005174058323144975,
+   "Median_Strength": -0.010449352391564859
+  },
+  {
+   "Event_Name": "BB_UPPER_TOUCH",
+   "Market_Regime": "BEAR_MARKET",
+   "Volatility_Regime": "LOW_VOL",
+   "Sample_Count": 11,
+   "Win_Rate": 0.2727272727272727,
+   "Mean_Strength": -0.026021539402424576,
+   "Median_Strength": -0.026214866051232688
+  },
+  {
+   "Event_Name": "BB_UPPER_TOUCH",
+   "Market_Regime": "BEAR_MARKET",
+   "Volatility_Regime": "UNKNOWN",
+   "Sample_Count": 1,
+   "Win_Rate": 0.0,
+   "Mean_Strength": -0.028515220042429235,
+   "Median_Strength": -0.028515220042429235
+  },
+  {
+   "Event_Name": "BB_UPPER_TOUCH",
+   "Market_Regime": "BULL_MARKET",
+   "Volatility_Regime": "HIGH_VOL",
+   "Sample_Count": 47,
+   "Win_Rate": 0.3617021276595745,
+   "Mean_Strength": -0.037279841636190456,
+   "Median_Strength": -0.025452511709060932
+  },
+  {
+   "Event_Name": "BB_UPPER_TOUCH",
+   "Market_Regime": "BULL_MARKET",
+   "Volatility_Regime": "LOW_VOL",
+   "Sample_Count": 40,
+   "Win_Rate": 0.325,
+   "Mean_Strength": -0.018725665010230458,
+   "Median_Strength": -0.01976647031720713
+  },
+  {
+   "Event_Name": "BB_UPPER_TOUCH",
+   "Market_Regime": "UNKNOWN",
+   "Volatility_Regime": "LOW_VOL",
+   "Sample_Count": 1,
+   "Win_Rate": 0.0,
+   "Mean_Strength": -0.006048351491290793,
+   "Median_Strength": -0.006048351491290793
+  },
+  {
+   "Event_Name": "ICHIMOKU_CLOUD_BREAKOUT",
+   "Market_Regime": "BEAR_MARKET",
+   "Volatility_Regime": "HIGH_VOL",
+   "Sample_Count": 3,
+   "Win_Rate": 0.3333333333333333,
+   "Mean_Strength": -0.01380591910801913,
+   "Median_Strength": -0.028854842643537548
+  },
+  {
+   "Event_Name": "ICHIMOKU_CLOUD_BREAKOUT",
+   "Market_Regime": "BEAR_MARKET",
+   "Volatility_Regime": "LOW_VOL",
+   "Sample_Count": 1,
+   "Win_Rate": 1.0,
+   "Mean_Strength": 0.026595714733123943,
+   "Median_Strength": 0.026595714733123943
+  },
+  {
+   "Event_Name": "ICHIMOKU_CLOUD_BREAKOUT",
+   "Market_Regime": "BULL_MARKET",
+   "Volatility_Regime": "HIGH_VOL",
+   "Sample_Count": 6,
+   "Win_Rate": 0.5,
+   "Mean_Strength": -0.012593169168590471,
+   "Median_Strength": -0.006268714767154182
+  },
+  {
+   "Event_Name": "ICHIMOKU_CLOUD_BREAKOUT",
+   "Market_Regime": "BULL_MARKET",
+   "Volatility_Regime": "LOW_VOL",
+   "Sample_Count": 6,
+   "Win_Rate": 0.3333333333333333,
+   "Mean_Strength": -0.018366534431462172,
+   "Median_Strength": -0.01450829454530339
+  },
+  {
+   "Event_Name": "ICHIMOKU_CLOUD_REJECTION_DOWN",
+   "Market_Regime": "BEAR_MARKET",
+   "Volatility_Regime": "HIGH_VOL",
+   "Sample_Count": 10,
+   "Win_Rate": 0.6,
+   "Mean_Strength": 0.003744639410769068,
+   "Median_Strength": 0.021736233538213134
+  },
+  {
+   "Event_Name": "ICHIMOKU_CLOUD_REJECTION_DOWN",
+   "Market_Regime": "BEAR_MARKET",
+   "Volatility_Regime": "LOW_VOL",
+   "Sample_Count": 8,
+   "Win_Rate": 0.375,
+   "Mean_Strength": -0.03093094267945097,
+   "Median_Strength": -0.03444228528380677
+  },
+  {
+   "Event_Name": "ICHIMOKU_CLOUD_REJECTION_DOWN",
+   "Market_Regime": "BULL_MARKET",
+   "Volatility_Regime": "HIGH_VOL",
+   "Sample_Count": 7,
+   "Win_Rate": 0.2857142857142857,
+   "Mean_Strength": -0.04171942685557463,
+   "Median_Strength": -0.06518015897103568
+  },
+  {
+   "Event_Name": "ICHIMOKU_CLOUD_REJECTION_DOWN",
+   "Market_Regime": "BULL_MARKET",
+   "Volatility_Regime": "LOW_VOL",
+   "Sample_Count": 2,
+   "Win_Rate": 0.5,
+   "Mean_Strength": 0.008547516775381292,
+   "Median_Strength": 0.008547516775381292
+  },
+  {
+   "Event_Name": "ICHIMOKU_CLOUD_REJECTION_UP",
+   "Market_Regime": "BEAR_MARKET",
+   "Volatility_Regime": "HIGH_VOL",
+   "Sample_Count": 9,
+   "Win_Rate": 0.5555555555555556,
+   "Mean_Strength": 0.0004727531778639814,
+   "Median_Strength": 0.03333326697792338
+  },
+  {
+   "Event_Name": "ICHIMOKU_CLOUD_REJECTION_UP",
+   "Market_Regime": "BEAR_MARKET",
+   "Volatility_Regime": "LOW_VOL",
+   "Sample_Count": 3,
+   "Win_Rate": 1.0,
+   "Mean_Strength": 0.1115689135026577,
+   "Median_Strength": 0.1167925234149303
+  },
+  {
+   "Event_Name": "ICHIMOKU_CLOUD_REJECTION_UP",
+   "Market_Regime": "BULL_MARKET",
+   "Volatility_Regime": "HIGH_VOL",
+   "Sample_Count": 14,
+   "Win_Rate": 0.35714285714285715,
+   "Mean_Strength": -0.024898544538238136,
+   "Median_Strength": -0.02892647047622815
+  },
+  {
+   "Event_Name": "ICHIMOKU_CLOUD_REJECTION_UP",
+   "Market_Regime": "BULL_MARKET",
+   "Volatility_Regime": "LOW_VOL",
+   "Sample_Count": 7,
+   "Win_Rate": 0.2857142857142857,
+   "Mean_Strength": -0.01913257311361294,
+   "Median_Strength": -0.021434470313146936
+  },
+  {
+   "Event_Name": "ICHIMOKU_RETURN_INTO_CLOUD",
+   "Market_Regime": "BEAR_MARKET",
+   "Volatility_Regime": "HIGH_VOL",
+   "Sample_Count": 6,
+   "Win_Rate": 0.8333333333333334,
+   "Mean_Strength": 0.019822136465824258,
+   "Median_Strength": 0.024000522479982855
+  },
+  {
+   "Event_Name": "ICHIMOKU_RETURN_INTO_CLOUD",
+   "Market_Regime": "BEAR_MARKET",
+   "Volatility_Regime": "LOW_VOL",
+   "Sample_Count": 4,
+   "Win_Rate": 0.5,
+   "Mean_Strength": 0.038619113062226956,
+   "Median_Strength": -0.0038660255144043476
+  },
+  {
+   "Event_Name": "ICHIMOKU_RETURN_INTO_CLOUD",
+   "Market_Regime": "BULL_MARKET",
+   "Volatility_Regime": "HIGH_VOL",
+   "Sample_Count": 7,
+   "Win_Rate": 1.0,
+   "Mean_Strength": -0.013401139800258715,
+   "Median_Strength": 0.014304291287386306
+  },
+  {
+   "Event_Name": "ICHIMOKU_RETURN_INTO_CLOUD",
+   "Market_Regime": "BULL_MARKET",
+   "Volatility_Regime": "LOW_VOL",
+   "Sample_Count": 6,
+   "Win_Rate": 0.6666666666666666,
+   "Mean_Strength": -0.01216468346860857,
+   "Median_Strength": -0.019865523847034272
+  },
+  {
+   "Event_Name": "KAMA_CROSS_DOWN",
+   "Market_Regime": "BEAR_MARKET",
+   "Volatility_Regime": "HIGH_VOL",
+   "Sample_Count": 14,
+   "Win_Rate": 0.5,
+   "Mean_Strength": -0.01967344907331304,
+   "Median_Strength": -0.0070756243498592
+  },
+  {
+   "Event_Name": "KAMA_CROSS_DOWN",
+   "Market_Regime": "BEAR_MARKET",
+   "Volatility_Regime": "LOW_VOL",
+   "Sample_Count": 9,
+   "Win_Rate": 0.2222222222222222,
+   "Mean_Strength": -0.035906949918459455,
+   "Median_Strength": -0.0347222227882682
+  },
+  {
+   "Event_Name": "KAMA_CROSS_DOWN",
+   "Market_Regime": "BEAR_MARKET",
+   "Volatility_Regime": "UNKNOWN",
+   "Sample_Count": 1,
+   "Win_Rate": 0.0,
+   "Mean_Strength": -0.09083191347447084,
+   "Median_Strength": -0.09083191347447084
+  },
+  {
+   "Event_Name": "KAMA_CROSS_DOWN",
+   "Market_Regime": "BULL_MARKET",
+   "Volatility_Regime": "HIGH_VOL",
+   "Sample_Count": 19,
+   "Win_Rate": 0.5263157894736842,
+   "Mean_Strength": -0.0019744567008984286,
+   "Median_Strength": 0.0025641310245358984
+  },
+  {
+   "Event_Name": "KAMA_CROSS_DOWN",
+   "Market_Regime": "BULL_MARKET",
+   "Volatility_Regime": "LOW_VOL",
+   "Sample_Count": 14,
+   "Win_Rate": 0.5714285714285714,
+   "Mean_Strength": 0.006808831281523827,
+   "Median_Strength": 0.006498396844776377
+  },
+  {
+   "Event_Name": "KAMA_CROSS_UP",
+   "Market_Regime": "BEAR_MARKET",
+   "Volatility_Regime": "HIGH_VOL",
+   "Sample_Count": 19,
+   "Win_Rate": 0.3684210526315789,
+   "Mean_Strength": 0.0004215435444288099,
+   "Median_Strength": -0.009174328877607496
+  },
+  {
+   "Event_Name": "KAMA_CROSS_UP",
+   "Market_Regime": "BEAR_MARKET",
+   "Volatility_Regime": "LOW_VOL",
+   "Sample_Count": 4,
+   "Win_Rate": 0.5,
+   "Mean_Strength": -0.0050204976831555725,
+   "Median_Strength": 0.01385801732212616
+  },
+  {
+   "Event_Name": "KAMA_CROSS_UP",
+   "Market_Regime": "BEAR_MARKET",
+   "Volatility_Regime": "UNKNOWN",
+   "Sample_Count": 2,
+   "Win_Rate": 1.0,
+   "Mean_Strength": 0.02991058369683597,
+   "Median_Strength": 0.02991058369683597
+  },
+  {
+   "Event_Name": "KAMA_CROSS_UP",
+   "Market_Regime": "BULL_MARKET",
+   "Volatility_Regime": "HIGH_VOL",
+   "Sample_Count": 22,
+   "Win_Rate": 0.5909090909090909,
+   "Mean_Strength": 0.018041867203512297,
+   "Median_Strength": 0.014726913192079527
+  },
+  {
+   "Event_Name": "KAMA_CROSS_UP",
+   "Market_Regime": "BULL_MARKET",
+   "Volatility_Regime": "LOW_VOL",
+   "Sample_Count": 10,
+   "Win_Rate": 0.6,
+   "Mean_Strength": 0.007591945034065295,
+   "Median_Strength": 0.010128300448290717
+  },
+  {
+   "Event_Name": "KAMA_SLOPE_TURN_DOWN",
+   "Market_Regime": "BEAR_MARKET",
+   "Volatility_Regime": "HIGH_VOL",
+   "Sample_Count": 11,
+   "Win_Rate": 0.2727272727272727,
+   "Mean_Strength": -0.024131693586779357,
+   "Median_Strength": -0.022727272727272707
+  },
+  {
+   "Event_Name": "KAMA_SLOPE_TURN_DOWN",
+   "Market_Regime": "BEAR_MARKET",
+   "Volatility_Regime": "LOW_VOL",
+   "Sample_Count": 11,
+   "Win_Rate": 0.18181818181818182,
+   "Mean_Strength": -0.050683382152435154,
+   "Median_Strength": -0.04825744359964479
+  },
+  {
+   "Event_Name": "KAMA_SLOPE_TURN_DOWN",
+   "Market_Regime": "BULL_MARKET",
+   "Volatility_Regime": "HIGH_VOL",
+   "Sample_Count": 8,
+   "Win_Rate": 0.25,
+   "Mean_Strength": -0.049543108950261816,
+   "Median_Strength": -0.05394692878929952
+  },
+  {
+   "Event_Name": "KAMA_SLOPE_TURN_DOWN",
+   "Market_Regime": "BULL_MARKET",
+   "Volatility_Regime": "LOW_VOL",
+   "Sample_Count": 7,
+   "Win_Rate": 0.2857142857142857,
+   "Mean_Strength": -0.010283458327097554,
+   "Median_Strength": -0.005828537964274627
+  },
+  {
+   "Event_Name": "KAMA_SLOPE_TURN_UP",
+   "Market_Regime": "BEAR_MARKET",
+   "Volatility_Regime": "HIGH_VOL",
+   "Sample_Count": 11,
+   "Win_Rate": 0.6363636363636364,
+   "Mean_Strength": 0.029470890804588232,
+   "Median_Strength": 0.040645161290322473
+  },
+  {
+   "Event_Name": "KAMA_SLOPE_TURN_UP",
+   "Market_Regime": "BEAR_MARKET",
+   "Volatility_Regime": "LOW_VOL",
+   "Sample_Count": 1,
+   "Win_Rate": 1.0,
+   "Mean_Strength": 0.033922205627916924,
+   "Median_Strength": 0.033922205627916924
+  },
+  {
+   "Event_Name": "KAMA_SLOPE_TURN_UP",
+   "Market_Regime": "BEAR_MARKET",
+   "Volatility_Regime": "UNKNOWN",
+   "Sample_Count": 1,
+   "Win_Rate": 1.0,
+   "Mean_Strength": 0.018482430031699026,
+   "Median_Strength": 0.018482430031699026
+  },
+  {
+   "Event_Name": "KAMA_SLOPE_TURN_UP",
+   "Market_Regime": "BULL_MARKET",
+   "Volatility_Regime": "HIGH_VOL",
+   "Sample_Count": 13,
+   "Win_Rate": 0.6923076923076923,
+   "Mean_Strength": 0.031011396129265296,
+   "Median_Strength": 0.025606480935258302
+  },
+  {
+   "Event_Name": "KAMA_SLOPE_TURN_UP",
+   "Market_Regime": "BULL_MARKET",
+   "Volatility_Regime": "LOW_VOL",
+   "Sample_Count": 11,
+   "Win_Rate": 0.6363636363636364,
+   "Mean_Strength": 0.02017078957858486,
+   "Median_Strength": 0.015526733379756852
+  },
+  {
+   "Event_Name": "RESISTANCE_TOUCH",
+   "Market_Regime": "BEAR_MARKET",
+   "Volatility_Regime": "HIGH_VOL",
+   "Sample_Count": 24,
+   "Win_Rate": 0.4166666666666667,
+   "Mean_Strength": -0.009739709303234007,
+   "Median_Strength": -0.010449352391564859
+  },
+  {
+   "Event_Name": "RESISTANCE_TOUCH",
+   "Market_Regime": "BEAR_MARKET",
+   "Volatility_Regime": "LOW_VOL",
+   "Sample_Count": 13,
+   "Win_Rate": 0.15384615384615385,
+   "Mean_Strength": -0.03335781012383943,
+   "Median_Strength": -0.034460844682400404
+  },
+  {
+   "Event_Name": "RESISTANCE_TOUCH",
+   "Market_Regime": "BULL_MARKET",
+   "Volatility_Regime": "HIGH_VOL",
+   "Sample_Count": 71,
+   "Win_Rate": 0.38028169014084506,
+   "Mean_Strength": -0.026246061569229307,
+   "Median_Strength": -0.015863996914922796
+  },
+  {
+   "Event_Name": "RESISTANCE_TOUCH",
+   "Market_Regime": "BULL_MARKET",
+   "Volatility_Regime": "LOW_VOL",
+   "Sample_Count": 63,
+   "Win_Rate": 0.36507936507936506,
+   "Mean_Strength": -0.015965184107059088,
+   "Median_Strength": -0.02101247226839953
+  },
+  {
+   "Event_Name": "RESISTANCE_TOUCH",
+   "Market_Regime": "UNKNOWN",
+   "Volatility_Regime": "LOW_VOL",
+   "Sample_Count": 1,
+   "Win_Rate": 0.0,
+   "Mean_Strength": -0.006048351491290793,
+   "Median_Strength": -0.006048351491290793
+  },
+  {
+   "Event_Name": "RSI_LOCAL_PEAK",
+   "Market_Regime": "BEAR_MARKET",
+   "Volatility_Regime": "HIGH_VOL",
+   "Sample_Count": 13,
+   "Win_Rate": 0.38461538461538464,
+   "Mean_Strength": -0.012203181271561468,
+   "Median_Strength": -0.004702194357366851
+  },
+  {
+   "Event_Name": "RSI_LOCAL_PEAK",
+   "Market_Regime": "BEAR_MARKET",
+   "Volatility_Regime": "LOW_VOL",
+   "Sample_Count": 7,
+   "Win_Rate": 0.2857142857142857,
+   "Mean_Strength": -0.006034106063790068,
+   "Median_Strength": -0.026214866051232688
+  },
+  {
+   "Event_Name": "RSI_LOCAL_PEAK",
+   "Market_Regime": "BULL_MARKET",
+   "Volatility_Regime": "HIGH_VOL",
+   "Sample_Count": 32,
+   "Win_Rate": 0.40625,
+   "Mean_Strength": -0.010779933023397383,
+   "Median_Strength": -0.002137673671946838
+  },
+  {
+   "Event_Name": "RSI_LOCAL_PEAK",
+   "Market_Regime": "BULL_MARKET",
+   "Volatility_Regime": "LOW_VOL",
+   "Sample_Count": 32,
+   "Win_Rate": 0.375,
+   "Mean_Strength": -0.018419388955462638,
+   "Median_Strength": -0.017940390700085795
+  },
+  {
+   "Event_Name": "RSI_LOCAL_PEAK",
+   "Market_Regime": "UNKNOWN",
+   "Volatility_Regime": "LOW_VOL",
+   "Sample_Count": 1,
+   "Win_Rate": 0.0,
+   "Mean_Strength": -0.06147719381361072,
+   "Median_Strength": -0.06147719381361072
+  },
+  {
+   "Event_Name": "RSI_LOCAL_TROUGH",
+   "Market_Regime": "BEAR_MARKET",
+   "Volatility_Regime": "HIGH_VOL",
+   "Sample_Count": 7,
+   "Win_Rate": 0.7142857142857143,
+   "Mean_Strength": 0.02269299449420738,
+   "Median_Strength": 0.021059782608695565
+  },
+  {
+   "Event_Name": "RSI_LOCAL_TROUGH",
+   "Market_Regime": "BEAR_MARKET",
+   "Volatility_Regime": "LOW_VOL",
+   "Sample_Count": 3,
+   "Win_Rate": 0.6666666666666666,
+   "Mean_Strength": 0.039077471937954376,
+   "Median_Strength": 0.01456729891333386
+  },
+  {
+   "Event_Name": "RSI_LOCAL_TROUGH",
+   "Market_Regime": "BULL_MARKET",
+   "Volatility_Regime": "HIGH_VOL",
+   "Sample_Count": 4,
+   "Win_Rate": 0.5,
+   "Mean_Strength": -0.015659670525177166,
+   "Median_Strength": -0.019283955525342178
+  },
+  {
+   "Event_Name": "RSI_LOCAL_TROUGH",
+   "Market_Regime": "BULL_MARKET",
+   "Volatility_Regime": "LOW_VOL",
+   "Sample_Count": 3,
+   "Win_Rate": 1.0,
+   "Mean_Strength": 0.03698564167731296,
+   "Median_Strength": 0.03748624411716506
+  },
+  {
+   "Event_Name": "RSI_OVERBOUGHT",
+   "Market_Regime": "BEAR_MARKET",
+   "Volatility_Regime": "HIGH_VOL",
+   "Sample_Count": 6,
+   "Win_Rate": 0.5,
+   "Mean_Strength": 0.0052451399431461265,
+   "Median_Strength": 0.0011634789960210945
+  },
+  {
+   "Event_Name": "RSI_OVERBOUGHT",
+   "Market_Regime": "BEAR_MARKET",
+   "Volatility_Regime": "LOW_VOL",
+   "Sample_Count": 11,
+   "Win_Rate": 0.36363636363636365,
+   "Mean_Strength": -0.0013249012289023663,
+   "Median_Strength": -0.02673447049653266
+  },
+  {
+   "Event_Name": "RSI_OVERBOUGHT",
+   "Market_Regime": "BULL_MARKET",
+   "Volatility_Regime": "HIGH_VOL",
+   "Sample_Count": 43,
+   "Win_Rate": 0.3953488372093023,
+   "Mean_Strength": -0.023957427504836856,
+   "Median_Strength": -0.010318126129610361
+  },
+  {
+   "Event_Name": "RSI_OVERBOUGHT",
+   "Market_Regime": "BULL_MARKET",
+   "Volatility_Regime": "LOW_VOL",
+   "Sample_Count": 33,
+   "Win_Rate": 0.3939393939393939,
+   "Mean_Strength": -0.020573336413486194,
+   "Median_Strength": -0.027955781578065997
+  },
+  {
+   "Event_Name": "RSI_OVERSOLD",
+   "Market_Regime": "BULL_MARKET",
+   "Volatility_Regime": "LOW_VOL",
+   "Sample_Count": 1,
+   "Win_Rate": 0.0,
+   "Mean_Strength": -0.02071169776918369,
+   "Median_Strength": -0.02071169776918369
+  },
+  {
+   "Event_Name": "SUPERTREND_BEARISH_FLIP",
+   "Market_Regime": "BEAR_MARKET",
+   "Volatility_Regime": "HIGH_VOL",
+   "Sample_Count": 1,
+   "Win_Rate": 1.0,
+   "Mean_Strength": 0.01903112629430337,
+   "Median_Strength": 0.01903112629430337
+  },
+  {
+   "Event_Name": "SUPERTREND_BEARISH_FLIP",
+   "Market_Regime": "BEAR_MARKET",
+   "Volatility_Regime": "LOW_VOL",
+   "Sample_Count": 3,
+   "Win_Rate": 0.3333333333333333,
+   "Mean_Strength": 0.0010898068537096295,
+   "Median_Strength": -0.024031405868489175
+  },
+  {
+   "Event_Name": "SUPERTREND_BEARISH_FLIP",
+   "Market_Regime": "BULL_MARKET",
+   "Volatility_Regime": "HIGH_VOL",
+   "Sample_Count": 2,
+   "Win_Rate": 0.0,
+   "Mean_Strength": -0.03263429266616069,
+   "Median_Strength": -0.03263429266616069
+  },
+  {
+   "Event_Name": "SUPERTREND_BEARISH_FLIP",
+   "Market_Regime": "BULL_MARKET",
+   "Volatility_Regime": "LOW_VOL",
+   "Sample_Count": 4,
+   "Win_Rate": 0.25,
+   "Mean_Strength": -0.02108829665788997,
+   "Median_Strength": -0.016673293413465462
+  },
+  {
+   "Event_Name": "SUPERTREND_BULLISH_FLIP",
+   "Market_Regime": "BEAR_MARKET",
+   "Volatility_Regime": "HIGH_VOL",
+   "Sample_Count": 4,
+   "Win_Rate": 1.0,
+   "Mean_Strength": 0.06798552486326115,
+   "Median_Strength": 0.03894166520683695
+  },
+  {
+   "Event_Name": "SUPERTREND_BULLISH_FLIP",
+   "Market_Regime": "BEAR_MARKET",
+   "Volatility_Regime": "LOW_VOL",
+   "Sample_Count": 1,
+   "Win_Rate": 1.0,
+   "Mean_Strength": 0.033922205627916924,
+   "Median_Strength": 0.033922205627916924
+  },
+  {
+   "Event_Name": "SUPERTREND_BULLISH_FLIP",
+   "Market_Regime": "BULL_MARKET",
+   "Volatility_Regime": "HIGH_VOL",
+   "Sample_Count": 4,
+   "Win_Rate": 0.5,
+   "Mean_Strength": 0.027031724048197148,
+   "Median_Strength": 0.005447055869108763
+  },
+  {
+   "Event_Name": "SUPERTREND_BULLISH_FLIP",
+   "Market_Regime": "BULL_MARKET",
+   "Volatility_Regime": "LOW_VOL",
+   "Sample_Count": 1,
+   "Win_Rate": 0.0,
+   "Mean_Strength": -0.08094850911886509,
+   "Median_Strength": -0.08094850911886509
+  },
+  {
+   "Event_Name": "SUPPORT_TOUCH",
+   "Market_Regime": "BEAR_MARKET",
+   "Volatility_Regime": "HIGH_VOL",
+   "Sample_Count": 18,
+   "Win_Rate": 0.7777777777777778,
+   "Mean_Strength": 0.0321355201421058,
+   "Median_Strength": 0.02816422073178826
+  },
+  {
+   "Event_Name": "SUPPORT_TOUCH",
+   "Market_Regime": "BEAR_MARKET",
+   "Volatility_Regime": "LOW_VOL",
+   "Sample_Count": 11,
+   "Win_Rate": 0.7272727272727273,
+   "Mean_Strength": 0.027024857857148143,
+   "Median_Strength": 0.028210033457540806
+  },
+  {
+   "Event_Name": "SUPPORT_TOUCH",
+   "Market_Regime": "BULL_MARKET",
+   "Volatility_Regime": "HIGH_VOL",
+   "Sample_Count": 7,
+   "Win_Rate": 0.8571428571428571,
+   "Mean_Strength": 0.06401844876980577,
+   "Median_Strength": 0.07149493814488062
+  },
+  {
+   "Event_Name": "SUPPORT_TOUCH",
+   "Market_Regime": "BULL_MARKET",
+   "Volatility_Regime": "LOW_VOL",
+   "Sample_Count": 9,
+   "Win_Rate": 0.6666666666666666,
+   "Mean_Strength": 0.012078095243089029,
+   "Median_Strength": 0.005823625328352344
+  }
+ ]
+}
