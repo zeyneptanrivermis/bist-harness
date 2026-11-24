@@ -152,8 +152,10 @@ def evaluate_ae(chat_fn, versions: tuple[str, ...] = VERSIONS) -> list[dict[str,
     reports = []
     for version in versions:
         rows, totals = [], {key: 0 for key in AE_RATES}
-        for item in EVAL_ITEMS + CORRUPT_ITEMS:
+        items = EVAL_ITEMS + CORRUPT_ITEMS
+        for number, item in enumerate(items, 1):
             first, again = _ask(item, chat_fn, version), _ask(item, chat_fn, version)
+            print(f"[{version}] {number}/{len(items)} done: {item['q'][:50]}", flush=True)
             if "error" in first:
                 s = {key: 0 for key in AE_RATES} | {"crash": 1, "quality_gate_bypass": int("corrupt" in item), "not_reproducible": int(first != again)}
             else:
