@@ -50,7 +50,7 @@ Yani fiyat hedefi verilmez, "kesin yükselir" iddiası kanıtsız bulunur ve dur
 |---|---|---|---|
 | Makro (kur, TCMB faizi, Fed faizi, TÜFE) | `get_macro_context`, harness `LOAD_MACRO_CONTEXT` | `data/macro/*.csv` (yayın tarihine göre) | Çalışıyor; TCMB ve TÜFE kaynağı doğrulanmadı (§2) |
 | Haber metadata'sı | `get_news_events`, harness `LOAD_CONTEXT` | `data/news/news_events.csv` **boş** | Kod hazır ve test edildi; veri yok, araç uyarı döner |
-| Konuşma (video transkripti) | Yok | Yok | İsteğe bağlı katman; uygulanmadı |
+| Konuşma (video transkripti) | `get_speech_features`, `transcribe_finance_video_segment`, harness `LOAD_CONTEXT` | `data/speech/speech_segments.csv` **yok** | Kod hazır ve test edildi; veri yok, araç uyarı döner |
 
 Haber verisi gelirse hiçbir kod değişmez: `extract_news_events` ile etiketlenip `save_news_events` ile dosyaya eklenir.
 
@@ -58,7 +58,7 @@ Haber verisi gelirse hiçbir kod değişmez: `extract_news_events` ile etiketlen
 
 Haber katmanı **yalnızca zaman damgalı metadata olarak** uygulanmıştır (`src/context/news.py`, `get_news_events` aracı, harness'te isteğe bağlı `LOAD_CONTEXT` adımı): başlık, kaynak, URL, yayın zamanı; BIST kapanışından (18:00) sonra yayımlanan haber ertesi gün geçerli sayılır. **Veri yoktur**: `data/news/news_events.csv` boş. EREGL için araç şu uyarıyı döner: *"No timestamped news records for this request; do not infer news context."* Bu yüzden bu raporda haber kanıtı kullanılmadı ve model haber bağlamı uydurmamalıdır.
 
-Konuşma (speech-to-text) kapsam dışı bırakıldı, uygulanmadı.
+Konuşma katmanı (`src/context/speech.py`) aynı kurallarla yazıldı (onaylı kaynak listesi, zaman damgası, doğrulanmamış sayısal iddialar) ama veri yoktur; bu raporda konuşma kanıtı kullanılmadı.
 
 ## 6. Sınırlamalar
 

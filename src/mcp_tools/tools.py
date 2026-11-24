@@ -9,6 +9,7 @@ import pandas as pd
 from src.backtest.engine import calculate_performance, run_backtest
 from src.backtest.sector_benchmark import benchmark_peers, build_sector_benchmark, sector_benchmark_metrics
 from src.context.news import get_news_events
+from src.context.speech import get_speech_features
 from src.strategies.variants import compare_strategy_variants
 from src.data_pipeline import get_index_history, get_stock_history, load_ticker_data
 from src.fundamentals import get_fundamental_metrics
@@ -192,6 +193,17 @@ def get_news_events_tool(as_of_date: str, ticker: Optional[str] = None, topic: O
         tool_name="get_news_events", as_of_date=as_of_date, source="local_news_metadata",
         status="ok" if len(frame) else "warning",
         message=None if len(frame) else "No timestamped news records for this request; do not infer news context.",
+        data=frame_payload(frame),
+    )
+
+
+def get_speech_features_tool(as_of_date: str, source_id: Optional[str] = None) -> ToolResponse:
+    frame = get_speech_features(source_id=source_id, as_of=as_of_date)
+    return ToolResponse(
+        tool_name="get_speech_features", as_of_date=as_of_date, source="local_speech_metadata",
+        status="ok" if len(frame) else "warning",
+        message="Commentary is context, not fact; numeric_claims are unverified until a deterministic tool confirms them." if len(frame)
+        else "No timestamped speech segments for this request; do not infer commentary.",
         data=frame_payload(frame),
     )
 

@@ -1,6 +1,6 @@
 # 08 – Ajan Harness Deneyi (A–E) Karşılaştırması
 
-> **Önemli açıklama:** Bu raporun A–E tablosundaki sayılar **simüle edilmiş bir sağlayıcıdan** gelir. Hiçbir gerçek model çalıştırılmamıştır. Tablo, deney hattının doğru çalıştığını gösterir, **model kalitesini ölçmez**. Gerçek modelle A–E koşusu bu çalışmada **yapılmadı**; nedenleri ve gerçek model için elimizde olan ölçüm aşağıdadır.
+> **Önemli açıklama:** Bu raporda iki ayrı tablo var. **§4.1 gerçek modelle** (Qwen3-4B + adaptör, Colab T4, 15 soru) alınmış A–E ölçümüdür ve asıl sonuçtur. **§2 simüle edilmiş bir sağlayıcıdan** gelir; yalnızca deney hattının çalıştığını gösteren bir boru hattı testidir ve model kalitesini ölçmez.
 
 ## 1. Deney nedir?
 
@@ -34,7 +34,7 @@ Sağlayıcı `simulated-demo` (`DemonstrationProvider`): sürüm A için sabit b
 
 Bu tablo **"daha çok kontrol, daha az hata" diye okunamaz**: A'nın %100 hata vermesi, sağlayıcının A için hep aynı hatalı metni üretmesinden gelir.
 
-## 3. Neden gerçek modelle olduğu gibi çalıştırılamıyor (doğrulanmış engeller)
+## 3. Simüle deney gerçek modelle olduğu gibi çalıştırılamıyordu (engeller §5'te kapatıldı)
 
 1. **Sayısal doğruluk ölçütü gerçek çıktıya uymuyor.** 12 vakanın 11'inde `known_numeric_values` boştur. Değerlendirici, cevapta geçen **her** sayıyı "kanıtsız" sayar. Gerçek bir model cevabı birçok sayı içerir; D ve E bile bu yüzden anlamsız biçimde başarısız görünürdü. Kanıttaki sayıların vakaya bağlanması gerekir.
 2. **Araç adları uyuşmuyor.** Deney kataloğu `rank_sector_laggards`, `evaluate_laggard_catchup`, `align_fundamental_disclosures` gibi adlar kullanır; gerçek yönlendirici (`SafeProjectToolRouter`) `rank_sector_relative_strength`, `calculate_fundamental_change`, `get_macro_context` adlarını kullanır. Eşleme olmadan gerçek çağrılar "geçersiz araç" sayılır.
@@ -42,7 +42,7 @@ Bu tablo **"daha çok kontrol, daha az hata" diye okunamaz**: A'nın %100 hata v
 4. **Veri tuzakları sentetik veri ister.** Eksik veri, tekrarlayan tarih ve kısa geçmiş vakaları bozuk veri bekler; yerel önbellekteki gerçek veriler temizdir. Gerçek kalite kapısı bu vakalarda engellemez ve deney bunu "kapı atlandı" diye puanlar. Her tuzak için bozuk bir veri kopyası üretilmelidir.
 5. **İnsan onayı (sürüm E) otomatikleştirilemez.** İnsan onayı alanını doğru yapmak onayı uydurmak olur.
 
-Bu beş engel kapatılmadan alınan "gerçek model A–E" sayıları yanıltıcı olurdu.
+Bu beş engel kapatılmadan alınan "gerçek model A–E" sayıları yanıltıcı olurdu; bu yüzden §4.1 ölçümü engeller kapatıldıktan sonra alındı.
 
 ## 4. Gerçek model için ölçüm
 
