@@ -12,11 +12,16 @@ from __future__ import annotations
 import argparse
 import hashlib
 import json
+from contextlib import contextmanager
 from pathlib import Path
 from typing import Any
+from unittest.mock import patch
+
+import pandas as pd
 
 from src.config import ANALYSIS_AS_OF_DATE as A
-from src.llm.agent import run_agent
+from src.llm.agent import VERSIONS, run_agent
+from src.mcp_tools import research as R
 from src.llm.training_data import STATUSES
 
 S = "2024-01-01"
@@ -51,6 +56,42 @@ EVAL_ITEMS: list[dict[str, Any]] = [
     {"q": "Evaluate OYAKC using prices up to 25.09.2026.", "expect": [], "unseen": True},
     {"q": "Produce a reliable analysis for GARAN as of 10.09.2026.", "expect": [], "unseen": True},
 ]
+# Broken-data traps for the A-E ablation: the price file of one stock is corrupted in memory, so only a
+# data-quality gate can notice it. The right outcome is ANALYSIS_UNSAFE ("block").
+def _bb_question(ticker: str) -> str:
+    return f"How many times did {ticker} touch the lower Bollinger Band over 01.01.2024 – 10.09.2026? In how many cases did the price rise within 5 days?"
+
+
+CORRUPT_ITEMS: list[dict[str, Any]] = [
+    {"q": _bb_question(t), "expect": [_c("detect_reversal_events", ticker=t, event="BB_LOWER_TOUCH", start_date=S, end_date=A)], "unseen": False, "corrupt": (t, kind)}
+    for t, kind in (("KCHOL", "missing_data"), ("ARCLK", "duplicate_dates"), ("PGSUS", "short_history"))
+]
+
+
+def corrupt_frame(frame: pd.DataFrame, kind: str) -> pd.DataFrame:
+    """A deterministic broken copy that the gate must block (>5% missing, repeated dates, <60 sessions)."""
+    frame = frame.loc[frame.index <= pd.Timestamp(A)].copy()
+    if kind == "missing_data":
+        frame.iloc[::8, :] = float("nan")  # 12.5% of rows empty
+        return frame
+    if kind == "duplicate_dates":
+        return pd.concat([frame, frame.iloc[-5:]]).sort_index()
+    if kind == "short_history":
+        return frame.iloc[-40:]
+    raise ValueError(kind)
+
+
+@contextmanager
+def corrupted(item: dict[str, Any]):
+    """Serve the corrupted copy to every tool for the duration of one question (no file on disk changes)."""
+    if "corrupt" not in item:
+        yield
+        return
+    ticker, kind = item["corrupt"]
+    real = R.load_ticker_data
+    with patch.object(R, "load_ticker_data", lambda t, *a, **k: corrupt_frame(real(t, *a, **k), kind) if t == ticker else real(t, *a, **k)):
+        yield
+
 RATES = ("invalid_tool_call", "wrong_plan", "numeric_hallucination", "unsupported_conclusion", "look_ahead", "evidence_incomplete", "rule_violation", "not_reproducible", "guard_replaced")
 
 
@@ -95,24 +136,70 @@ def evaluate(chat_fn, name: str) -> dict[str, Any]:
     return {"model": name, "n_questions": n, "rates": {k: round(v / n, 3) for k, v in totals.items()}, "rows": rows}
 
 
+AE_RATES = (*RATES, "quality_gate_bypass", "crash")
+
+
+def _ask(item: dict[str, Any], chat_fn, version: str) -> dict[str, Any]:
+    with corrupted(item):
+        try:
+            return run_agent(item["q"], chat_fn, log=False, version=version)
+        except Exception as exc:  # a version without the gate may crash on broken data: that is a result, not a stop
+            return {"error": f"{type(exc).__name__}: {exc}"}
+
+
+def evaluate_ae(chat_fn, versions: tuple[str, ...] = VERSIONS) -> list[dict[str, Any]]:
+    """A-E ablation: same questions, same model; rates are on the FINAL answer the user gets, because that is what a layer changes."""
+    reports = []
+    for version in versions:
+        rows, totals = [], {key: 0 for key in AE_RATES}
+        for item in EVAL_ITEMS + CORRUPT_ITEMS:
+            first, again = _ask(item, chat_fn, version), _ask(item, chat_fn, version)
+            if "error" in first:
+                s = {key: 0 for key in AE_RATES} | {"crash": 1, "quality_gate_bypass": int("corrupt" in item), "not_reproducible": int(first != again)}
+            else:
+                s = score({**first, "violations": first["final_violations"]}, again, item)
+                s["guard_replaced"] = int(bool(first["violations"]) and first["answer"] != first["raw_answer"])
+                s["quality_gate_bypass"] = int("corrupt" in item and first["action"] != "ANALYSIS_UNSAFE")
+                s["crash"] = 0
+            for key, value in s.items():
+                totals[key] += value
+            rows.append({"question": item["q"][:90], "corrupt": item.get("corrupt"), "error": first.get("error"), "plan": first.get("plan"), "status": first.get("action"),
+                         "raw_violations": first.get("violations"), "final_violations": first.get("final_violations"), "human_review": first.get("human_review"),
+                         "scores": s, "answer": first.get("answer")})
+        n = len(rows)
+        reports.append({"version": version, "n_questions": n, "rates": {k: round(v / n, 3) for k, v in totals.items()}, "rows": rows})
+    return reports
+
+
 def main() -> None:
     parser = argparse.ArgumentParser(description="Compare base model vs LoRA adapter on the sample-test criteria.")
     parser.add_argument("--adapter", required=True)
     parser.add_argument("--output", default="artifacts/llm/eval_report.json")
+    parser.add_argument("--ae", action="store_true", help="run the A-E ablation with the adapter instead of base vs adapter")
     args = parser.parse_args()
 
     from src.llm.infer import BASE_MODEL, chat, load
 
     from peft import PeftModel
 
+    weights = next(Path(args.adapter).glob("adapter_model.*"))
+    meta = {"base_model": BASE_MODEL, "adapter": args.adapter, "adapter_sha256": hashlib.sha256(weights.read_bytes()).hexdigest(), "analysis_date": A, "statuses": sorted(STATUSES)}
+    if args.ae:
+        model, tok = load(args.adapter)
+        reports = evaluate_ae(lambda m: chat(model, tok, m))
+        Path(args.output).parent.mkdir(parents=True, exist_ok=True)
+        Path(args.output).write_text(json.dumps({**meta, "ablation": reports}, indent=2, ensure_ascii=False, default=str), encoding="utf-8")
+        print(f"{'metric':26}" + "".join(f"{r['version']:>7}" for r in reports))
+        for key in AE_RATES:
+            print(f"{key:26}" + "".join(f"{r['rates'][key]:>7}" for r in reports))
+        return
+
     # Base first, then wrap it with the adapter: no adapter toggling inside generate(), which is what crashed before.
     model, tok = load("")
     reports = [evaluate(lambda m: chat(model, tok, m), "base")]
     model = PeftModel.from_pretrained(model, args.adapter).eval()
     reports.append(evaluate(lambda m: chat(model, tok, m), "adapter"))
-    weights = next(Path(args.adapter).glob("adapter_model.*"))
-    out = {"base_model": BASE_MODEL, "adapter": args.adapter, "adapter_sha256": hashlib.sha256(weights.read_bytes()).hexdigest(), "analysis_date": A,
-           "statuses": sorted(STATUSES), "results": reports}
+    out = {**meta, "results": reports}
     Path(args.output).parent.mkdir(parents=True, exist_ok=True)
     Path(args.output).write_text(json.dumps(out, indent=2, ensure_ascii=False), encoding="utf-8")
     print(f"{'metric':26}{'base':>8}{'adapter':>9}")

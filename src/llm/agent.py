@@ -24,6 +24,7 @@ from src.harness.permissions import assert_tool_allowed
 from src.llm.tool_loop import SafeProjectToolRouter, ToolRequestError
 from src.llm.training_data import DEFAULT_SYSTEM_PROMPT, STATUSES, refusal_text, report_prompt, tool_prompt, tool_system_prompt
 from src.mcp_tools import research as R
+from src.universe import get_all_tickers
 
 ChatFn = Callable[[list[dict[str, str]]], str]
 _DATE = re.compile(r"\d{4}-\d{2}-\d{2}")
@@ -134,12 +135,16 @@ def _primary_ticker(plan: list[tuple[str, dict[str, Any]]], outputs: list[dict[s
     return None
 
 
-def execute_plan(plan: list[tuple[str, dict[str, Any]]], as_of: str, router: SafeProjectToolRouter) -> dict[str, Any]:
-    """Run the harness states for a validated plan: gate first, then the tools, then the mandatory backtest."""
-    states = ["START", "SELECT_UNIVERSE", "LOAD_DATA", "CHECK_DATA_QUALITY"]
+def execute_plan(plan: list[tuple[str, dict[str, Any]]], as_of: str, router: SafeProjectToolRouter, *, gate: bool = True, states_on: bool = True) -> dict[str, Any]:
+    """Run the harness states for a validated plan: gate first, then the tools, then the mandatory backtest.
+
+    gate=False skips the data-quality gate and states_on=False skips the mandatory states (context, backtest);
+    both exist only for the A-E ablation, the real agent always runs with both on.
+    """
+    states = ["START", "SELECT_UNIVERSE", "LOAD_DATA"] + (["CHECK_DATA_QUALITY"] if gate else [])
     evidence: list[dict[str, Any]] = []
     tickers = _plan_tickers(plan)
-    if tickers:  # the mandatory gate runs in code, before any calculation, for every stock in the plan
+    if gate and tickers:  # the mandatory gate runs in code, before any calculation, for every stock in the plan
         assert_tool_allowed("CHECK_DATA_QUALITY", "check_data_quality")
         gates = {t: router.execute("check_data_quality", {"ticker": t}, as_of_date=as_of) for t in tickers}
         status = {t: g.get("gate_status", "ANALYSIS_UNSAFE") for t, g in gates.items()}
@@ -152,6 +157,8 @@ def execute_plan(plan: list[tuple[str, dict[str, Any]]], as_of: str, router: Saf
         assert_tool_allowed("RUN_SCENARIO", name)
     outputs = [router.execute(name, args, as_of_date=as_of) for name, args in plan]
     evidence += [_item(len(evidence) + i + 1, out, as_of) for i, out in enumerate(outputs)]
+    if not states_on:
+        return {"states": ["START", "RUN_TOOLS"], "evidence": evidence, "expected": _expected_status(evidence), "blocked_answer": None}
     ticker = _primary_ticker(plan, outputs)
     first = next((a for _, a in plan if "start_date" in a), {})
     window = {k: v for k, v in first.items() if k in ("start_date", "end_date")}
@@ -167,48 +174,72 @@ def execute_plan(plan: list[tuple[str, dict[str, Any]]], as_of: str, router: Saf
     return {"states": [*states, "BUILD_EVIDENCE", "GENERATE_EXPLANATION", "LOG_AND_CLOSE"], "evidence": evidence, "expected": _expected_status(evidence), "blocked_answer": None}
 
 
-def run_agent(question: str, chat_fn: ChatFn, *, as_of_date: str | None = None, router: SafeProjectToolRouter | None = None, log: bool = True) -> dict[str, Any]:
-    """Answer one question. The returned dict is the full audit trail."""
+VERSIONS = ("A", "B", "C", "D", "E")  # A-E ablation: each adds one control layer; E is the real agent
+
+
+def _raw_data_evidence(question: str, as_of: str, router: SafeProjectToolRouter) -> list[dict[str, Any]]:
+    """Version A: no tool plan; the price history of every universe stock named in the question, as plain data."""
+    tickers = [t for t in get_all_tickers() if re.search(rf"\b{t}\b", question)]
+    return [_item(i + 1, router.execute("get_stock_history", {"ticker": t, "start_date": "2024-01-01", "end_date": as_of}, as_of_date=as_of), as_of)
+            for i, t in enumerate(tickers)]
+
+
+def run_agent(question: str, chat_fn: ChatFn, *, as_of_date: str | None = None, router: SafeProjectToolRouter | None = None, log: bool = True,
+              version: str = "E") -> dict[str, Any]:
+    """Answer one question. The returned dict is the full audit trail.
+
+    version (ablation only): A raw data, no tools; B + validated tool plan; C + mandatory states (context, backtest);
+    D + data-quality gate and guard; E + replay log and a human-review slot (the real agent).
+    """
+    if version not in VERSIONS:
+        raise ValueError(f"version must be one of {VERSIONS}")
     router = router or SafeProjectToolRouter()
     as_of = as_of_date or ANALYSIS_AS_OF_DATE
-    result: dict[str, Any] = {"question": question, "as_of_date": as_of, "tool_call": None, "tool_valid": None, "plan": [], "state_history": ["START"],
-                              "action": None, "evidence": [], "raw_answer": None, "answer": None, "violations": [], "replay_log": None}
-
-    reply = first_json(chat_fn([{"role": "system", "content": tool_system_prompt()}, {"role": "user", "content": tool_prompt(question, as_of)}]))
-    result["tool_call"] = reply
-    try:
-        plan = router.validate_plan(reply, as_of_date=as_of)
-    except ToolRequestError as exc:
-        result["raw_answer"] = reply
-        status = _STATUS.match(reply)
-        if status and status.group(1) in STATUSES and not _ADVICE.search(reply):
-            result["answer"] = reply  # a prose refusal is allowed and is not a tool call
-            result["action"] = status.group(1)
-        else:
-            result["tool_valid"] = False
-            result["action"] = "ANALYSIS_UNSAFE"  # the router blocked the plan, which is what the answer says
-            result["violations"] = ["invalid_tool_call"]
-            result["answer"] = f"{refusal_text('INVALID_TOOL_REQUEST')} ({exc})"
-        return result
-    result["tool_valid"] = True
-    result["plan"] = [{"tool_name": n, "arguments": a} for n, a in plan]
-    run = execute_plan(plan, as_of, router)
-    result["state_history"] = run["states"]
-    if run["blocked_answer"]:
-        result.update(action="ANALYSIS_UNSAFE", answer=run["blocked_answer"])
-        return result
-    evidence, expected, states = run["evidence"], run["expected"], run["states"]
-    result.update(evidence=evidence, action=expected)
+    result: dict[str, Any] = {"question": question, "as_of_date": as_of, "version": version, "tool_call": None, "tool_valid": None, "plan": [], "state_history": ["START"],
+                              "action": None, "evidence": [], "raw_answer": None, "answer": None, "violations": [], "final_violations": [], "replay_log": None,
+                              "human_review": None}
+    if version == "A":
+        evidence, expected, states = _raw_data_evidence(question, as_of, router), None, ["START", "ANSWER"]
+    else:
+        reply = first_json(chat_fn([{"role": "system", "content": tool_system_prompt()}, {"role": "user", "content": tool_prompt(question, as_of)}]))
+        result["tool_call"] = reply
+        try:
+            plan = router.validate_plan(reply, as_of_date=as_of)
+        except ToolRequestError as exc:
+            result["raw_answer"] = reply
+            status = _STATUS.match(reply)
+            if status and status.group(1) in STATUSES and not _ADVICE.search(reply):
+                result["answer"] = reply  # a prose refusal is allowed and is not a tool call
+                result["action"] = status.group(1)
+            else:
+                result["tool_valid"] = False
+                result["action"] = "ANALYSIS_UNSAFE"  # the router blocked the plan, which is what the answer says
+                result["violations"] = ["invalid_tool_call"]
+                result["answer"] = f"{refusal_text('INVALID_TOOL_REQUEST')} ({exc})"
+            return result
+        result["tool_valid"] = True
+        result["plan"] = [{"tool_name": n, "arguments": a} for n, a in plan]
+        run = execute_plan(plan, as_of, router, gate=version in "DE", states_on=version in "CDE")
+        result["state_history"] = run["states"]
+        if run["blocked_answer"]:
+            result.update(action="ANALYSIS_UNSAFE", answer=run["blocked_answer"])
+            return result
+        evidence, expected, states = run["evidence"], run["expected"], run["states"]
+    result.update(evidence=evidence, action=expected, state_history=states)
 
     raw = chat_fn([{"role": "system", "content": DEFAULT_SYSTEM_PROMPT}, {"role": "user", "content": report_prompt(question, as_of, evidence)}])
     result["raw_answer"] = raw
     result["violations"] = check_answer(raw, evidence, expected, as_of, question)
-    result["answer"] = raw if not result["violations"] else draft_summary(expected, evidence, question)
-    if log:
-        key = hashlib.sha256(json.dumps([question, as_of, result["plan"]], sort_keys=True).encode()).hexdigest()[:16]  # same question -> same log id
-        result["replay_log"] = str(log_decision({"analysis_id": key, "request": {"question": question, "as_of_date": as_of}, "state_history": states, "plan": result["plan"],
-                                                 "evidence": evidence, "action": expected, "answer": result["answer"],
-                                                 "raw_answer": raw, "violations": result["violations"]}))
+    guarded = version in "DE" and result["violations"]
+    result["answer"] = draft_summary(expected, evidence, question) if guarded else raw
+    result["final_violations"] = check_answer(result["answer"], evidence, expected, as_of, question)
+    if version == "E":
+        result["human_review"] = {"status": "PENDING", "note": "Human approval is not filled in automatically."}
+        if log:
+            key = hashlib.sha256(json.dumps([question, as_of, result["plan"]], sort_keys=True).encode()).hexdigest()[:16]  # same question -> same log id
+            result["replay_log"] = str(log_decision({"analysis_id": key, "request": {"question": question, "as_of_date": as_of}, "state_history": states, "plan": result["plan"],
+                                                     "evidence": evidence, "action": expected, "answer": result["answer"],
+                                                     "raw_answer": raw, "violations": result["violations"], "human_review": result["human_review"]}))
     return result
 
 
