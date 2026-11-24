@@ -97,4 +97,35 @@ def get_fundamental_metrics(ticker: str) -> pd.DataFrame:
         raise ValueError(f"No fundamental records found for ticker {ticker}.")
 
     ticker_df = ticker_df.sort_values(by="kap_disclosure_date").reset_index(drop=True)
-    return ticker_df
+    return add_derived_metrics(ticker_df, ticker)
+
+
+# Spec section 9 metrics that need balance-sheet, cash-flow or price data. They are NaN until
+# real values (e.g. from Fintables) are added as columns; they are never invented here.
+EXTERNAL_METRIC_COLUMNS = (
+    "roa", "debt_equity", "current_ratio", "quick_ratio", "pe", "pb", "ev_ebitda", "operating_cash_flow",
+)
+FINANCIAL_SECTORS = ("Banking", "Insurance", "Brokerage")
+
+
+def add_derived_metrics(frame: pd.DataFrame, ticker: str) -> pd.DataFrame:
+    """Add margins, leverage and cash conversion from the stored columns; keep external metrics explicit."""
+    df = frame.copy()
+    for col in EXTERNAL_METRIC_COLUMNS:
+        if col not in df.columns:
+            df[col] = np.nan
+    df["net_margin"] = df["net_income"] / df["revenue"]
+    # Net debt / trailing-four-quarter EBITDA (NaN until four quarters exist).
+    df["net_debt_ebitda"] = df["net_debt"] / df["ebitda"].rolling(4).sum()
+    df["cash_conversion"] = df["operating_cash_flow"] / df["net_income"]
+    try:
+        from src.universe import get_universe_df
+        uni = get_universe_df()
+        sector = str(uni.loc[uni["ticker"] == ticker, "sector"].iloc[0]) if (uni["ticker"] == ticker).any() else ""
+    except Exception:  # universe lookup must never break a metrics read
+        sector = ""
+    if any(tag in sector for tag in FINANCIAL_SECTORS):
+        # Net debt/EBITDA and EBITDA margin are not meaningful for banks, insurers and brokers.
+        df[["net_debt_ebitda", "ebitda_margin"]] = np.nan
+        df["sector_note"] = "Financial company: industrial ratios disabled; use bank-specific metrics."
+    return df

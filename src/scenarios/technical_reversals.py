@@ -30,7 +30,20 @@ MANDATORY_EVENT_FAMILIES = [
     "SUPERTREND_BEARISH_FLIP",
     "KAMA_CROSS_UP",
     "ICHIMOKU_CLOUD_BREAKOUT",
+    "RSI_LOCAL_TROUGH",
+    "RSI_LOCAL_PEAK",
+    "KAMA_CROSS_DOWN",
+    "KAMA_SLOPE_TURN_UP",
+    "KAMA_SLOPE_TURN_DOWN",
+    "ICHIMOKU_CLOUD_REJECTION_UP",
+    "ICHIMOKU_CLOUD_REJECTION_DOWN",
+    "ICHIMOKU_RETURN_INTO_CLOUD",
+    "SUPPORT_TOUCH",
+    "RESISTANCE_TOUCH",
 ]
+
+SR_WINDOW = 20
+SR_TOLERANCE = 0.005  # a touch is a low/high within 0.5% of the prior-window level
 
 
 def detect_reversal_events(
@@ -66,6 +79,17 @@ def detect_reversal_events(
         mkt_ret_20d = market_df["Adj Close"].pct_change(20)
         mkt_regime_series = np.where(mkt_ret_20d >= 0, "BULL_MARKET", "BEAR_MARKET")
         mkt_regime_df = pd.Series(mkt_regime_series, index=market_df.index)
+
+    # Support/resistance use the PRIOR window only (shift(1)) so the level is known at t.
+    sr_support = enriched["Low"].rolling(SR_WINDOW).min().shift(1)
+    sr_resistance = enriched["High"].rolling(SR_WINDOW).max().shift(1)
+
+    # Volatility regime: 20d realized vol vs its own expanding median (point in time).
+    realized_vol = enriched["Close"].pct_change().rolling(20).std()
+    vol_regime_series = pd.Series(
+        np.where(realized_vol >= realized_vol.expanding(min_periods=40).median(), "HIGH_VOL", "LOW_VOL"),
+        index=enriched.index,
+    ).where(realized_vol.notna(), "UNKNOWN")
 
     events_list = []
     roundtrip_cost = 2.0 * (DEFAULT_COMMISSION_RATE + DEFAULT_SLIPPAGE_RATE)
@@ -139,6 +163,40 @@ def detect_reversal_events(
         if "ICHIMOKU_CLOUD_BREAKOUT" in families and prev_ichi_state != "ABOVE_CLOUD" and ichi_state == "ABOVE_CLOUD":
             active_events.append(("ICHIMOKU_CLOUD_BREAKOUT", "BULLISH"))
 
+        # 10. RSI local trough / peak, confirmed one bar later (no look-ahead)
+        if i >= 2:
+            prev2_rsi = enriched["RSI_14"].iloc[i - 2]
+            if "RSI_LOCAL_TROUGH" in families and prev_rsi < prev2_rsi and prev_rsi < rsi and prev_rsi <= 40.0:
+                active_events.append(("RSI_LOCAL_TROUGH", "BULLISH"))
+            if "RSI_LOCAL_PEAK" in families and prev_rsi > prev2_rsi and prev_rsi > rsi and prev_rsi >= 60.0:
+                active_events.append(("RSI_LOCAL_PEAK", "BEARISH"))
+
+        # 11. KAMA cross down and slope turns
+        if "KAMA_CROSS_DOWN" in families and prev_close >= prev_kama and close < kama:
+            active_events.append(("KAMA_CROSS_DOWN", "BEARISH"))
+        prev_kama_state = enriched.get("KAMA_Slope_State", pd.Series(["UNKNOWN"] * n, index=dates)).iloc[i - 1]
+        if "KAMA_SLOPE_TURN_UP" in families and kama_slope_state == "RISING" and prev_kama_state != "RISING":
+            active_events.append(("KAMA_SLOPE_TURN_UP", "BULLISH"))
+        if "KAMA_SLOPE_TURN_DOWN" in families and kama_slope_state == "FALLING" and prev_kama_state != "FALLING":
+            active_events.append(("KAMA_SLOPE_TURN_DOWN", "BEARISH"))
+
+        # 12. Ichimoku rejection (price tests the cloud edge but closes back outside) and return into cloud
+        cloud_top = enriched["Cloud_Top"].iloc[i] if "Cloud_Top" in enriched else np.nan
+        cloud_bottom = enriched["Cloud_Bottom"].iloc[i] if "Cloud_Bottom" in enriched else np.nan
+        if "ICHIMOKU_CLOUD_REJECTION_UP" in families and ichi_state == "ABOVE_CLOUD" and low <= cloud_top * (1 + SR_TOLERANCE):
+            active_events.append(("ICHIMOKU_CLOUD_REJECTION_UP", "BULLISH"))
+        if "ICHIMOKU_CLOUD_REJECTION_DOWN" in families and ichi_state == "BELOW_CLOUD" and high >= cloud_bottom * (1 - SR_TOLERANCE):
+            active_events.append(("ICHIMOKU_CLOUD_REJECTION_DOWN", "BEARISH"))
+        if "ICHIMOKU_RETURN_INTO_CLOUD" in families and ichi_state == "INSIDE_CLOUD" and prev_ichi_state in {"ABOVE_CLOUD", "BELOW_CLOUD"}:
+            active_events.append(("ICHIMOKU_RETURN_INTO_CLOUD", "NEUTRAL"))
+
+        # 13. Support / resistance touches (levels from the prior window only)
+        sup, res = sr_support.iloc[i], sr_resistance.iloc[i]
+        if "SUPPORT_TOUCH" in families and not np.isnan(sup) and low <= sup * (1 + SR_TOLERANCE):
+            active_events.append(("SUPPORT_TOUCH", "BULLISH"))
+        if "RESISTANCE_TOUCH" in families and not np.isnan(res) and high >= res * (1 - SR_TOLERANCE):
+            active_events.append(("RESISTANCE_TOUCH", "BEARISH"))
+
         if not active_events:
             continue
 
@@ -167,6 +225,7 @@ def detect_reversal_events(
                 "Volume_Ratio": curr_vol_ratio,
                 "Volume_Regime": "HIGH" if curr_vol_ratio >= 1.2 else ("LOW" if curr_vol_ratio < 0.8 else "NORMAL"),
                 "Market_Regime": mkt_reg,
+                "Volatility_Regime": vol_regime_series.iloc[i],
                 "Entry_Date": entry_date,
                 "Entry_Price": entry_price,
             }
@@ -187,10 +246,13 @@ def detect_reversal_events(
                         hit = int(abs(fwd_ret) > 0.01)
 
                     record[f"Fwd_{h}d_Return"] = fwd_ret
+                    # Reversal strength: return in the direction the event predicts
+                    record[f"Reversal_Strength_{h}d"] = -fwd_ret if ev_type == "BEARISH" else fwd_ret
                     record[f"Fwd_{h}d_Net_Return"] = net_ret
                     record[f"Fwd_{h}d_Hit"] = hit
                 else:
                     record[f"Fwd_{h}d_Return"] = np.nan
+                    record[f"Reversal_Strength_{h}d"] = np.nan
                     record[f"Fwd_{h}d_Net_Return"] = np.nan
                     record[f"Fwd_{h}d_Hit"] = np.nan
 
@@ -266,3 +328,18 @@ def compare_single_vs_combined_reversals(
         })
 
     return pd.DataFrame(comparison)
+
+
+def summarize_reversals_by_regime(events_df: pd.DataFrame, target_horizon: int = 5) -> pd.DataFrame:
+    """Spec section 13: bounce rate and strength per event, split by market and volatility regime."""
+    if events_df.empty:
+        return pd.DataFrame()
+    hit, strength = f"Fwd_{target_horizon}d_Hit", f"Reversal_Strength_{target_horizon}d"
+    valid = events_df.dropna(subset=[hit])
+    grouped = valid.groupby(["Event_Name", "Market_Regime", "Volatility_Regime"])
+    return grouped.agg(
+        Sample_Count=(hit, "size"),
+        Win_Rate=(hit, "mean"),
+        Mean_Strength=(strength, "mean"),
+        Median_Strength=(strength, "median"),
+    ).reset_index()

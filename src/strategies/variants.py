@@ -20,6 +20,7 @@ import numpy as np
 import pandas as pd
 
 from src.backtest.engine import run_backtest
+from src.backtest.sector_benchmark import benchmark_peers, build_sector_benchmark, sector_benchmark_metrics
 from src.context.news import get_news_events
 from src.data_pipeline import load_ticker_data
 from src.fundamentals import get_fundamental_metrics
@@ -104,13 +105,15 @@ def _inputs(ticker: str, as_of: str) -> Dict[str, Any]:
     except ValueError:
         fundamentals = None
     fx = load_macro_series("USDTRY")
-    return {"price": price, "market": market, "peers": peers, "fundamentals": fundamentals,
+    sector_peers = {t: load_ticker_data(t).loc[lambda f: f.index <= cut] for t in benchmark_peers(ticker)}
+    return {"sector_peers": sector_peers, "price": price, "market": market, "peers": peers, "fundamentals": fundamentals,
             "fx": fx["value"].loc[:cut] if fx is not None else None, "news": get_news_events(as_of=as_of)}
 
 
-def _score(signal: pd.Series, price: pd.DataFrame, market: pd.DataFrame) -> Dict[str, Any]:
+def _score(signal: pd.Series, price: pd.DataFrame, market: pd.DataFrame, sector: Optional[pd.DataFrame] = None) -> Dict[str, Any]:
     result = run_backtest(signal, price, benchmark_df=market)
     row = {k: result.metrics.get(k) for k in METRICS}
+    row.update({k: v for k, v in sector_benchmark_metrics(result.equity_curve, sector).items() if k != "Sector_Benchmark"})
     row["Buy_and_Hold_Return"] = float(result.buy_and_hold_equity.iloc[-1] / result.buy_and_hold_equity.iloc[0] - 1)
     row["Signal_Days"] = int(signal.sum())
     if row["Total_Trades"] < MIN_TRADES:
@@ -128,13 +131,16 @@ def compare_strategy_variants(ticker: str, as_of: str, oos_start: Optional[str] 
     data.update(inputs)
     price, market = data["price"], data["market"]
     signals, flags = generate_strategy_variants(ticker, price, data["peers"], data["fundamentals"], data["fx"], data["news"])
+    sector = build_sector_benchmark(ticker, data.get("sector_peers") or {}, as_of)
+    if sector is None:
+        flags.append("no_sector_benchmark")
     out: Dict[str, Any] = {"ticker": ticker, "as_of": as_of, "flags": sorted(set(flags)), "variants": {}}
     for name in VARIANTS:
-        out["variants"][name] = _score(signals[name], price, market)
+        out["variants"][name] = _score(signals[name], price, market, sector)
     if oos_start:
         cut = pd.Timestamp(oos_start)
         out["out_of_sample_from"] = oos_start
         for name in VARIANTS:
-            out["variants"][name]["out_of_sample"] = _score(signals[name].loc[cut:], price.loc[cut:], market)
+            out["variants"][name]["out_of_sample"] = _score(signals[name].loc[cut:], price.loc[cut:], market, None if sector is None else sector.loc[cut:])
     out["note"] = "Educational backtest labels. Prediction and backtest performance are not future guarantees."
     return json_safe(out)

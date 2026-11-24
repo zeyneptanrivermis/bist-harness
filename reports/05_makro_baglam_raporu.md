@@ -44,7 +44,17 @@ Yerel model + guard (`python -m src.llm.agent`), 2 kez sorulduğunda iki turda a
 
 Yani fiyat hedefi verilmez, "kesin yükselir" iddiası kanıtsız bulunur ve durum `INVESTIGATE` olur.
 
-## 5. Haber bağlamı (metadata katmanı)
+## 5. Bağlamsal kanıt katmanlarının durumu
+
+| Katman | Kod | Veri | Durum |
+|---|---|---|---|
+| Makro (kur, TCMB faizi, Fed faizi, TÜFE) | `get_macro_context`, harness `LOAD_MACRO_CONTEXT` | `data/macro/*.csv` (yayın tarihine göre) | Çalışıyor; TCMB ve TÜFE kaynağı doğrulanmadı (§2) |
+| Haber metadata'sı | `get_news_events`, harness `LOAD_CONTEXT` | `data/news/news_events.csv` **boş** | Kod hazır ve test edildi; veri yok, araç uyarı döner |
+| Konuşma (video transkripti) | Yok | Yok | İsteğe bağlı katman; uygulanmadı |
+
+Haber verisi gelirse hiçbir kod değişmez: `extract_news_events` ile etiketlenip `save_news_events` ile dosyaya eklenir.
+
+### Haber bağlamı (metadata katmanı)
 
 Haber katmanı **yalnızca zaman damgalı metadata olarak** uygulanmıştır (`src/context/news.py`, `get_news_events` aracı, harness'te isteğe bağlı `LOAD_CONTEXT` adımı): başlık, kaynak, URL, yayın zamanı; BIST kapanışından (18:00) sonra yayımlanan haber ertesi gün geçerli sayılır. **Veri yoktur**: `data/news/news_events.csv` boş. EREGL için araç şu uyarıyı döner: *"No timestamped news records for this request; do not infer news context."* Bu yüzden bu raporda haber kanıtı kullanılmadı ve model haber bağlamı uydurmamalıdır.
 
