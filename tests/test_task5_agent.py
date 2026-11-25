@@ -76,6 +76,29 @@ class AgentLoopTests(unittest.TestCase):
         self.assertEqual(router.ran, ["check_data_quality", "test_weekday_pattern", "run_backtest"])
         self.assertEqual(result["action"], "REJECT_SIGNAL")
 
+    def test_trace_records_model_prompts_tools_and_times(self) -> None:
+        model = _model("Status: REJECT_SIGNAL. E1")
+        model.meta = {"base_model": "m", "temperature": 0, "seed": None}
+        trace = self._run(model)["trace"]
+        self.assertEqual(trace["model"]["temperature"], 0)
+        self.assertEqual([c["step"] for c in trace["model_calls"]], ["plan_tools", "write_summary"])
+        self.assertEqual([m["role"] for m in trace["model_calls"][0]["messages"]], ["system", "user"])
+        self.assertEqual([c["tool_name"] for c in trace["tool_calls"]], ["check_data_quality", "test_weekday_pattern", "run_backtest"])
+        self.assertEqual(trace["tool_calls"][1]["arguments"]["ticker"], "THYAO")
+        self.assertEqual(trace["tool_calls"][1]["output"]["tool"], "test_weekday_pattern")
+        stamps = [trace["started_at"], *(c["started_at"] for c in trace["model_calls"] + trace["tool_calls"]), trace["finished_at"]]
+        self.assertTrue(all(s and s.endswith("+00:00") for s in stamps))
+        self.assertLessEqual(trace["started_at"], trace["finished_at"])
+
+    def test_trace_is_written_into_the_replay_log_and_blocked_runs_have_one(self) -> None:
+        with patch("src.llm.agent.log_decision", return_value=Path("log.json")) as logged:
+            run_agent("Does THYAO show the pattern?", _model("x"), as_of_date=AS_OF, router=StubRouter())
+        self.assertIn("trace", logged.call_args.args[0])
+        blocked = self._run(_model("x"), StubRouter("HARD_BLOCK"))
+        self.assertEqual(blocked["action"], "ANALYSIS_UNSAFE")
+        self.assertTrue(blocked["trace"]["finished_at"])
+        self.assertEqual(blocked["trace"]["model"]["base_model"], "unknown (chat function has no .meta)")
+
     @unittest.skipUnless((PROCESSED_DATA_DIR / "MAVI.parquet").exists(), "needs the price cache")
     def test_sector_plan_gets_macro_context_and_pattern_reports_costs(self) -> None:
         sector = [("rank_sector_relative_strength", {"tickers": ["BIMAS", "MGROS", "MAVI"], "horizon_days": 20, "start_date": "2024-01-01", "end_date": AS_OF})]

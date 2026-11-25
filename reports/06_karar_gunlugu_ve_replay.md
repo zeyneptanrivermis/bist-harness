@@ -29,6 +29,26 @@ Her cevap `data/analysis_logs/analysis_<kimlik>.json` olarak yazılır. Kimlik, 
 
 `raw_answer` ve `violations` alanları bu çalışmayla eklendi: önceki sürümde günlük yalnızca son cevabı saklıyordu, guard'ın modelin taslağını değiştirip değiştirmediği günlükten anlaşılamıyordu.
 
+### İz kaydı (`trace`)
+
+Şartname, her örnek için yalnızca nihai yanıtın değil, yanıtın üretildiği sürecin tam kaydının da sunulmasını ister. Bu yüzden `run_agent` her çalışmada bir `trace` alanı üretir. Alan günlüğe yazılır (karmaya dahildir) ve web arayüzünde her cevabın altındaki **Run trace** düğmesiyle açılır.
+
+| `trace` alanı | İçerik |
+|---|---|
+| `model` | Arka uç, taban model adı ve revizyonu, LoRA adaptörü ve SHA-256'sı, duyarlık (4-bit NF4 ya da bf16), `max_new_tokens`, `temperature`, `do_sample`, `seed`, torch/transformers/peft sürümleri |
+| `started_at`, `finished_at` | Tüm çalışmanın UTC zaman damgaları (ms) |
+| `model_calls[]` | Her model çağrısı: `step` (`plan_tools` ya da `write_summary`), başlangıç ve bitiş zamanı, **sistem ve kullanıcı istemi** (`messages`), modelin ham çıktısı |
+| `tool_calls[]` | Her araç çağrısı: `tool_name`, `arguments` (tarih aralıkları dahil), `as_of_date`, başlangıç ve bitiş zamanı, tam `output`. Harness'in kendi eklediği kalite kapısı, makro bağlam ve zorunlu backtest çağrıları da buradadır |
+
+**Temperature ve seed.** Çözümleme greedy'dir (`do_sample=False`): her adımda en olası belirteç seçilir, örnekleme yoktur. Bu yüzden `temperature=0` yazılır ve `seed` **kullanılmaz** (`null`); rastgelelik olmadığı için seed sonucu etkilemez. Ollama yolunda `temperature: 0` gönderilir, seed gönderilmez.
+
+**Arayüz.** Pencere varsayılan olarak kapalıdır. **Run trace** düğmesi, tarayıcı geçmişindeki eski cevaplarda da çalışır (iz kaydı cevabın içinde saklanır); iz kaydı eklenmeden önce kaydedilmiş eski geçmiş girdilerinde düğme görünmez. Tarayıcı kotası dolarsa en eski girdiler kalıcı geçmişe yazılmaz.
+
+**Sınırlar.**
+- Ollama yolunda model etiketi kaydedilir, ağırlık özeti (digest) kaydedilmez; HF yolunda adaptör SHA-256'sı kaydedilir.
+- İz kaydı, ölçüm betiklerinin (`repro_check.py`, `evaluate.py`) karşılaştırdığı alanlara (`plan`, `evidence`, `raw_answer`, `answer`) girmez. Zaman damgaları her çalışmada farklıdır ve tekrarlanabilirlik ölçütünü bozmaz.
+- `reports/evidence/example_analysis_log.json` bu özellikten önce üretildi ve `trace` içermez. İz kaydı içeren örnek, modeli çalıştırıp yeniden üretildiğinde eklenmelidir (model Colab/Mac'te yüklü olmadığı için bu oturumda üretilmedi).
+
 ## 2. Replay: bozulmamış günlük açılır, tek karakter değişince reddedilir
 
 ```bash
@@ -56,6 +76,6 @@ Betik günlüğün bir **kopyasında** tek bir ifadeyi (`REJECT_SIGNAL` → `WAT
 ## 4. Hocanın "kanıt ve tekrarlanabilirlik" ölçütü için kontrol listesi
 
 1. Soruyu sor, `data/analysis_logs/` içindeki dosyayı göster.
-2. Dosyada `plan`, `evidence`, `state_history`, `raw_answer`, `violations` alanlarını göster.
+2. Dosyada `plan`, `evidence`, `state_history`, `raw_answer`, `violations` ve `trace` alanlarını göster. Web arayüzünde aynı kaydı **Run trace** penceresinden aç.
 3. `python scripts/replay_demo.py <dosya>` ile bozulmamış kaydın açıldığını ve değiştirilmiş kopyanın reddedildiğini göster.
 4. Aynı soruyu tekrar sor: aynı `analysis_id`, aynı cevap.

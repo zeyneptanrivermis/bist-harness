@@ -29,6 +29,13 @@ class PayloadTests(unittest.TestCase):
         self.assertEqual(p["raw_answer"], "Status: WATCH. 99.9%")
         self.assertFalse(next(c for c in p["checks"] if c["label"].startswith("Every number"))["ok"])
 
+    def test_trace_is_passed_to_the_page_json_safe(self) -> None:
+        trace = {"model": {"temperature": 0}, "model_calls": [], "tool_calls": [{"output": {"x": float("nan")}}]}
+        p = ui_payload(_result(trace=trace))
+        self.assertIsNone(p["trace"]["tool_calls"][0]["output"]["x"])
+        json.loads(json.dumps(p, allow_nan=False))  # the browser's JSON.parse rejects NaN
+        self.assertIsNone(ui_payload(_result())["trace"])
+
     def test_blocked_request_has_no_checks(self) -> None:
         p = ui_payload(_result(action="ANALYSIS_UNSAFE", raw_answer=None, plan=[], evidence=[], answer="Status: ANALYSIS_UNSAFE. No data."))
         self.assertEqual((p["checks"], p["guard_replaced"], p["status"]), ([], False, "ANALYSIS_UNSAFE"))
@@ -52,7 +59,9 @@ class ServerTests(unittest.TestCase):
             return exc.code, json.loads(exc.read())
 
     def test_page_samples_and_ask(self) -> None:
-        self.assertIn(b"BIST research assistant", urlopen(self.base + "/").read())
+        page = urlopen(self.base + "/").read()
+        self.assertIn(b"BIST research assistant", page)
+        self.assertIn(b'<dialog id="tr"', page)  # the trace window exists and is closed until the button is pressed
         self.assertEqual(len(json.loads(urlopen(self.base + "/api/samples").read())), 5)
         self.assertEqual(self._post(json.dumps({"question": " hi "}).encode()), (200, {"echo": "hi"}))
 

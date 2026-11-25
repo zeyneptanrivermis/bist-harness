@@ -41,6 +41,21 @@ section{margin:0 0 24px}
 .ok{color:var(--ok)}.no{color:var(--bad)}
 details{font-size:13px;color:var(--text2)}
 details pre{white-space:pre-wrap;border:1px solid var(--line);border-radius:8px;padding:10px 12px;font-size:12px}
+button.trace{font:inherit;font-size:12px;padding:3px 12px;border:1px solid var(--line);border-radius:6px;background:var(--card);color:var(--text2);cursor:pointer}
+button.trace:hover{border-color:var(--accent);color:var(--accent)}
+dialog{width:min(820px,94vw);max-height:88vh;padding:0;border:1px solid var(--line);border-radius:12px;background:var(--bg);color:var(--text)}
+dialog::backdrop{background:rgba(0,0,0,.45)}
+.dh{position:sticky;top:0;display:flex;justify-content:space-between;align-items:center;padding:12px 20px;background:var(--bg);border-bottom:1px solid var(--line)}
+.dh b{font-size:15px}
+.db{padding:16px 20px 24px}
+.db h3{font-size:12px;font-weight:600;letter-spacing:.04em;text-transform:uppercase;color:var(--muted);margin:20px 0 8px}
+.kv{display:grid;grid-template-columns:max-content 1fr;gap:2px 14px;font-size:13px;color:var(--text2);margin:0}
+.kv dt{font:12px ui-monospace,Menlo,monospace;color:var(--muted)}
+.kv dd{margin:0;word-break:break-all}
+.step{border:1px solid var(--line);border-radius:8px;padding:8px 12px;margin:0 0 8px;font-size:13px}
+.step .t{font-weight:600;color:var(--text)}
+.step .when{font:12px ui-monospace,Menlo,monospace;color:var(--muted);margin:0 0 4px}
+.step details{margin:4px 0}
 .err{color:var(--bad);font-size:14px;margin:16px 0 0}
 .foot{font-size:12px;color:var(--muted);margin:40px 0 0}
 .hide{display:none}
@@ -67,7 +82,9 @@ details pre{white-space:pre-wrap;border:1px solid var(--line);border-radius:8px;
 <section><span class="lab">Evidence</span><dl class="ev"></dl></section>
 <section class="ckbox"><span class="lab">Guard checks</span><div class="ck"></div></section>
 <details class="hide"><summary>Model draft before the guard</summary><pre></pre></details>
+<p><button class="trace hide" type="button">Run trace</button></p>
 </article></template>
+<dialog id="tr" aria-labelledby="trt"><div class="dh"><b id="trt">Run trace</b><button class="link" id="trx" type="button">Close</button></div><div class="db" id="trb"></div></dialog>
 <p class="foot">Educational, evidence-bound summary. It is not investment advice.</p>
 </main>
 <script>
@@ -76,7 +93,27 @@ var COLORS={INVESTIGATE:"warn",WATCH:"warn",REJECT_SIGNAL:"bad",ANALYSIS_UNSAFE:
 function el(tag,cls,text){var e=document.createElement(tag);if(cls)e.className=cls;if(text!==undefined)e.textContent=text;return e}
 var KEY="bist-chat-history",MAX=20,hist=[];
 try{hist=JSON.parse(localStorage.getItem(KEY)||"[]")}catch(x){}
-function save(){try{localStorage.setItem(KEY,JSON.stringify(hist))}catch(x){}}
+function save(){var h=hist.slice();while(h.length){try{localStorage.setItem(KEY,JSON.stringify(h));return}catch(x){h.pop()}}} // traces are large: if the quota is hit, the oldest entries are not persisted
+function pre(t){return el("pre","",typeof t==="string"?t:JSON.stringify(t,null,1))}
+function det(title,body){var d=el("details"),s=el("summary","",title);d.appendChild(s);d.appendChild(pre(body));return d}
+function kv(o){var l=el("dl","kv");Object.keys(o).forEach(function(k){var v=o[k];l.appendChild(el("dt","",k));l.appendChild(el("dd","",v&&typeof v==="object"?JSON.stringify(v):String(v)))});return l}
+function sec(b,t){b.appendChild(el("h3","",t))}
+function openTrace(p){
+  var t=p.trace,b=$("trb");b.replaceChildren();
+  sec(b,"Question");b.appendChild(el("p","",p.question));
+  sec(b,"Model and decoding");b.appendChild(kv(t.model));
+  sec(b,"Timestamps (UTC)");b.appendChild(kv({started_at:t.started_at,finished_at:t.finished_at,analysis_date:p.as_of_date}));
+  sec(b,"Model calls ("+t.model_calls.length+")");
+  t.model_calls.forEach(function(c,i){var s=el("div","step");s.appendChild(el("div","t",(i+1)+". "+c.step));s.appendChild(el("div","when",c.started_at+" → "+c.finished_at));
+    c.messages.forEach(function(m){s.appendChild(det(m.role+" prompt",m.content))});s.appendChild(det("model output",c.output));b.appendChild(s)});
+  sec(b,"Tool calls ("+t.tool_calls.length+")");
+  t.tool_calls.forEach(function(c,i){var s=el("div","step");s.appendChild(el("div","t",(i+1)+". "+c.tool_name));s.appendChild(el("div","when",c.started_at+" → "+c.finished_at));
+    s.appendChild(det("arguments",c.arguments));s.appendChild(det("output",c.output));b.appendChild(s)});
+  sec(b,"Final answer");b.appendChild(el("p","t",p.status));b.appendChild(el("p","ans",p.answer));
+  $("tr").showModal();
+}
+$("trx").onclick=function(){$("tr").close()};
+$("tr").addEventListener("click",function(e){if(e.target===this)this.close()});
 function render(p){
   var n=$("tpl").content.firstElementChild.cloneNode(true),q=function(c){return n.querySelector(c)};
   q(".q").textContent=p.question;
@@ -88,6 +125,7 @@ function render(p){
   p.checks.forEach(function(x){q(".ck").appendChild(el("span",x.ok?"ok":"no",(x.ok?"✓ ":"✗ ")+x.label))});
   if(!p.checks.length)q(".ckbox").classList.add("hide");
   if(p.raw_answer){q("details").classList.remove("hide");q("pre").textContent=p.raw_answer}
+  if(p.trace){var tb=q("button.trace");tb.classList.remove("hide");tb.onclick=function(){openTrace(p)}} // entries saved before traces existed have none
   return n;
 }
 function show(p){

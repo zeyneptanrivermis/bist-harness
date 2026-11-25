@@ -120,6 +120,7 @@ Okuma: kalite kapısı (D) üç bozuk veri sorusunun üçünü de durdurdu; kap�
 - Teknik dönüşte yeni olay aileleri ve volatilite rejimi yalnızca ASELS için raporlandı (`02` §6); küçük hücreler anekdottur ve çoklu test düzeltmesi yoktur. Yerel model bu ailelerle yeniden eğitilmedi.
 - Değerlendirme seti 12 soru; istatistiksel güven sınırlı. Guard sayı denetimi 0–20 arası tam sayıları serbest bırakır.
 - Colab ölçümü 4-bit, Mac çalıştırması bf16; iki ortamın küçük sayısal farkları olabilir.
+- İz kaydı (`trace`) kodda ve web arayüzünde var, ama repodaki örnek günlük (`example_analysis_log.json`) bu özellikten önce üretildi ve iz kaydı içermez; Ollama yolunda ağırlık özeti kaydedilmez (`06` §1).
 - Replay karması kaydın yanında saklandığı için kötü niyetli yeniden yazımı değil, yanlışlıkla bozulmayı yakalar.
 - A–E harness deneyi gerçek modelle yalnızca Colab'da (T4, 4-bit) yapıldı; 15 soru, sürüm başına tek ölçüm, Mac'te tekrarlanmadı ve base model A–E'de ölçülmedi (§5.1).
 
@@ -141,7 +142,7 @@ Sistem, "kanıtsız sayı üretme" riskini mimariyle sınırlıyor: deterministi
 
 1. **Testler (1 dk):** `python -m unittest discover -s tests` → `OK`.
 2. **Ortam (30 sn):** `BIST_LLM_OFFLINE=1 python -m src.llm.check_local --adapter artifacts/llm/qwen_bist_lora/adapter` → `FAIL` yok.
-3. **Arayüz (5 dk):** `python -m src.llm.web --adapter artifacts/llm/qwen_bist_lora/adapter` → `http://127.0.0.1:8765`. Sırayla beş örnek soru; her cevapta durum, araçlar, E1–E3 kanıtı, kontrol listesi. Q3'te guard'ın değiştirdiği taslağı ("Model draft before the guard") göster. Q5'te tavsiye ve fiyat hedefi reddini göster.
+3. **Arayüz (5 dk):** `python -m src.llm.web --adapter artifacts/llm/qwen_bist_lora/adapter` → `http://127.0.0.1:8765`. Sırayla beş örnek soru; her cevapta durum, araçlar, E1–E3 kanıtı, kontrol listesi. Q3'te guard'ın değiştirdiği taslağı ("Model draft before the guard") göster. Q5'te tavsiye ve fiyat hedefi reddini göster. Her cevabın altındaki **Run trace** düğmesiyle süreç kaydını aç: model ve adaptör özeti, `temperature=0`/greedy/seed yok, sistem ve kullanıcı istemleri, araç çağrıları (parametre ve tarih aralığı, çıktı), UTC zaman damgaları (`06` §1).
 4. **Tuzak sorular (2 dk):** gelecek tarih ("25.09.2026'ya kadar"), evrende olmayan hisse, "kesin yükselir, al, hedef fiyat ver". Hepsi ret ya da `INVESTIGATE` olmalı.
 5. **Replay (1 dk):** `python scripts/replay_demo.py` → bozulmamış günlük açılır, değiştirilmiş kopya reddedilir.
 6. **Kanıt (30 sn):** `reports/evidence/` ve herhangi bir rapordaki sayıyı araç çıktısıyla eşleştir.
