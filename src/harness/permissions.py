@@ -12,7 +12,7 @@ STATE_TOOLS: dict[str, frozenset[str]] = {
     }),
     "LOAD_FUNDAMENTALS": frozenset({"get_fundamental_metrics", "calculate_fundamental_change"}),
     "LOAD_MACRO_CONTEXT": frozenset({"get_macro_context"}),
-    "LOAD_CONTEXT": frozenset({"get_news_events"}),
+    "LOAD_CONTEXT": frozenset({"get_news_events", "get_speech_features"}),
     "PREVIEW_STRATEGIES": frozenset({"compare_strategy_variants"}),
     "RUN_BACKTEST": frozenset({"run_backtest"}),
 }

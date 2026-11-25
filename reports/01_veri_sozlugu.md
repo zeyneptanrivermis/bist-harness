@@ -82,6 +82,8 @@ Fiyat sütunlarından deterministik hesaplanır, saklanmaz. Her gösterge yalnı
 
 Resmi üç dosyanın sütunları: `date` (değerin ait olduğu dönem), `value`, `published_date` (kamuya açıklandığı gün). Yükleyici seriyi `published_date` ile indeksler; `get_macro_context` analiz tarihinden sonra yayımlanan satırları keser. `published_date` sütunu yoksa `date` kullanılır ve bu sızıntı riskidir.
 
+**Kaynak adresleri (resmi siteler):** TCMB/EVDS <https://evds2.tcmb.gov.tr/> · TÜİK <https://www.tuik.gov.tr/> (enflasyon verisi: <https://data.tuik.gov.tr/>) · Fed faizi, FRED `FEDFUNDS` <https://fred.stlouisfed.org/series/FEDFUNDS> (FOMC kararları: <https://www.federalreserve.gov/monetarypolicy/openmarket.htm>). Sorgu ve indirme tarihi kayıtlı değildir.
+
 **Doğrulanmamış noktalar:** `TUIK_CPI.csv` değerleri 62,33'ten 132,31'e düzgün artıyor; bu yıllık enflasyon yüzdesi değil, bir **endeks düzeyi** gibi görünüyor ve taban yılı dosyada belirtilmemiş. Dosyalar repoya "Macro Finance Data" commit'iyle eklenmiş, kaynak sorgusu/indirme tarihi kayıtlı değil.
 
 ## 5. Çeyreklik temel veriler (`data/fundamentals/bist_quarterly_fundamentals.csv`)
@@ -121,7 +123,12 @@ Resmi üç dosyanın sütunları: `date` (değerin ait olduğu dönem), `value`,
 | `source` | Kaynak |
 | `url` | Bağlantı |
 
-**Konuşma (speech-to-text) kapsam dışıdır**, uygulanmadı.
+## 6b. Konuşma özellikleri (`data/speech/speech_segments.csv`)
+
+- **Kod:** `src/context/speech.py`. `transcribe_finance_video_segment` yalnızca hocanın onayladığı video adreslerini (`data/speech/approved_sources.txt`, deneylerden önce sabitlenir) işler; konuşmacı, kanal, yayın zamanı ve transkript aralığı zorunludur. Metne çevirme isteğe bağlı `faster-whisper` ile ya da verilen bir `transcriber` ile yapılır. `extract_speech_features` konu, duruş, hisse ve sayısal iddia çıkarır; `get_speech_features` aracı (MCP) kayıtları döndürür.
+- **Durum:** dosya şu an **yok** (0 kayıt). Araç uyarı döner, içerik uydurulmaz. Konuşma metni gerçek kabul edilmez: `numeric_claims` doğrulanmamıştır ve deterministik bir araç doğrulamadan kanıt kümesine girmez.
+- **Yayın tarihi kuralı:** haberdeki gibi 18:00 sonrası yayın ertesi gün geçerlidir (`effective_date`).
+- **Sütunlar:** `segment_id`, `source_id`, `video_url`, `speaker`, `channel`, `published_at`, `effective_date`, `start_s`, `end_s`, `text`, `topics`, `stance`, `tickers`, `numeric_claims`, `uncertainty`.
 
 ## 7. Türetilmiş özellikler
 

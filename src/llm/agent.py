@@ -14,6 +14,8 @@ from __future__ import annotations
 import hashlib
 import json
 import re
+from datetime import datetime, timezone
+from pathlib import Path
 from typing import Any, Callable
 
 from src.config import ANALYSIS_AS_OF_DATE
@@ -35,12 +37,37 @@ _PRIMARY = ("rank_sector_relative_strength", "test_weekday_pattern", "detect_rev
 _BLOCKING = {"HARD_BLOCK", "ANALYSIS_UNSAFE"}
 
 
+def _now() -> str:
+    return datetime.now(timezone.utc).isoformat(timespec="milliseconds")
+
+
+def _versions() -> dict[str, str | None]:
+    from importlib import metadata
+
+    out = {}
+    for name in ("torch", "transformers", "peft"):
+        try:
+            out[name] = metadata.version(name)
+        except metadata.PackageNotFoundError:
+            out[name] = None
+    return out
+
+
 def local_chat_fn(adapter_dir: str = "", model_name: str | None = None, max_new_tokens: int = 900) -> ChatFn:
     """Chat function backed by a local Hugging Face model (+ LoRA adapter). Needs the model on disk."""
-    from src.llm.infer import BASE_MODEL, chat, load
+    import torch
+
+    from src.llm.infer import BASE_MODEL, DECODING, chat, load
 
     model, tokenizer = load(adapter_dir, model_name or BASE_MODEL)
-    return lambda messages: chat(model, tokenizer, messages, max_new_tokens=max_new_tokens)
+    weights = next(Path(adapter_dir).glob("adapter_model.*"), None) if adapter_dir else None
+    fn = lambda messages: chat(model, tokenizer, messages, max_new_tokens=max_new_tokens)  # noqa: E731
+    fn.meta = {"backend": "huggingface-transformers", "base_model": model_name or BASE_MODEL,
+               "base_model_revision": getattr(getattr(model, "config", None), "_commit_hash", None),
+               "adapter": adapter_dir or None, "adapter_sha256": hashlib.sha256(weights.read_bytes()).hexdigest() if weights else None,
+               "precision": "4-bit NF4 (CUDA)" if torch.cuda.is_available() else "bf16", "max_new_tokens": max_new_tokens,
+               **DECODING, "libraries": _versions()}
+    return fn
 
 
 def ollama_chat_fn(model: str = "bist-qwen", host: str = "http://localhost:11434", max_new_tokens: int = 900) -> ChatFn:
@@ -53,6 +80,8 @@ def ollama_chat_fn(model: str = "bist-qwen", host: str = "http://localhost:11434
             text = json.loads(response.read())["message"]["content"]
             return re.sub(r"^\s*<think>\s*</think>\s*", "", text).strip()  # Qwen3 non-thinking mode writes an empty think block
 
+    chat.meta = {"backend": "ollama", "base_model": model, "adapter": None, "adapter_sha256": None, "host": host, "max_new_tokens": max_new_tokens,
+                 "temperature": 0, "do_sample": False, "seed": None, "note": "temperature 0 sent to Ollama, no seed sent; the weights are the merged model behind this tag"}
     return chat
 
 
@@ -184,24 +213,54 @@ def _raw_data_evidence(question: str, as_of: str, router: SafeProjectToolRouter)
             for i, t in enumerate(tickers)]
 
 
+class _TracedRouter:
+    """Records every tool execution (arguments, UTC start/end, full output) for the trace; everything else is the real router."""
+
+    def __init__(self, router: SafeProjectToolRouter, calls: list[dict[str, Any]]) -> None:
+        self._router, self._calls = router, calls
+
+    def execute(self, tool_name: str, arguments: dict[str, Any], *, as_of_date: str) -> dict[str, Any]:
+        started = _now()
+        output = self._router.execute(tool_name, arguments, as_of_date=as_of_date)
+        self._calls.append({"tool_name": tool_name, "arguments": arguments, "as_of_date": as_of_date, "started_at": started, "finished_at": _now(), "output": output})
+        return output
+
+    def __getattr__(self, name: str) -> Any:
+        return getattr(self._router, name)
+
+
 def run_agent(question: str, chat_fn: ChatFn, *, as_of_date: str | None = None, router: SafeProjectToolRouter | None = None, log: bool = True,
               version: str = "E") -> dict[str, Any]:
     """Answer one question. The returned dict is the full audit trail.
 
     version (ablation only): A raw data, no tools; B + validated tool plan; C + mandatory states (context, backtest);
     D + data-quality gate and guard; E + replay log and a human-review slot (the real agent).
+
+    result["trace"] is the process record: model and decoding settings, every model call with its system and user prompt,
+    every tool call with arguments and output, and UTC timestamps. It is also written into the replay log.
     """
     if version not in VERSIONS:
         raise ValueError(f"version must be one of {VERSIONS}")
-    router = router or SafeProjectToolRouter()
     as_of = as_of_date or ANALYSIS_AS_OF_DATE
+    trace: dict[str, Any] = {"model": getattr(chat_fn, "meta", None) or {"base_model": "unknown (chat function has no .meta)"}, "started_at": _now(), "finished_at": None,
+                             "model_calls": [], "tool_calls": []}
+    real_router = router or SafeProjectToolRouter()
+    router = _TracedRouter(real_router, trace["tool_calls"])
+    model_chat = chat_fn
+
+    def chat_fn(messages: list[dict[str, str]], step: str) -> str:  # noqa: F811 - the traced wrapper
+        started = _now()
+        output = model_chat(messages)
+        trace["model_calls"].append({"step": step, "started_at": started, "finished_at": _now(), "messages": messages, "output": output})
+        return output
+
     result: dict[str, Any] = {"question": question, "as_of_date": as_of, "version": version, "tool_call": None, "tool_valid": None, "plan": [], "state_history": ["START"],
                               "action": None, "evidence": [], "raw_answer": None, "answer": None, "violations": [], "final_violations": [], "replay_log": None,
-                              "human_review": None}
+                              "human_review": None, "trace": trace}
     if version == "A":
         evidence, expected, states = _raw_data_evidence(question, as_of, router), None, ["START", "ANSWER"]
     else:
-        reply = first_json(chat_fn([{"role": "system", "content": tool_system_prompt()}, {"role": "user", "content": tool_prompt(question, as_of)}]))
+        reply = first_json(chat_fn([{"role": "system", "content": tool_system_prompt()}, {"role": "user", "content": tool_prompt(question, as_of)}], "plan_tools"))
         result["tool_call"] = reply
         try:
             plan = router.validate_plan(reply, as_of_date=as_of)
@@ -216,6 +275,7 @@ def run_agent(question: str, chat_fn: ChatFn, *, as_of_date: str | None = None, 
                 result["action"] = "ANALYSIS_UNSAFE"  # the router blocked the plan, which is what the answer says
                 result["violations"] = ["invalid_tool_call"]
                 result["answer"] = f"{refusal_text('INVALID_TOOL_REQUEST')} ({exc})"
+            trace["finished_at"] = _now()
             return result
         result["tool_valid"] = True
         result["plan"] = [{"tool_name": n, "arguments": a} for n, a in plan]
@@ -223,23 +283,25 @@ def run_agent(question: str, chat_fn: ChatFn, *, as_of_date: str | None = None, 
         result["state_history"] = run["states"]
         if run["blocked_answer"]:
             result.update(action="ANALYSIS_UNSAFE", answer=run["blocked_answer"])
+            trace["finished_at"] = _now()
             return result
         evidence, expected, states = run["evidence"], run["expected"], run["states"]
     result.update(evidence=evidence, action=expected, state_history=states)
 
-    raw = chat_fn([{"role": "system", "content": DEFAULT_SYSTEM_PROMPT}, {"role": "user", "content": report_prompt(question, as_of, evidence)}])
+    raw = chat_fn([{"role": "system", "content": DEFAULT_SYSTEM_PROMPT}, {"role": "user", "content": report_prompt(question, as_of, evidence)}], "write_summary")
     result["raw_answer"] = raw
     result["violations"] = check_answer(raw, evidence, expected, as_of, question)
     guarded = version in "DE" and result["violations"]
     result["answer"] = draft_summary(expected, evidence, question) if guarded else raw
     result["final_violations"] = check_answer(result["answer"], evidence, expected, as_of, question)
+    trace["finished_at"] = _now()
     if version == "E":
         result["human_review"] = {"status": "PENDING", "note": "Human approval is not filled in automatically."}
         if log:
             key = hashlib.sha256(json.dumps([question, as_of, result["plan"]], sort_keys=True).encode()).hexdigest()[:16]  # same question -> same log id
             result["replay_log"] = str(log_decision({"analysis_id": key, "request": {"question": question, "as_of_date": as_of}, "state_history": states, "plan": result["plan"],
                                                      "evidence": evidence, "action": expected, "answer": result["answer"],
-                                                     "raw_answer": raw, "violations": result["violations"], "human_review": result["human_review"]}))
+                                                     "raw_answer": raw, "violations": result["violations"], "human_review": result["human_review"], "trace": trace}))
     return result
 
 

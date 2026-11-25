@@ -9,6 +9,8 @@ import numpy as np
 import pandas as pd
 
 from src.context.news import extract_news_events, get_news_events, save_news_events
+from src.context.speech import (extract_speech_features, get_speech_features, save_speech_features,
+                                transcribe_finance_video_segment)
 from src.harness.harness import HarnessSession, HarnessState
 from src.mcp_tools.models import AnalysisRequest
 from src.strategies.variants import VARIANTS, compare_strategy_variants, generate_strategy_variants
@@ -47,6 +49,36 @@ class NewsTests(unittest.TestCase):
 
     def test_missing_file_means_no_evidence_not_an_error(self) -> None:
         self.assertTrue(get_news_events(path=Path("does-not-exist.csv")).empty)
+
+
+class SpeechTests(unittest.TestCase):
+    URL = "https://youtu.be/approved"
+
+    def segment(self, url: str = URL) -> dict:
+        return transcribe_finance_video_segment(
+            "a.wav", url, "Speaker", "Channel", "2026-03-12 19:00", 0, 30, approved=[self.URL],
+            transcriber=lambda *_: "THYAO margins might improve. Inflation is 45 percent. Fed rate cut soon.")
+
+    def test_unapproved_source_is_refused(self) -> None:
+        with self.assertRaises(PermissionError):
+            self.segment("https://youtu.be/other")
+
+    def test_features_flag_claims_unverified_and_respect_cutoff(self) -> None:
+        frame = extract_speech_features([self.segment()])
+        row = frame.iloc[0]
+        self.assertEqual(row["tickers"], "THYAO")
+        self.assertTrue(row["uncertainty"])
+        self.assertIn("45 percent", row["numeric_claims"])
+        self.assertEqual(row["effective_date"], pd.Timestamp("2026-03-13"))  # after the 18:00 close
+        with tempfile.TemporaryDirectory() as tmp:
+            path = save_speech_features(frame, Path(tmp) / "s.csv")
+            save_speech_features(frame, path)  # de-duplicated
+            self.assertEqual(len(get_speech_features(path=path)), 1)
+            self.assertTrue(get_speech_features(as_of="2026-03-12", path=path).empty)
+            self.assertEqual(len(get_speech_features(source_id=self.URL, as_of="2026-03-13", path=path)), 1)
+
+    def test_missing_file_means_no_evidence(self) -> None:
+        self.assertTrue(get_speech_features(path=Path("does-not-exist.csv")).empty)
 
 
 class StrategyVariantTests(unittest.TestCase):

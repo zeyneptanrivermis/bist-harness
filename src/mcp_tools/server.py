@@ -39,6 +39,7 @@ def build_mcp_server():
         tools.run_backtest_tool,
         tools.calculate_performance_tool,
         tools.get_news_events_tool,
+        tools.get_speech_features_tool,
         tools.compare_strategy_variants_tool,
     ]
     for function in exposed:

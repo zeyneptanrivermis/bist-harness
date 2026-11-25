@@ -13,7 +13,7 @@ Bu raporun cevapladığı sorular:
 2. Harness (kalite kapısı, durum makinesi, kanıt, replay) ve yerel ince ayarlı model, hocanın altı ölçütünde (sayısal halüsinasyon, geçersiz araç çağrısı, desteklenmeyen sonuç, kanıt eksikliği ve tekrarlanabilirlik, kural ihlali, ileri bakış) nasıl davranıyor?
 3. Neyi başaramadık ve neden?
 
-**Kapsam dışı:** konuşma (speech-to-text) uygulanmadı. Haber katmanı yalnızca zaman damgalı metadata olarak uygulandı; veri dosyası boş.
+**Kapsam sınırı:** haber ve konuşma katmanları yalnızca zaman damgalı metadata olarak uygulandı (`get_news_events`, `get_speech_features`, `transcribe_finance_video_segment`); iki veri dosyası da boş. Konuşma aracı harness'in isteğe bağlı `LOAD_CONTEXT` adımında izinlidir ama yerel model plan örneklerinde görmediği için onu çağırmaz.
 
 ## 2. Sistem mimarisi
 
@@ -116,16 +116,17 @@ Okuma: kalite kapısı (D) üç bozuk veri sorusunun üçünü de durdurdu; kap�
 
 **Sınırlamalar (özet):**
 - Evren 30 hisse ve 24 sektör etiketinde yalnızca 6'sında 2 hisse var; sektör karşılaştırması sınırlı; sektör benchmark'ı yalnızca 17 hisse için var ve ilk kelime eşleşmesine dayanır.
-- Temel veri elle girilmiş ve 5 hisselik; haber verisi yok; konuşma yok; TÜFE ve TCMB dosyalarının kaynağı doğrulanmadı.
+- Temel veri elle girilmiş ve 5 hisselik; haber ve konuşma verisi yok (araçlar var, dosyalar boş); TÜFE ve TCMB dosyalarının kaynak sitesi kayıtlı (`01` §4) ama sorgu ve indirme tarihi kayıtlı değil.
 - Teknik dönüşte yeni olay aileleri ve volatilite rejimi yalnızca ASELS için raporlandı (`02` §6); küçük hücreler anekdottur ve çoklu test düzeltmesi yoktur. Yerel model bu ailelerle yeniden eğitilmedi.
 - Değerlendirme seti 12 soru; istatistiksel güven sınırlı. Guard sayı denetimi 0–20 arası tam sayıları serbest bırakır.
 - Colab ölçümü 4-bit, Mac çalıştırması bf16; iki ortamın küçük sayısal farkları olabilir.
+- İz kaydı (`trace`) kodda ve web arayüzünde var, ama repodaki örnek günlük (`example_analysis_log.json`) bu özellikten önce üretildi ve iz kaydı içermez; Ollama yolunda ağırlık özeti kaydedilmez (`06` §1).
 - Replay karması kaydın yanında saklandığı için kötü niyetli yeniden yazımı değil, yanlışlıkla bozulmayı yakalar.
-- A–E harness deneyi gerçek modelle yapılmadı.
+- A–E harness deneyi gerçek modelle yalnızca Colab'da (T4, 4-bit) yapıldı; 15 soru, sürüm başına tek ölçüm, Mac'te tekrarlanmadı ve base model A–E'de ölçülmedi (§5.1).
 
 ## 7. Sonuç
 
-Sistem, "kanıtsız sayı üretme" riskini mimariyle sınırlıyor: deterministik araçlar, zorunlu kalite kapısı, kanıt kimlikleri, guard ve değiştirilemez günlük. Yerel ince ayarlı model araç planlamayı güvenilir yapıyor; metin kalitesindeki kalan sapmaları guard telafi ediyor. Araştırma bulguları ise sistemin kendi vokabülerine uygun biçimde temkinli: dört senaryoda da işlem sinyali olarak savunulabilir bir sonuç çıkmadı. Eksikler (gerçek haber ve temel veri, A–E'nin gerçek model koşusu) §6'da açıkça listelidir.
+Sistem, "kanıtsız sayı üretme" riskini mimariyle sınırlıyor: deterministik araçlar, zorunlu kalite kapısı, kanıt kimlikleri, guard ve değiştirilemez günlük. Yerel ince ayarlı model araç planlamayı güvenilir yapıyor; metin kalitesindeki kalan sapmaları guard telafi ediyor. Araştırma bulguları ise sistemin kendi vokabülerine uygun biçimde temkinli: dört senaryoda da işlem sinyali olarak savunulabilir bir sonuç çıkmadı. Eksikler (gerçek haber, konuşma ve temel veri; A–E'nin Mac'te tekrarı) §6'da açıkça listelidir.
 
 ## Kaynaklar
 
@@ -141,7 +142,7 @@ Sistem, "kanıtsız sayı üretme" riskini mimariyle sınırlıyor: deterministi
 
 1. **Testler (1 dk):** `python -m unittest discover -s tests` → `OK`.
 2. **Ortam (30 sn):** `BIST_LLM_OFFLINE=1 python -m src.llm.check_local --adapter artifacts/llm/qwen_bist_lora/adapter` → `FAIL` yok.
-3. **Arayüz (5 dk):** `python -m src.llm.web --adapter artifacts/llm/qwen_bist_lora/adapter` → `http://127.0.0.1:8765`. Sırayla beş örnek soru; her cevapta durum, araçlar, E1–E3 kanıtı, kontrol listesi. Q3'te guard'ın değiştirdiği taslağı ("Model draft before the guard") göster. Q5'te tavsiye ve fiyat hedefi reddini göster.
+3. **Arayüz (5 dk):** `python -m src.llm.web --adapter artifacts/llm/qwen_bist_lora/adapter` → `http://127.0.0.1:8765`. Sırayla beş örnek soru; her cevapta durum, araçlar, E1–E3 kanıtı, kontrol listesi. Q3'te guard'ın değiştirdiği taslağı ("Model draft before the guard") göster. Q5'te tavsiye ve fiyat hedefi reddini göster. Her cevabın altındaki **Run trace** düğmesiyle süreç kaydını aç: model ve adaptör özeti, `temperature=0`/greedy/seed yok, sistem ve kullanıcı istemleri, araç çağrıları (parametre ve tarih aralığı, çıktı), UTC zaman damgaları (`06` §1).
 4. **Tuzak sorular (2 dk):** gelecek tarih ("25.09.2026'ya kadar"), evrende olmayan hisse, "kesin yükselir, al, hedef fiyat ver". Hepsi ret ya da `INVESTIGATE` olmalı.
 5. **Replay (1 dk):** `python scripts/replay_demo.py` → bozulmamış günlük açılır, değiştirilmiş kopya reddedilir.
 6. **Kanıt (30 sn):** `reports/evidence/` ve herhangi bir rapordaki sayıyı araç çıktısıyla eşleştir.

@@ -141,6 +141,8 @@ python -m src.llm.agent --adapter artifacts/llm/qwen_bist_lora/adapter "Does THY
 ```
 Add `--json` to print the full audit trail (tool plan, states, evidence, raw model answer, guard violations). Each answer is also written as a replay log under `data/analysis_logs/`.
 
+The audit trail includes `trace`, the full process record: model, adapter SHA-256 and decoding settings (`temperature` 0, greedy, no seed), every model call with its system and user prompt, every tool call with arguments, date ranges and output, and UTC timestamps. In the web page (`python -m src.llm.web`) it opens from the **Run trace** button under each answer; the window is closed by default. See `reports/06_karar_gunlugu_ve_replay.md`.
+
 Loading the model takes a minute or more. Questions are answered with the temperature at 0, so asking the same question twice gives the same answer.
 
 ### What to expect

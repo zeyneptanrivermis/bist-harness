@@ -4,6 +4,7 @@
     -> open http://127.0.0.1:8765
 
 The page only shows what run_agent returns: the status, the answer, the tools called, the evidence and the guard result.
+Each answer also carries its process record (result["trace"]), opened from the "Run trace" button; closed by default.
 """
 
 from __future__ import annotations
@@ -14,6 +15,8 @@ import threading
 from http.server import BaseHTTPRequestHandler, ThreadingHTTPServer
 from pathlib import Path
 from typing import Any, Callable
+
+from src.mcp_tools.serialization import json_safe
 
 PAGE = Path(__file__).with_name("web_page.html")
 MAX_BODY = 4000
@@ -55,6 +58,7 @@ def ui_payload(result: dict[str, Any]) -> dict[str, Any]:
         # checks describe the model's own draft; they are only meaningful when a draft was written
         "checks": [] if raw is None else [{"label": label, "ok": key not in violations} for key, label in CHECKS.items()],
         "raw_answer": raw if violations else None,
+        "trace": json_safe(result.get("trace")),  # shown in the collapsed "Run trace" window
     }
 
 

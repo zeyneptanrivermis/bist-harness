@@ -12,6 +12,8 @@ from typing import Any
 
 BASE_MODEL = os.getenv("BIST_LLM_MODEL", "Qwen/Qwen3-4B")
 ADAPTER_DIR = os.getenv("BIST_LLM_ADAPTER", "")
+# Greedy decoding: no sampling, so temperature and seed do not apply. Recorded in every trace (src/llm/agent.py).
+DECODING = {"temperature": 0, "do_sample": False, "seed": None, "note": "greedy decoding (argmax), no sampling: temperature 0, seed not used"}
 
 
 def load(adapter_dir: str = ADAPTER_DIR, model_name: str = BASE_MODEL):
@@ -43,7 +45,7 @@ def chat(model, tokenizer, messages: list[dict[str, str]], max_new_tokens: int =
     kwargs = {"enable_thinking": False}  # Qwen3 template flag; ignored by other templates
     ids = tokenizer.apply_chat_template(messages, add_generation_prompt=True, return_tensors="pt", return_dict=True, **kwargs).to(model.device)
     with torch.no_grad():
-        out = model.generate(**ids, max_new_tokens=max_new_tokens, do_sample=False)
+        out = model.generate(**ids, max_new_tokens=max_new_tokens, do_sample=DECODING["do_sample"])
     return tokenizer.decode(out[0][ids["input_ids"].shape[1]:], skip_special_tokens=True).strip()
 
 
