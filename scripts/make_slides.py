@@ -123,7 +123,7 @@ table(s, [["Metrik", "Base", "Adaptör"], ["Geçersiz araç çağrısı", "%66,7
           ["Desteklenmeyen sonuç", "%25,0", "%0"], ["Kural ihlali (tavsiye)", "%0", "%0"], ["Sayısal halüsinasyon (ham taslak)", "%0*", "%33,3"]],
       col_widths=[6.2, 2.85, 2.85])
 text(s, 0.7, 5.0, 11.9, 1.5, ["*Base çoğu soruda geçerli plan üretemediği için bu adil bir kıyas değil.",
-                              "Guard sapan taslakları deterministik özetle değiştirir. 12 soru: istatistiksel güven sınırlı."], size=16)
+                              "Ölçüm yeniden yazımdan önce. Şimdi: guard bulguları modele geri verir, model bir kez yeniden yazar; o da geçemezse \"harness özeti\" etiketli deterministik özet. 12 soru: güven sınırlı."], size=16)
 
 s = slide("A–E harness deneyi: gerçek model (15 soru, Colab T4)")
 table(s, [["Ölçüt", "A", "B", "C", "D", "E"],

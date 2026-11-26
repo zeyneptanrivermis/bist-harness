@@ -119,7 +119,7 @@ def score(result: dict[str, Any], again: dict[str, Any], item: dict[str, Any], a
         "evidence_incomplete": int("missing_evidence_id" in v),
         "rule_violation": int(bool({"trade_advice", "missing_advice_refusal"} & v)),
         "not_reproducible": int((result["answer"], result["plan"]) != (again["answer"], again["plan"])),
-        "guard_replaced": int(bool(v - {"invalid_tool_call"}) and result["answer"] != result["raw_answer"]),
+        "guard_replaced": int(result.get("answer_source") == "harness_template"),  # the model's rewrite also failed, so the harness summary stood in
     }
 
 
@@ -131,7 +131,8 @@ def evaluate(chat_fn, name: str) -> dict[str, Any]:
         s = score(first, again, item)
         for key, value in s.items():
             totals[key] += value
-        rows.append({"question": item["q"][:90], "unseen": item["unseen"], "plan": first["plan"], "status": first["action"], "violations": first["violations"], "scores": s, "raw_answer": first["raw_answer"]})
+        rows.append({"question": item["q"][:90], "unseen": item["unseen"], "plan": first["plan"], "status": first["action"], "violations": first["violations"], "scores": s, "raw_answer": first["raw_answer"],
+                     "answer_source": first.get("answer_source"), "retry_violations": first.get("retry_violations")})
     n = len(EVAL_ITEMS)
     return {"model": name, "n_questions": n, "rates": {k: round(v / n, 3) for k, v in totals.items()}, "rows": rows}
 
@@ -160,7 +161,7 @@ def evaluate_ae(chat_fn, versions: tuple[str, ...] = VERSIONS) -> list[dict[str,
                 s = {key: 0 for key in AE_RATES} | {"crash": 1, "quality_gate_bypass": int("corrupt" in item), "not_reproducible": int(first != again)}
             else:
                 s = score({**first, "violations": first["final_violations"]}, again, item)
-                s["guard_replaced"] = int(bool(first["violations"]) and first["answer"] != first["raw_answer"])
+                s["guard_replaced"] = int(first.get("answer_source") == "harness_template")
                 s["quality_gate_bypass"] = int("corrupt" in item and first["action"] != "ANALYSIS_UNSAFE")
                 s["crash"] = 0
             for key, value in s.items():

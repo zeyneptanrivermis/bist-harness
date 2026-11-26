@@ -95,21 +95,21 @@ def _evidence_numbers(node: Any) -> set[str]:
         return set()
     if isinstance(node, (int, float)):
         return _numeric_forms(float(node))
-    if isinstance(node, dict):
-        return set().union(*(_evidence_numbers(v) for v in node.values())) if node else set()
+    if isinstance(node, dict):  # keys count too: horizons live in keys like "5d", "ret_20d", "RSI_14"
+        return set().union(*(_evidence_numbers(v) | {n.lstrip("-") for n in _NUMBER.findall(str(k))} for k, v in node.items())) if node else set()
     if isinstance(node, list):
         return set().union(*(_evidence_numbers(v) for v in node)) if node else set()
     return {n.lstrip("-") for n in _NUMBER.findall(str(node))}  # strings (periods, dates, warnings) carry digits
 
 
 def unsupported_numbers(answer: str, evidence: list[dict[str, Any]], question: str = "") -> list[str]:
-    """Numbers in the answer that trace neither to the evidence nor to the user's own question (E-ids and ISO dates ignored).
+    """Numbers in the answer that trace neither to the evidence nor to the user's own question.
 
-    shortcut: integers 0-20 pass unchecked (template words like "5-day", "t+1"); upgrade by tagging them.
+    Every number is checked, small integers included. Only E-ids, ISO dates, XU100 and the "t+1" timing label are ignored.
     """
     allowed = _evidence_numbers(evidence) | {n.lstrip("-") for n in _NUMBER.findall(question)}
-    text = re.sub(r"\bE\d+\b|XU100", " ", _DATE.sub(" ", answer))
-    return [n for n in _NUMBER.findall(text) if n.lstrip("-") not in allowed and not (n.isdigit() and int(n) <= 20)]
+    text = re.sub(r"\bE\d+\b|XU100|\bt\+1\b", " ", _DATE.sub(" ", answer))
+    return [n for n in _NUMBER.findall(text) if n.lstrip("-") not in allowed]
 
 
 def check_answer(answer: str, evidence: list[dict[str, Any]], expected_status: str | None, as_of_date: str, question: str = "") -> list[str]:
@@ -131,6 +131,21 @@ def check_answer(answer: str, evidence: list[dict[str, Any]], expected_status: s
     if advice_requested(question) and "cannot give investment advice" not in answer:
         found.append("missing_advice_refusal")
     return found
+
+
+def guard_feedback(answer: str, violations: list[str], evidence: list[dict[str, Any]], expected_status: str | None, as_of_date: str, question: str = "") -> str:
+    """The guard's findings, worded as a rewrite request to the model (no answer text is supplied, only the broken rules)."""
+    notes = {
+        "bad_status": f"Start with \"Status: {expected_status}.\"" if expected_status else "Start with \"Status: <STATUS>.\" using an allowed status.",
+        "unsupported_conclusion": f"The evidence supports the status {expected_status}; start with \"Status: {expected_status}.\"",
+        "trade_advice": "Do not write buy, sell or guaranteed.",
+        "future_date": f"Do not mention any date after {as_of_date}.",
+        "missing_evidence_id": "Cite every evidence id: " + ", ".join(e["evidence_id"] for e in evidence) + ".",
+        "numeric_hallucination": "These numbers are not in the evidence or the question; remove them or use the evidence values: "
+                                 + ", ".join(unsupported_numbers(answer, evidence, question)) + ".",
+        "missing_advice_refusal": "The question asks for advice; include the sentence \"I cannot give investment advice.\"",
+    }
+    return "Your summary broke these rules. Rewrite it using only the committed evidence.\n" + "\n".join(f"- {notes[v]}" for v in violations if v in notes)
 
 
 def _plan_tickers(plan: list[tuple[str, dict[str, Any]]]) -> list[str]:
@@ -182,8 +197,10 @@ def execute_plan(plan: list[tuple[str, dict[str, Any]]], as_of: str, router: Saf
             return {"states": [*states, "BLOCKED"], "evidence": [], "expected": "ANALYSIS_UNSAFE", "blocked_answer": refusal_text(blocking[0] if blocking else "NO_DATA")}
         evidence.append(_item(1, {"tool": "check_data_quality", "available": True, "gate": status, "warnings": []}, as_of))
     states += ["CALCULATE", "RUN_SCENARIO"]
+    if gate:  # the gate already ran for every planned stock (E1); a planned quality check would only repeat it
+        plan = [(name, args) for name, args in plan if name != "check_data_quality"]
     for name, _ in plan:
-        assert_tool_allowed("RUN_SCENARIO", name)
+        assert_tool_allowed("CHECK_DATA_QUALITY" if name == "check_data_quality" else "RUN_SCENARIO", name)
     outputs = [router.execute(name, args, as_of_date=as_of) for name, args in plan]
     evidence += [_item(len(evidence) + i + 1, out, as_of) for i, out in enumerate(outputs)]
     if not states_on:
@@ -255,8 +272,8 @@ def run_agent(question: str, chat_fn: ChatFn, *, as_of_date: str | None = None, 
         return output
 
     result: dict[str, Any] = {"question": question, "as_of_date": as_of, "version": version, "tool_call": None, "tool_valid": None, "plan": [], "state_history": ["START"],
-                              "action": None, "evidence": [], "raw_answer": None, "answer": None, "violations": [], "final_violations": [], "replay_log": None,
-                              "human_review": None, "trace": trace}
+                              "action": None, "evidence": [], "raw_answer": None, "answer": None, "answer_source": None, "violations": [], "retry_answer": None,
+                              "retry_violations": None, "final_violations": [], "replay_log": None, "human_review": None, "trace": trace}
     if version == "A":
         evidence, expected, states = _raw_data_evidence(question, as_of, router), None, ["START", "ANSWER"]
     else:
@@ -269,12 +286,14 @@ def run_agent(question: str, chat_fn: ChatFn, *, as_of_date: str | None = None, 
             status = _STATUS.match(reply)
             if status and status.group(1) in STATUSES and not _ADVICE.search(reply):
                 result["answer"] = reply  # a prose refusal is allowed and is not a tool call
+                result["answer_source"] = "model"
                 result["action"] = status.group(1)
             else:
                 result["tool_valid"] = False
                 result["action"] = "ANALYSIS_UNSAFE"  # the router blocked the plan, which is what the answer says
                 result["violations"] = ["invalid_tool_call"]
                 result["answer"] = f"{refusal_text('INVALID_TOOL_REQUEST')} ({exc})"
+                result["answer_source"] = "harness_refusal"
             trace["finished_at"] = _now()
             return result
         result["tool_valid"] = True
@@ -282,17 +301,27 @@ def run_agent(question: str, chat_fn: ChatFn, *, as_of_date: str | None = None, 
         run = execute_plan(plan, as_of, router, gate=version in "DE", states_on=version in "CDE")
         result["state_history"] = run["states"]
         if run["blocked_answer"]:
-            result.update(action="ANALYSIS_UNSAFE", answer=run["blocked_answer"])
+            result.update(action="ANALYSIS_UNSAFE", answer=run["blocked_answer"], answer_source="harness_refusal")
             trace["finished_at"] = _now()
             return result
         evidence, expected, states = run["evidence"], run["expected"], run["states"]
     result.update(evidence=evidence, action=expected, state_history=states)
 
-    raw = chat_fn([{"role": "system", "content": DEFAULT_SYSTEM_PROMPT}, {"role": "user", "content": report_prompt(question, as_of, evidence)}], "write_summary")
+    messages = [{"role": "system", "content": DEFAULT_SYSTEM_PROMPT}, {"role": "user", "content": report_prompt(question, as_of, evidence)}]
+    raw = chat_fn(messages, "write_summary")
     result["raw_answer"] = raw
     result["violations"] = check_answer(raw, evidence, expected, as_of, question)
-    guarded = version in "DE" and result["violations"]
-    result["answer"] = draft_summary(expected, evidence, question) if guarded else raw
+    result["answer"], result["answer_source"] = raw, "model"
+    if version in "DE" and result["violations"]:
+        # one rewrite by the model itself with the guard's findings; only if that also fails does the harness summary stand in, labelled as such
+        retry = chat_fn([*messages, {"role": "assistant", "content": raw}, {"role": "user", "content": guard_feedback(raw, result["violations"], evidence, expected, as_of, question)}],
+                        "rewrite_summary")
+        result["retry_answer"] = retry
+        result["retry_violations"] = check_answer(retry, evidence, expected, as_of, question)
+        if result["retry_violations"]:
+            result["answer"], result["answer_source"] = draft_summary(expected, evidence, question), "harness_template"
+        else:
+            result["answer"], result["answer_source"] = retry, "model_retry"
     result["final_violations"] = check_answer(result["answer"], evidence, expected, as_of, question)
     trace["finished_at"] = _now()
     if version == "E":
@@ -300,8 +329,9 @@ def run_agent(question: str, chat_fn: ChatFn, *, as_of_date: str | None = None, 
         if log:
             key = hashlib.sha256(json.dumps([question, as_of, result["plan"]], sort_keys=True).encode()).hexdigest()[:16]  # same question -> same log id
             result["replay_log"] = str(log_decision({"analysis_id": key, "request": {"question": question, "as_of_date": as_of}, "state_history": states, "plan": result["plan"],
-                                                     "evidence": evidence, "action": expected, "answer": result["answer"],
-                                                     "raw_answer": raw, "violations": result["violations"], "human_review": result["human_review"], "trace": trace}))
+                                                     "evidence": evidence, "action": expected, "answer": result["answer"], "answer_source": result["answer_source"],
+                                                     "raw_answer": raw, "violations": result["violations"], "retry_answer": result["retry_answer"],
+                                                     "retry_violations": result["retry_violations"], "human_review": result["human_review"], "trace": trace}))
     return result
 
 

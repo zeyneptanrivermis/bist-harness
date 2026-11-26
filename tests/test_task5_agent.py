@@ -38,8 +38,9 @@ class StubRouter(SafeProjectToolRouter):
         return {"test_weekday_pattern": WEEKDAY, "run_backtest": BACKTEST}[tool_name]
 
 
-def _model(second: str, first: str = PLAN):
-    replies = iter([first, second])
+def _model(second: str, first: str = PLAN, retry: str | None = None):
+    """plan reply, summary reply, and the rewrite the guard asks for (default: the same bad summary again)."""
+    replies = iter([first, second, second if retry is None else retry])
     return lambda messages: next(replies)
 
 
@@ -50,6 +51,8 @@ class GuardTests(unittest.TestCase):
         self.assertEqual(unsupported_numbers("E1: return 5.6% versus XU100 in 2024Q3 (2026-09-10)", self.EVIDENCE), [])
         self.assertEqual(unsupported_numbers("return will be 77.7%", self.EVIDENCE), ["77.7"])
         self.assertEqual(unsupported_numbers("over 33.3 days", self.EVIDENCE, question="the last 33.3 days"), [])
+        self.assertEqual(unsupported_numbers("12 events, t+1 timing", self.EVIDENCE), ["12"])  # small integers are checked too
+        self.assertEqual(unsupported_numbers("5-day hit rate", [{"evidence_id": "E1", "values": {"5d": {"hit_rate": 0.6}}}]), [])  # horizons live in keys
 
     def test_check_answer_flags_each_rule(self) -> None:
         bad = check_answer("Status: MOON. Buy it, 2026-12-01 gain 77.7%", self.EVIDENCE, "WATCH", AS_OF)
@@ -81,7 +84,7 @@ class AgentLoopTests(unittest.TestCase):
         model.meta = {"base_model": "m", "temperature": 0, "seed": None}
         trace = self._run(model)["trace"]
         self.assertEqual(trace["model"]["temperature"], 0)
-        self.assertEqual([c["step"] for c in trace["model_calls"]], ["plan_tools", "write_summary"])
+        self.assertEqual([c["step"] for c in trace["model_calls"]], ["plan_tools", "write_summary", "rewrite_summary"])  # E2, E3 missing -> one rewrite
         self.assertEqual([m["role"] for m in trace["model_calls"][0]["messages"]], ["system", "user"])
         self.assertEqual([c["tool_name"] for c in trace["tool_calls"]], ["check_data_quality", "test_weekday_pattern", "run_backtest"])
         self.assertEqual(trace["tool_calls"][1]["arguments"]["ticker"], "THYAO")
@@ -121,10 +124,25 @@ class AgentLoopTests(unittest.TestCase):
         good = draft_summary(run["expected"], run["evidence"], "Does THYAO show the pattern?")
         kept = self._run(_model(good))
         self.assertEqual((kept["answer"], kept["violations"]), (good, []))
+        self.assertEqual(kept["answer_source"], "model")
+        self.assertIsNone(kept["retry_answer"])
         replaced = self._run(_model("Status: WATCH. Buy now for 77.7%."))
         self.assertIn("trade_advice", replaced["violations"])
         self.assertEqual(replaced["raw_answer"], "Status: WATCH. Buy now for 77.7%.")
-        self.assertEqual(replaced["answer"], good)
+        self.assertEqual((replaced["answer"], replaced["answer_source"]), (good, "harness_template"))
+        self.assertIn("trade_advice", replaced["retry_violations"])
+
+    def test_a_failing_draft_gets_one_rewrite_from_the_model_with_the_guard_findings(self) -> None:
+        run = execute_plan(StubRouter().validate_plan(PLAN, as_of_date=AS_OF), AS_OF, StubRouter())
+        good = draft_summary(run["expected"], run["evidence"], "Does THYAO show the pattern?")
+        seen = []
+        model = _model("Status: REJECT_SIGNAL. E1 E2 E3 return 77.7%", retry=good)
+        result = self._run(lambda messages: seen.append(messages) or model(messages))
+        self.assertEqual((result["answer"], result["answer_source"], result["retry_violations"]), (good, "model_retry", []))
+        self.assertEqual(result["violations"], ["numeric_hallucination"])
+        feedback = seen[2][-1]["content"]
+        self.assertIn("77.7", feedback)
+        self.assertEqual([m["role"] for m in seen[2]], ["system", "user", "assistant", "user"])
 
     def test_blocked_gate_stops_before_any_tool_and_yields_analysis_unsafe(self) -> None:
         router = StubRouter(gate="HARD_BLOCK")
@@ -139,6 +157,15 @@ class AgentLoopTests(unittest.TestCase):
             router = StubRouter()
             result = self._run(_model("x", first=reply), router)
             self.assertEqual((result["tool_valid"], result["violations"], router.ran, result["action"]), (False, ["invalid_tool_call"], [], "ANALYSIS_UNSAFE"))
+
+    def test_a_plan_that_only_asks_for_the_quality_check_does_not_crash(self) -> None:
+        only_gate = json.dumps({"tool_calls": [{"tool_name": "check_data_quality", "arguments": {"ticker": "THYAO"}}]})
+        router = StubRouter()
+        result = self._run(_model("x", first=only_gate), router)
+        self.assertEqual(router.ran, ["check_data_quality"])  # the gate ran once, the planned repeat was dropped
+        self.assertEqual(result["action"], "INVESTIGATE")
+        plan = StubRouter().validate_plan(only_gate, as_of_date=AS_OF)
+        self.assertEqual([e["source_tool"] for e in execute_plan(plan, AS_OF, StubRouter(), gate=False, states_on=False)["evidence"]], ["check_data_quality"])
 
     def test_prose_refusal_is_allowed_and_is_not_a_tool_call(self) -> None:
         result = self._run(_model("x", first="Status: ANALYSIS_UNSAFE. The request needs data after the analysis date."))

@@ -24,7 +24,8 @@ class PayloadTests(unittest.TestCase):
         self.assertIsNone(p["raw_answer"])
 
     def test_guard_replacement_is_visible(self) -> None:
-        p = ui_payload(_result(raw_answer="Status: WATCH. 99.9%", violations=["numeric_hallucination"]))
+        p = ui_payload(_result(raw_answer="Status: WATCH. 99.9%", violations=["numeric_hallucination"], answer_source="harness_template", retry_answer="Status: WATCH. 98%"))
+        self.assertEqual((p["answer_source"], p["retry_answer"]), ("harness_template", "Status: WATCH. 98%"))
         self.assertTrue(p["guard_replaced"])
         self.assertEqual(p["raw_answer"], "Status: WATCH. 99.9%")
         self.assertFalse(next(c for c in p["checks"] if c["label"].startswith("Every number"))["ok"])
@@ -62,6 +63,7 @@ class ServerTests(unittest.TestCase):
         page = urlopen(self.base + "/").read()
         self.assertIn(b"BIST research assistant", page)
         self.assertIn(b'<dialog id="tr"', page)  # the trace window exists and is closed until the button is pressed
+        self.assertIn(b"Analysis date 2026-09-10", page)  # filled from the server's analysis date
         self.assertEqual(len(json.loads(urlopen(self.base + "/api/samples").read())), 5)
         self.assertEqual(self._post(json.dumps({"question": " hi "}).encode()), (200, {"echo": "hi"}))
 

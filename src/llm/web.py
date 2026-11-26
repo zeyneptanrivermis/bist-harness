@@ -16,6 +16,7 @@ from http.server import BaseHTTPRequestHandler, ThreadingHTTPServer
 from pathlib import Path
 from typing import Any, Callable
 
+from src.config import ANALYSIS_AS_OF_DATE
 from src.mcp_tools.serialization import json_safe
 
 PAGE = Path(__file__).with_name("web_page.html")
@@ -53,16 +54,19 @@ def ui_payload(result: dict[str, Any]) -> dict[str, Any]:
         "tools": [call["tool_name"] for call in result.get("plan", [])],
         "evidence": [{"id": e["evidence_id"], "label": TOOL_LABELS.get(e["source_tool"], e["source_tool"]),
                       "note": (e["values"].get("warnings") or [""])[0][:140]} for e in result.get("evidence", [])],
-        "guard_replaced": bool(violations) and raw is not None and answer != raw,
+        # who wrote the shown answer: model, model_retry (the model's own rewrite after the guard), harness_template or harness_refusal
+        "answer_source": result.get("answer_source"),
+        "guard_replaced": result.get("answer_source") == "harness_template",
         "violations": violations,
         # checks describe the model's own draft; they are only meaningful when a draft was written
         "checks": [] if raw is None else [{"label": label, "ok": key not in violations} for key, label in CHECKS.items()],
         "raw_answer": raw if violations else None,
+        "retry_answer": result.get("retry_answer"), "retry_violations": result.get("retry_violations") or [],
         "trace": json_safe(result.get("trace")),  # shown in the collapsed "Run trace" window
     }
 
 
-def make_server(ask: Callable[[str], dict[str, Any]], host: str = "127.0.0.1", port: int = 8765) -> ThreadingHTTPServer:
+def make_server(ask: Callable[[str], dict[str, Any]], host: str = "127.0.0.1", port: int = 8765, as_of: str = ANALYSIS_AS_OF_DATE) -> ThreadingHTTPServer:
     lock = threading.Lock()  # one model, one question at a time
 
     class Handler(BaseHTTPRequestHandler):
@@ -79,7 +83,7 @@ def make_server(ask: Callable[[str], dict[str, Any]], host: str = "127.0.0.1", p
 
         def do_GET(self) -> None:
             if self.path == "/":
-                self._send(200, PAGE.read_bytes(), "text/html; charset=utf-8")
+                self._send(200, PAGE.read_bytes().replace(b"{{AS_OF}}", as_of.encode()), "text/html; charset=utf-8")
             elif self.path == "/api/samples":
                 self._json(200, [{"name": n, "question": q} for n, q in SAMPLES])
             else:
@@ -111,7 +115,6 @@ def make_server(ask: Callable[[str], dict[str, Any]], host: str = "127.0.0.1", p
 def main() -> None:
     import argparse
 
-    from src.config import ANALYSIS_AS_OF_DATE
     from src.llm.agent import local_chat_fn, ollama_chat_fn, run_agent
     from src.llm.tool_loop import SafeProjectToolRouter
 
@@ -120,11 +123,12 @@ def main() -> None:
     parser.add_argument("--backend", choices=["hf", "ollama"], default="hf")
     parser.add_argument("--ollama-model", default="bist-qwen")
     parser.add_argument("--port", type=int, default=8765)
+    parser.add_argument("--as-of", default=ANALYSIS_AS_OF_DATE, help="analysis date; nothing after it may be used (set it to the last date of the refreshed data for a live question)")
     args = parser.parse_args()
     chat_fn = local_chat_fn(args.adapter) if args.backend == "hf" else ollama_chat_fn(args.ollama_model)
     router = SafeProjectToolRouter()
-    server = make_server(lambda q: ui_payload(run_agent(q, chat_fn, as_of_date=ANALYSIS_AS_OF_DATE, router=router)), port=args.port)
-    print(f"Ready: http://127.0.0.1:{args.port}  (Ctrl+C to stop)")
+    server = make_server(lambda q: ui_payload(run_agent(q, chat_fn, as_of_date=args.as_of, router=router)), port=args.port, as_of=args.as_of)
+    print(f"Ready: http://127.0.0.1:{args.port}  analysis date {args.as_of}  (Ctrl+C to stop)")
     try:
         server.serve_forever()
     except KeyboardInterrupt:

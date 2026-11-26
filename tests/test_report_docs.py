@@ -66,5 +66,25 @@ class SubmissionCleanupTest(unittest.TestCase):
         self.assertNotIn("0,583 | 0,000", text)  # the old adapter's guard rate
 
 
+class RagFileTest(unittest.TestCase):
+    def test_rag_file_states_no_rag_and_matches_the_code(self) -> None:
+        import importlib.util
+
+        from src.llm.training_data import DEFAULT_SYSTEM_PROMPT, project_tool_definitions
+
+        spec = importlib.util.spec_from_file_location("make_rag_file", Path("scripts/make_rag_file.py"))
+        module = importlib.util.module_from_spec(spec)
+        spec.loader.exec_module(module)
+        rag = module.build()
+        self.assertIs(rag["retrieval_augmented_generation"], False)
+        self.assertEqual(rag["procedural_memory"]["system_prompt"], DEFAULT_SYSTEM_PROMPT)
+        self.assertEqual(rag["procedural_memory"]["tool_definitions"], project_tool_definitions())
+        docs = {d["id"]: d for d in rag["documents"]}
+        self.assertTrue(all({"memory_type", "path", "source"} <= d.keys() for d in docs.values()))
+        self.assertEqual(docs["quarterly_fundamentals"]["tickers"], ["ASELS", "BIMAS", "FROTO", "THYAO", "TUPRS"])
+        self.assertIsNone(docs["quarterly_fundamentals"]["source"]["kap_reference"])
+        self.assertEqual(docs["news_events"]["rows"], 0)
+
+
 if __name__ == "__main__":
     unittest.main()

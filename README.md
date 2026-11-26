@@ -2,10 +2,10 @@
 
 A question about BIST stocks goes in. The **model** turns it into a JSON tool plan and words the final summary.
 **Python code** runs the data-quality gate, the tools and the backtest, and picks the conclusion (WATCH, INVESTIGATE, ANALYSIS_UNSAFE, ...).
-A guard replaces any summary that invents numbers, gives advice or uses a date after the analysis date.
+A guard checks every summary for numbers not in the tool outputs, advice and dates after the analysis date. A failing summary goes back to the model once with the findings; if the rewrite also fails, a deterministic evidence summary is shown, labelled as harness output (`answer_source`), never as the model's answer.
 Everything runs on this machine. **No cloud AI API is called.**
 
-Analysis date is fixed at **2026-09-10** (`src/config.py`); nothing after it may be used.
+Analysis date defaults to **2026-09-10** (`src/config.py`); nothing after it may be used. Both the CLI and the web page take `--as-of YYYY-MM-DD` (for a live question on newer data, refresh the data first).
 
 ---
 
@@ -204,5 +204,6 @@ src/scenarios/          sector, weekday, reversal, fundamentals scenarios
 roadmap/                project plans and the report draft
 reports/01-09            written deliverables (data dictionary, four scenario reports, replay demo, backtests, A-E report, final report)
 reports/evidence/       raw tool outputs behind every number; rebuild with scripts/make_report_evidence.py
+reports/rag_knowledge_base.json  knowledge sources and their metadata (no RAG is used); rebuild with scripts/make_rag_file.py
 scripts/                evidence, strategy-variant and replay-demo scripts
 ```
