@@ -67,7 +67,7 @@ def training_args(adapter: Path) -> dict | None:
 
 def fine_tuning_config(adapter: Path) -> dict:
     lora = json.loads((adapter / "adapter_config.json").read_text(encoding="utf-8"))
-    dataset_manifest = DATASET / "manifest.json"
+    dataset_manifest, provenance = DATASET / "manifest.json", DATASET / "provenance.json"
     return {
         "base_model": lora.get("base_model_name_or_path"),
         "method": "QLoRA: 4-bit NF4 base (double quantization), LoRA adapter trained with TRL SFTTrainer, loss on the answer only",
@@ -77,6 +77,8 @@ def fine_tuning_config(adapter: Path) -> dict:
                                          "bnb_4bit_compute_dtype": "float16 on T4 (bfloat16 on compute capability >= 8)"},
         "inference_decoding": DECODING,
         "dataset": {"path": rel(DATASET / "records.jsonl"), "builder": "python -m src.llm.dataset --output-dir data/llm/dataset_v3 --per-family 120 --reports-per-family 90",
+                    "builder_commit": "cfc6b46",  # the adapter was trained on data built by this commit; later code builds different records
+                    "provenance": json.loads(provenance.read_text(encoding="utf-8")) if provenance.exists() else None,
                     "split": "src.llm.training_data.stable_split (train+test used for training, validation for eval)",
                     "manifest": json.loads(dataset_manifest.read_text(encoding="utf-8")) if dataset_manifest.exists() else None},
         "sources": {"lora": rel(adapter / "adapter_config.json"), "training": rel(adapter / "training_args.bin"), "notebook": "notebooks/bist_llm_training.ipynb"},
@@ -105,6 +107,7 @@ def main() -> int:
         "adapter": {**attachment(weights, "LoRA adapter weights (safetensors)"), "config": attachment(adapter / "adapter_config.json", "LoRA configuration"),
                     "matches_reported_evaluation": adapter_sha == measured, "reported_evaluation_sha256": measured},
         "fine_tuning": [attachment(DATASET / "records.jsonl", "training data (JSONL)"), attachment(DATASET / "manifest.json", "training data manifest"),
+                        attachment(DATASET / "provenance.json", "how records.jsonl was rebuilt (the original was lost)"),
                         attachment(CONFIG, "configuration and hyperparameters (JSON)")],
         "rag": attachment(ROOT / "reports" / "rag_knowledge_base.json", "knowledge sources and source metadata (no RAG is used; see the file)"),
         "execution_traces": attachment(ROOT / "reports" / "execution_traces.json", "question-answer records with full traces for the five scenarios"),

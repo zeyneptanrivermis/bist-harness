@@ -52,6 +52,8 @@ class GuardTests(unittest.TestCase):
         self.assertEqual(unsupported_numbers("return will be 77.7%", self.EVIDENCE), ["77.7"])
         self.assertEqual(unsupported_numbers("over 33.3 days", self.EVIDENCE, question="the last 33.3 days"), [])
         self.assertEqual(unsupported_numbers("12 events, t+1 timing", self.EVIDENCE), ["12"])  # small integers are checked too
+        ties = [{"evidence_id": "E1", "values": {"ret_3d": 0.0145, "hit_rate_5d": 0.6765}}]
+        self.assertEqual(unsupported_numbers("1.4% and 1.5%, 67.6% and 67.7%; 1.3% and 67.8%", ties), ["1.3", "67.8"])  # both roundings of a tie pass, nothing wider
         self.assertEqual(unsupported_numbers("5-day hit rate", [{"evidence_id": "E1", "values": {"5d": {"hit_rate": 0.6}}}]), [])  # horizons live in keys
 
     def test_check_answer_flags_each_rule(self) -> None:

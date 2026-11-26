@@ -13,8 +13,10 @@ from __future__ import annotations
 
 import hashlib
 import json
+import math
 import re
 from datetime import datetime, timezone
+from decimal import ROUND_HALF_EVEN, Decimal
 from pathlib import Path
 from typing import Any, Callable
 
@@ -87,6 +89,9 @@ def ollama_chat_fn(model: str = "bist-qwen", host: str = "http://localhost:11434
 
 def _numeric_forms(value: float) -> set[str]:
     forms = {f"{value:.{d}f}" for d in (0, 1, 2, 3, 4)} | {f"{value * 100:.{d}f}" for d in (0, 1, 2)}
+    if math.isfinite(value):  # a tie like 0.0145 is 1.5% by float formatting but 1.4% by round-half-even; both trace to the evidence
+        exact = Decimal(repr(value))
+        forms |= {str((exact * scale).quantize(Decimal(1).scaleb(-d), ROUND_HALF_EVEN)) for scale in (1, 100) for d in (0, 1, 2)}
     return forms | {str(value)} | {f.lstrip("-") for f in forms}
 
 

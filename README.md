@@ -179,7 +179,11 @@ python -m unittest discover -s tests
 
 Run these on the machine that has the **evaluated** adapter (SHA-256 `4d62e052...cf96c4d5c`, see `reports/evidence/eval_report_colab.json`), in the LLM environment (`trl` and `torch` are needed to read `training_args.bin`):
 
-1. Put the training data in place: `data/llm/dataset_v3/records.jsonl` and `manifest.json` from the Colab run.
+1. Put the training data in place: `data/llm/dataset_v3/records.jsonl`, `manifest.json` and `provenance.json`. The original `records.jsonl` was lost with the Colab runtime; it was rebuilt from commit `cfc6b46` (seed 481) and matches the original manifest except one report status (see `provenance.json`). To rebuild it:
+   ```bash
+   git worktree add ../bist-v3 cfc6b46 && cp -R data/processed data/raw data/macro data/fundamentals data/news ../bist-v3/data/
+   cd ../bist-v3 && BIST_LLM_OFFLINE=1 python -m src.llm.dataset --output-dir data/llm/dataset_v3 --per-family 120 --reports-per-family 90
+   ```
 2. Record the five scenarios with full traces (model, prompts, tool calls with arguments and outputs, answer source, timestamps, temperature 0, greedy, no seed):
    ```bash
    BIST_LLM_OFFLINE=1 python scripts/run_scenarios.py --adapter artifacts/llm/qwen_bist_lora/adapter
@@ -191,6 +195,17 @@ Run these on the machine that has the **evaluated** adapter (SHA-256 `4d62e052..
    python scripts/make_submission.py --adapter artifacts/llm/qwen_bist_lora/adapter
    ```
    -> `submission.json` and `reports/fine_tuning_config.json` (LoRA and training values are read from the adapter's own `adapter_config.json` and `training_args.bin`). The script exits with 1 and prints `MISSING:` / `WARNING:` lines if an attachment is absent or the adapter is not the evaluated one.
+
+## Live question on newer data (demo)
+
+The reports use the frozen data (prices to 2026-09-30, FX to 2026-09-10). A fresh Yahoo download has the same prices but drops a few trading days before 2026-09-10, which would shift report numbers, so never overwrite the frozen data permanently. For a question about October-November 2026:
+```bash
+tar czf data/backup_frozen.tar.gz data/processed data/raw data/macro      # once
+rm -rf data/processed data/raw data/macro && tar xzf data/live_2026-11-26.tar.gz   # or download: python -c "from src.data_pipeline import download_entire_universe as d; d(force_refresh=True)"
+python -m src.llm.web --adapter artifacts/llm/qwen_bist_lora/adapter --as-of 2026-11-26
+rm -rf data/processed data/raw data/macro && tar xzf data/backup_frozen.tar.gz    # back to the frozen data
+```
+Policy rate, CPI and Fed funds are manual files; for dates after their last row the macro tool reports the last published value with its date.
 
 ## Troubleshooting
 

@@ -63,7 +63,7 @@ Simüle edilmiş tablonun yerine, aynı 15 soruyu (12 normal, 3 bozuk veri) ger�
 
 Okuma:
 - **Kalite kapısı (D):** Üç bozuk veri sorusunun üçünü de D ve E `ANALYSIS_UNSAFE` ile durdurdu. B ve C bozuk veriyi analiz etti; tekrarlayan tarihli ARCLK sorusunda ikisi de `WATCH` verdi.
-- **Guard (D'ye ekleme):** D ve E soruların %26,7'sinde modelin taslağını değiştirdi. Yani bu iki sürümde kullanıcıya giden cevapların dörtte birinden fazlası modelin değil şablonun metni.
+- **Guard (D'ye ekleme):** D ve E soruların %26,7'sinde modelin taslağını değiştirdi. Yani bu iki sürümde kullanıcıya giden cevapların dörtte birinden fazlası modelin değil şablonun metni. Bu ölçüm eski guard ile yapıldı. Yeni guard önce taslağı bulgularla birlikte modele geri gönderiyor ve modelin kendisine bir kez yeniden yazdırıyor. Şablon yalnızca yeniden yazım da kuralı ihlal ederse devreye giriyor ve `answer_source: harness_template` ile işaretleniyor. Bu oran yeni guard ile yeniden ölçülmedi.
 - **A'nın yanlış planı:** A'da araç planı yok; bu bir hata değil, tasarım gereği. A için kalite kapısı ölçütü de anlamsız.
 - **Sınır:** 15 soru ve her sürüm için tek ölçüm. Sonuçlar eğilim gösterir, kanıt değildir. Ayrıca A–E sırasında model yalnızca adaptörle çalıştı; base model A–E'de ölçülmedi.
 
