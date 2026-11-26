@@ -175,6 +175,23 @@ python -m unittest discover -s tests
 
 ---
 
+## Submission package
+
+Run these on the machine that has the **evaluated** adapter (SHA-256 `4d62e052...cf96c4d5c`, see `reports/evidence/eval_report_colab.json`), in the LLM environment (`trl` and `torch` are needed to read `training_args.bin`):
+
+1. Put the training data in place: `data/llm/dataset_v3/records.jsonl` and `manifest.json` from the Colab run.
+2. Record the five scenarios with full traces (model, prompts, tool calls with arguments and outputs, answer source, timestamps, temperature 0, greedy, no seed):
+   ```bash
+   BIST_LLM_OFFLINE=1 python scripts/run_scenarios.py --adapter artifacts/llm/qwen_bist_lora/adapter
+   ```
+   -> `reports/execution_traces.json`
+3. Rebuild the knowledge-source file: `python scripts/make_rag_file.py` -> `reports/rag_knowledge_base.json`
+4. Write the manifest and the fine-tuning configuration:
+   ```bash
+   python scripts/make_submission.py --adapter artifacts/llm/qwen_bist_lora/adapter
+   ```
+   -> `submission.json` and `reports/fine_tuning_config.json` (LoRA and training values are read from the adapter's own `adapter_config.json` and `training_args.bin`). The script exits with 1 and prints `MISSING:` / `WARNING:` lines if an attachment is absent or the adapter is not the evaluated one.
+
 ## Troubleshooting
 
 | Symptom | Fix |

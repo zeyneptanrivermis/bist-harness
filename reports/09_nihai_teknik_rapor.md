@@ -169,6 +169,8 @@ python scripts/make_report_evidence.py          # reports/evidence/*.json (rapor
 python scripts/run_strategy_variants.py         # reports/evidence/strategy_variants.csv (rapor 07)
 python scripts/replay_demo.py                   # rapor 06
 python scripts/make_rag_file.py                 # reports/rag_knowledge_base.json (teslimdeki "RAG dosyası")
+python scripts/run_scenarios.py --adapter <dir> # reports/execution_traces.json (beş senaryo, tam iz kaydıyla; model gerekir)
+python scripts/make_submission.py --adapter <dir>  # submission.json + reports/fine_tuning_config.json (ayarlar adaptör dosyalarından okunur)
 python -m src.experiments.cli                   # A–E simülasyonu (rapor 08)
 python -m unittest discover -s tests            # tüm testler
 ```
