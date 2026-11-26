@@ -1,6 +1,6 @@
 # 08 – Ajan Harness Deneyi (A–E) Karşılaştırması
 
-> **Önemli açıklama:** Bu raporda iki ayrı tablo var. **§4.1 gerçek modelle** (Qwen3-4B + adaptör, Colab T4, 15 soru) alınmış A–E ölçümüdür ve asıl sonuçtur. **§2 simüle edilmiş bir sağlayıcıdan** gelir; yalnızca deney hattının çalıştığını gösteren bir boru hattı testidir ve model kalitesini ölçmez.
+> **Önemli açıklama:** Bu raporda iki ayrı tablo var. **§4.1 gerçek modelle** (Qwen3-4B + adaptör, Colab, 15 soru) alınmış A–E ölçümüdür ve asıl sonuçtur. **§2 simüle edilmiş bir sağlayıcıdan** gelir; yalnızca deney hattının çalıştığını gösteren bir boru hattı testidir ve model kalitesini ölçmez.
 
 ## 1. Deney nedir?
 
@@ -46,7 +46,7 @@ Bu beş engel kapatılmadan alınan "gerçek model A–E" sayıları yanıltıc�
 
 ## 4. Gerçek model için ölçüm
 
-### 4.1 Gerçek A–E koşusu (Colab, T4, Qwen3-4B + adaptör)
+### 4.1 Gerçek A–E koşusu (Colab, Qwen3-4B + adaptör)
 
 Simüle edilmiş tablonun yerine, aynı 15 soruyu (12 normal, 3 bozuk veri) gerçek model ile beş sürümde çalıştıran ölçüm geçti. Her soru iki kez soruldu. Sonuç: `reports/evidence/eval_ae_colab.json` (adaptör SHA-256 `4d62e052…cf96c4d5c`). Komut: `python -m src.llm.evaluate --ae --adapter <dizin>`.
 

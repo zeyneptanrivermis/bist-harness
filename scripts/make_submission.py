@@ -68,13 +68,14 @@ def training_args(adapter: Path) -> dict | None:
 def fine_tuning_config(adapter: Path) -> dict:
     lora = json.loads((adapter / "adapter_config.json").read_text(encoding="utf-8"))
     dataset_manifest, provenance = DATASET / "manifest.json", DATASET / "provenance.json"
+    training = training_args(adapter)
     return {
         "base_model": lora.get("base_model_name_or_path"),
         "method": "QLoRA: 4-bit NF4 base (double quantization), LoRA adapter trained with TRL SFTTrainer, loss on the answer only",
         "lora": {key: lora.get(key) for key in ("r", "lora_alpha", "lora_dropout", "target_modules", "bias", "task_type", "peft_version")},
-        "training": training_args(adapter),
+        "training": training,
         "quantization_during_training": {"load_in_4bit": True, "bnb_4bit_quant_type": "nf4", "bnb_4bit_use_double_quant": True,
-                                         "bnb_4bit_compute_dtype": "float16 on T4 (bfloat16 on compute capability >= 8)"},
+                                         "bnb_4bit_compute_dtype": "bfloat16" if isinstance(training, dict) and training.get("bf16") else "float16 (T4) or bfloat16 (compute capability >= 8)"},
         "inference_decoding": DECODING,
         "dataset": {"path": rel(DATASET / "records.jsonl"), "builder": "python -m src.llm.dataset --output-dir data/llm/dataset_v3 --per-family 120 --reports-per-family 90",
                     "builder_commit": "cfc6b46",  # the adapter was trained on data built by this commit; later code builds different records

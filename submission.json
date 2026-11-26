@@ -1,6 +1,6 @@
 {
  "project": "BIST 100 agent harness (CSE-481 Engineering Economics)",
- "generated_at": "2026-11-26T13:15:55+00:00",
+ "generated_at": "2026-11-26T14:11:22+00:00",
  "base_model": {
   "name": "Qwen/Qwen3-4B",
   "version": "1cfa9a7208912126459214e8b04321603b3df60c",
@@ -50,8 +50,8 @@
    "path": "reports/fine_tuning_config.json",
    "role": "configuration and hyperparameters (JSON)",
    "present": true,
-   "bytes": 3499,
-   "sha256": "5d02d6806488cdc3fc1706cb99b16930fdfeeb10f383ae418f908417381d4f59"
+   "bytes": 3456,
+   "sha256": "56da0fdc18766055a4c9346cfae908023889bef55eaa4589b781ab5e94627225"
   }
  ],
  "rag": {
@@ -59,7 +59,7 @@
   "role": "knowledge sources and source metadata (no RAG is used; see the file)",
   "present": true,
   "bytes": 16416,
-  "sha256": "9f98e115c92fc89c48b60ddf556bf9df460c9a6cc0f6122fd78eac7126b6cfea"
+  "sha256": "08cc64aa12e0924f4262d3575082674c1db82af4552cda2567d8129799f7f1af"
  },
  "execution_traces": {
   "path": "reports/execution_traces.json",
@@ -73,8 +73,8 @@
    "path": "README.md",
    "role": "source",
    "present": true,
-   "bytes": 13852,
-   "sha256": "ebb368f478e90d8a984943825bb9843d1a6ddaa19da645ed153ca84d4cbc8956"
+   "bytes": 14117,
+   "sha256": "637c91b76616a9a33be10aa44bc6e9d517ebe68e6cd328f2f33173a7dca6dd79"
   },
   {
    "path": "notebooks/05_local_llm_finetuning.ipynb",
@@ -87,8 +87,8 @@
    "path": "notebooks/README.md",
    "role": "source",
    "present": true,
-   "bytes": 6339,
-   "sha256": "6d823375ea9fd6d50ffa138cd498e988d89eddf88b17d951af8ba7eaf3ff2134"
+   "bytes": 6617,
+   "sha256": "6edd16040ea7d040fd5eaf7a4117b11b4954e27e0a588513e49d656dd5327bbb"
   },
   {
    "path": "notebooks/bist_llm_training.ipynb",
@@ -136,8 +136,8 @@
    "path": "scripts/make_submission.py",
    "role": "source",
    "present": true,
-   "bytes": 7583,
-   "sha256": "ed56b3dc80389e63250192b1370a2ecfbbed289a4f28577cbfb5cea2222a64b8"
+   "bytes": 7677,
+   "sha256": "bfc64323e1090520c3db6032c599afbcff7993f0f846faf3c401c28278c96b26"
   },
   {
    "path": "scripts/replay_demo.py",

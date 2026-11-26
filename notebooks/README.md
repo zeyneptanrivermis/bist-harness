@@ -15,10 +15,12 @@ Core principle of the course: the LLM reasons and explains, Python tools calcula
 
 Tools (names from the course table): `get_stock_history`, `calculate_indicators`, `detect_reversal_events`, `rank_sector_relative_strength`, `test_weekday_pattern`, `get_fundamental_metrics`, `calculate_fundamental_change`, `get_macro_context`, `run_backtest`, `check_data_quality`. Each takes `start_date`/`end_date`; the analysis date (`config.ANALYSIS_AS_OF_DATE`, 2026-09-10) is set by the harness, not the model. Forward windows that are not complete by the end date are excluded and reported.
 
-## Train in Colab (T4)
+## Train in Colab (T4 or newer)
+
+The notebook also runs on a T4 (fp16). The submitted adapter was trained in bf16 (`training_args.bin`: `bf16=true`, `fp16=false`); the notebook picks bf16 only on compute capability >= 8, so it was trained on a newer Colab GPU (e.g. L4/A100), not on a T4.
 
 1. Push the `zeynep` branch (the notebook clones it).
-2. Open `bist_llm_training.ipynb`, choose a **T4 GPU**, run top to bottom. Cell 4 downloads prices and FX and builds the dataset (`python -m src.llm.dataset`, about 700 records: tool plans, evidence reports, refusals). Targets are deterministic, built from the tool outputs, so no target number can be wrong. Six tickers (`dataset.HOLDOUT_TICKERS`) are never used in training, so the evaluation has unseen stocks.
+2. Open `bist_llm_training.ipynb`, choose a GPU (**T4** is enough), run top to bottom. Cell 4 downloads prices and FX and builds the dataset (`python -m src.llm.dataset`, about 700 records: tool plans, evidence reports, refusals). Targets are deterministic, built from the tool outputs, so no target number can be wrong. Six tickers (`dataset.HOLDOUT_TICKERS`) are never used in training, so the evaluation has unseen stocks.
 3. Models: `Qwen/Qwen3-4B` (demo model) or `Qwen/Qwen3-1.7B` (faster fallback). Keep the same model for training, evaluation and the local run: an adapter only fits the model it was trained on.
 4. The adapter is copied to Google Drive right after training. Download `results.zip` at the end; Colab runtimes reset.
 5. The last cell runs `python -m src.llm.evaluate`: 12 questions in the style of the course sample test, each asked twice, for the base model and the adapter. Rates: invalid tool call, wrong plan (tool/tickers/dates), numeric hallucination, unsupported conclusion, look-ahead, missing evidence, rule violation, not reproducible, guard replaced the answer.

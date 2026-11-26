@@ -13,7 +13,7 @@
     "url": null
    },
    "rows": 30,
-   "sha256": "fe0f42efb00895ccfad37baa20e02ae60137ac4adac600a03eac764e685ddb0d",
+   "sha256": "72547bcbaabfc93d4986c129f33133e157ba102bfaa35c1ecdea2790fb261c32",
    "in_repository": true
   },
   {
@@ -65,39 +65,39 @@
     "XU100"
    ],
    "first_date": "2024-01-02",
-   "last_date": "2026-11-13",
+   "last_date": "2026-09-30",
    "sha256": {
-    "AKBNK": "be673c9ce48d7b0af5967001e7d2908f1107902a9d560b29cf9202bf0a90ea88",
-    "AKSEN": "4c53ba2a4a66957afbfb298345ed42b081330a418442fbfb3e5d04249199b528",
-    "ARCLK": "c43cc14438e745a735aae8e975ce2c2e0e599b19ed8fbb39c7081b442bf9b7d8",
-    "ASELS": "3e230bec778c5542d78071c3050a6c503d4e5f6edeef2547aa4b9d58051fc4e7",
-    "BIMAS": "cf27db46a2c0c9065837b924d3832f3a212ec4951cc3d1378f4bf7c88c061a2b",
-    "CCOLA": "2f08b753de8907de0d299e88cece1ff1f5f7f551e31b3725e5a7f2df81181f86",
-    "ECILC": "56cd2293d68ca323d4d862fb7f9062f3d596ac2c3373e12964598df78efd8941",
-    "EKGYO": "43174e8664be84b6fa72c63e96290a9e8f0abb7bcfc21ff73dbfd0ead01989ab",
-    "ENJSA": "ca8a90cbf89c748cd6114391983846ec886b635f89dbd2116cdc3172c0f71ee4",
-    "ENKAI": "3a40045daf3a488a03bbea14ea025044ca7bbc594dad077f6da188b766dd1946",
-    "EREGL": "f55345d27bc8931c683ebd1cf049887c843ec124b75c8b70a0d015036fc35533",
-    "FROTO": "53b1e5458e793ae42a508b9b7fbc32f5290ea52ecf03825702f7defa9dc5afdd",
-    "GUBRF": "58348e014c167b1991f0e6346f1659ce06c59588c097ac591a35eab55fbbcfbd",
-    "ISMEN": "7203c8a8d8e4f30b57e759d7c3167517f774c9b7dd6b064d0cb5f720d2a3a9c2",
-    "KCHOL": "b961a93063e642e4d705c2b0572acfe2f20cb2e2a52e9408be49bbae2f4cd77f",
-    "KRDMD": "6faf6d45646decefc27e542b4327e1cbc41acd1fc709c55edcfbe52c7398c0a7",
-    "MAVI": "54460e8d1a7f4da7a9841271b233a4d7cd9dd3fa3c93131ba359ba1fa0c6a638",
-    "MGROS": "7d523a9828b378a8c946c322e617f54ec03172b70bbba0d4722f1ec1fe3d33a7",
-    "MPARK": "556b12cb25e665251ae0ecd41a74ecd57dcca40c4a5991366941030eb2e48bbe",
-    "OYAKC": "b51128e0dda0a6bba14dc79d88ca12c278d4a7b83228cf4f8329efb1e5cae347",
-    "PETKM": "c3fc1a145fcedb80dd6de4a40b96a234409b6785bf04fba9144ca94e1d43b6df",
-    "PGSUS": "d1fb358f03fb89c8dd17f98498d4802fd4e7000f1e9e4c9317a56e0a11e252e8",
-    "SASA": "37c84d77dfb8e5033be77e1d1fb2b7e82a8977930ba2862649b5454e05a2bded",
-    "TCELL": "ba1e26cd85c151597769c583aa06069048f7dbe74774ced90ad34d53ec7def1e",
-    "THYAO": "9fccd1d549dfb1e932a903137673029a1306a5d588262c96e397035c6f8a8a8d",
-    "TOASO": "555d6c22ff8c8b3e1cdd0077ac534db24933a2fd2a67993d578f4ee6fa2e2e43",
-    "TRALT": "2d25d275c8a338bfd250306cbb0bb57df3056f607f855e1c395c1e2446af05f5",
-    "TTKOM": "2ed3ae2bef07eec54923bf69370b8ba76cabc4224030bcaae9e13a0ee6fc0fb8",
-    "TUPRS": "dd98c70a4ad99c6a2d77ada602ffad1992924e5827850b4d8252903f0bc8dffb",
-    "TURSG": "bedc69c5372aefb9d105727f6e5e94412c2368a49d215e8d20bc4427c36e16e0",
-    "XU100": "b979caf57718846d70f1cdda69f9ba666c6497a8aecefbc62d4b7eb8f294b609"
+    "AKBNK": "a1753e0c9b10864178c8e48a4a54a712d65802c9585c40a25cdf30878d8710a1",
+    "AKSEN": "95c9665ddb42787636847257c3090633b7057a90bbf411ee5a56bfdfe98c2969",
+    "ARCLK": "9d21458a04de43286722a309af9b3202e0d161ccbeb4e27af93fb2e811765da0",
+    "ASELS": "539b00bf6a45572def484dc7348122f56d58d7369ffc473f29b2149d90147db4",
+    "BIMAS": "2e4a2e82109904c368b55b6ef0cccbfd128e544e27bec87b20fb42b77e72d3b6",
+    "CCOLA": "65546020130673ee7e7a99f489ecd02e1067325ce015a3416be2993f1a75b552",
+    "ECILC": "d8a5b5324c328f215047b856b9aeb89b7cd8583602183b0043144fa0541b6cad",
+    "EKGYO": "5ad874a8c4f0373d02c58e9e5b706f09c658df5a181860804968e71b5e8ba04e",
+    "ENJSA": "722070f0dde048786711637324913fc72380e248710f4e3863b6003fa2522ce2",
+    "ENKAI": "f2f8ee472f7e2016a7baf25ce3b4d25ba04e7c110a062d3dfa3220738fc23d10",
+    "EREGL": "07a22e44570a9dd3460d6e9bc8c7d15badd6d3058b208140c635ce50804d62eb",
+    "FROTO": "847b52a612f9829c5941cf188c4eea11fa305d67bb433c131f9427496b0e630d",
+    "GUBRF": "0d43399fe1dc92b03c2dbd5a1c09c2e1fb87d6719f33eacfdb450781bdee1b47",
+    "ISMEN": "9cc31b585b57e3821f18194402315ac3f17505007c596e0d72bc3b6a522b844c",
+    "KCHOL": "e5f86da6e77a0134ec8da79f48ee1d2c9ef6d1fcbf88fce68d1cc66b6abf1c9d",
+    "KRDMD": "f812da61a8858d83f7e84a3b2ecbe59c069bce90a8314afb82008d8352fd3338",
+    "MAVI": "60dc533c078a789b41183ac69531f321c4002218329253dcfff452a85d4c33f9",
+    "MGROS": "ac800aeee5147b3533e274d4083e5d73dff83431c2968a576ed8f82992adce97",
+    "MPARK": "feb7771b6f007cccf438192af1e09c716fe8fbe103d2cf634ef9706e1a46876d",
+    "OYAKC": "f95585069a53d3dc9fc1dc5484a75cdb27a09e1d00569132b7c9a8582c10a291",
+    "PETKM": "e481fd26723c8df9fb3fe5ccdcb16fad42d651e37cb0968290909314a1d210c5",
+    "PGSUS": "cef1634a6c63ca96a6c2739b1838b6fef5f2e17724dd34d84a66c80a222fefcd",
+    "SASA": "56fd51e0e5c898f2365b26fa6f589d329ee09a2de2692b9473ee6d9c39f164bd",
+    "TCELL": "93aa505cc5b24f31d7415321087975a201336a2271f4a72d70733a2321ec9d37",
+    "THYAO": "45c8d4ceeed78c3f2f1861f641c8c140ee3b11ed50f249ac0d192e89a9030b99",
+    "TOASO": "0b7db60c2aa3476ec05d6c339499f7de0d28dcc0db1598dbce1ef2ee37ab181f",
+    "TRALT": "27fcb76ee72457aa5f3f5d236c6195c50c4be0a3f1640c012ccb9e26bca03408",
+    "TTKOM": "2ec4de3a9ee6e034f3386cffc7d9a185278e323945dd0442d3a606e38cc9a3b8",
+    "TUPRS": "a13e572090214e1eaf2d1d624ef55b5299bbd6855203320cd2aa21b97eaa5e89",
+    "TURSG": "c3c55bb1f4983dcc40e7f1af27df7e7cf7638410072de12ebe55a19d535c5fbf",
+    "XU100": "4b5c45ed4401a08e08cadabd24eb14190091ac6ce5e30b885cc56f5db2d3d91e"
    }
   },
   {
@@ -114,10 +114,10 @@
    "publication_rule": "Day-end value, usable the same day.",
    "in_repository": true,
    "available": true,
-   "rows": 699,
+   "rows": 754,
    "first_date": "2024-01-01",
-   "last_date": "2026-09-10",
-   "sha256": "71773e22fa69e28867619c10b6105f384354286310c90e4fffa1ad5eb47dec6c"
+   "last_date": "2026-11-26",
+   "sha256": "40dccd2ccc4474a87ae5b6004f63ffc13b6af106f32986b366eea4d5265f18f8"
   },
   {
    "id": "macro_eurtry",
@@ -133,10 +133,10 @@
    "publication_rule": "Day-end value, usable the same day.",
    "in_repository": true,
    "available": true,
-   "rows": 699,
+   "rows": 754,
    "first_date": "2024-01-01",
-   "last_date": "2026-09-10",
-   "sha256": "7991d55f9850ee44bb14be49b0142401bb7b3a3cd7328d0e36300828c012e864"
+   "last_date": "2026-11-26",
+   "sha256": "7105ebaa57cb7651956b010f896410650dc655315c33d021bf5cf8b3d7f83289"
   },
   {
    "id": "macro_tcmb_policy_rate",
@@ -155,7 +155,7 @@
    "rows": 11,
    "first_date": "2024-01-26",
    "last_date": "2026-01-23",
-   "sha256": "4bb740fa98c5c8b0d64c3b0f44f36210a3c230ad577a90e916d46ce0aa9ce289"
+   "sha256": "7ca1bed6fc463e0543361f868b9d7517c43de0a381222b8541feef84438e1155"
   },
   {
    "id": "macro_tuik_cpi",
@@ -174,7 +174,7 @@
    "rows": 32,
    "first_date": "2024-01-01",
    "last_date": "2026-08-01",
-   "sha256": "eba2641fdec14714ddcb0b01d852755391926dea544d8c6b9b479cb122fd36de",
+   "sha256": "fa8f856fdcd6e646d841e0a7f537508279eb23a44e54beadcd344de4fe927f2d",
    "note": "Values rise from about 62 to 135: an index level, not an annual inflation %; base year not stated in the file."
   },
   {
@@ -194,7 +194,7 @@
    "rows": 32,
    "first_date": "2024-01-01",
    "last_date": "2026-08-01",
-   "sha256": "ea15c2cfbdac65539ea58170ddda6c343923526598d7033755ef400e3e9695f6"
+   "sha256": "6d7f86d467619b13c67219ec32e51a1c6b5a77d92215a46e4e101bf03561e906"
   },
   {
    "id": "quarterly_fundamentals",
@@ -215,7 +215,7 @@
     "THYAO",
     "TUPRS"
    ],
-   "sha256": "ac7e5770bc988d0ba05b4117eab481446e1f041054f667561f21d441ad2bd7ea",
+   "sha256": "b2b3fe6cfa7aa5f502f73e6db4bdd254b97cd8cd35bfb4090208e03469a85ad8",
    "in_repository": true,
    "note": "Sample data: no KAP notification id or source document, so the numbers cannot be verified."
   },

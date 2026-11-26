@@ -156,7 +156,7 @@ Loading the model takes a minute or more. Questions are answered with the temper
 
 ## Reproduce training and evaluation (optional)
 
-**Training** is done on a Colab T4: open `notebooks/bist_llm_training.ipynb`, choose a T4 GPU, and run it top to bottom. It builds the data, trains the QLoRA adapter and saves it to `artifacts/llm/qwen_bist_lora/adapter`. See `notebooks/README.md`.
+**Training** is done in Colab: open `notebooks/bist_llm_training.ipynb`, choose a GPU (a T4 is enough), and run it top to bottom. The notebook also runs on a T4 (fp16). The submitted adapter was trained in bf16 (`training_args.bin`: `bf16=true`, `fp16=false`); the notebook picks bf16 only on compute capability >= 8, so it was trained on a newer Colab GPU (e.g. L4/A100), not on a T4. It builds the data, trains the QLoRA adapter and saves it to `artifacts/llm/qwen_bist_lora/adapter`. See `notebooks/README.md`.
 
 **Dataset only** (needs the data from step 4):
 ```bash
