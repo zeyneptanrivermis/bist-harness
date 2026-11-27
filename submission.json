@@ -1,6 +1,6 @@
 {
  "project": "BIST 100 agent harness (CSE-481 Engineering Economics)",
- "generated_at": "2026-11-27T14:42:44+00:00",
+ "generated_at": "2026-11-27T15:26:56+00:00",
  "base_model": {
   "name": "Qwen/Qwen3-4B",
   "version": "1cfa9a7208912126459214e8b04321603b3df60c",
@@ -65,8 +65,8 @@
   "path": "reports/execution_traces.json",
   "role": "question-answer records with full traces for the five scenarios",
   "present": true,
-  "bytes": 122390,
-  "sha256": "a6da6fd78f6ea1d3719c9d483db2b25b593bfbdd68d34246b8c358620fdee2fd"
+  "bytes": 122618,
+  "sha256": "1929f66fdea02da0f21f91490c89ffa899fd46fef9a793138745c3fb2573407f"
  },
  "source_code": [
   {
@@ -136,8 +136,8 @@
    "path": "scripts/make_submission.py",
    "role": "source",
    "present": true,
-   "bytes": 7677,
-   "sha256": "bfc64323e1090520c3db6032c599afbcff7993f0f846faf3c401c28278c96b26"
+   "bytes": 7280,
+   "sha256": "afb59eeab3502b66b178842c062008ae1fb19d682a159c479505c792502cdd6e"
   },
   {
    "path": "scripts/replay_demo.py",
@@ -367,8 +367,8 @@
    "path": "src/llm/agent.py",
    "role": "source",
    "present": true,
-   "bytes": 22310,
-   "sha256": "88ccfb509fd79d3d7b0458d0add07c2314097a246d59d26cb0ee8f636fff633a"
+   "bytes": 22368,
+   "sha256": "8497d4ba1b2b1dbbd656e5a578d925cddd45a60a88774131cda6cde7a819cac6"
   },
   {
    "path": "src/llm/build_corpus.py",
@@ -409,8 +409,8 @@
    "path": "src/llm/infer.py",
    "role": "source",
    "present": true,
-   "bytes": 3171,
-   "sha256": "cfd2f62f43cd938a7ee71c72c96b4c63d6f9c11ac11e4d3893bf5fdfac9ffe13"
+   "bytes": 3619,
+   "sha256": "4c849db95331b3d466ea0ceed7ee7afcaf53cf07d008f691daf3a9687d09eb35"
   },
   {
    "path": "src/llm/mascot/idle.jpg",

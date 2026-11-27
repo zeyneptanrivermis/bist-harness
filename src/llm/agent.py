@@ -59,13 +59,13 @@ def local_chat_fn(adapter_dir: str = "", model_name: str | None = None, max_new_
     """Chat function backed by a local Hugging Face model (+ LoRA adapter). Needs the model on disk."""
     import torch
 
-    from src.llm.infer import BASE_MODEL, DECODING, chat, load
+    from src.llm.infer import BASE_MODEL, DECODING, base_revision, chat, load
 
     model, tokenizer = load(adapter_dir, model_name or BASE_MODEL)
     weights = next(Path(adapter_dir).glob("adapter_model.*"), None) if adapter_dir else None
     fn = lambda messages: chat(model, tokenizer, messages, max_new_tokens=max_new_tokens)  # noqa: E731
     fn.meta = {"backend": "huggingface-transformers", "base_model": model_name or BASE_MODEL,
-               "base_model_revision": getattr(getattr(model, "config", None), "_commit_hash", None),
+               "base_model_revision": getattr(getattr(model, "config", None), "_commit_hash", None) or base_revision(model_name or BASE_MODEL),
                "adapter": adapter_dir or None, "adapter_sha256": hashlib.sha256(weights.read_bytes()).hexdigest() if weights else None,
                "precision": "4-bit NF4 (CUDA)" if torch.cuda.is_available() else "bf16", "max_new_tokens": max_new_tokens,
                **DECODING, "libraries": _versions()}

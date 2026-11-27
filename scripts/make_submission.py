@@ -9,7 +9,6 @@ still missing, and warns when the adapter is not the one the reports were measur
 import argparse
 import hashlib
 import json
-import os
 import subprocess
 import sys
 from datetime import datetime, timezone
@@ -17,7 +16,7 @@ from pathlib import Path
 
 ROOT = Path(__file__).resolve().parents[1]
 sys.path.insert(0, str(ROOT))
-from src.llm.infer import BASE_MODEL, DECODING  # noqa: E402
+from src.llm.infer import BASE_MODEL, DECODING, base_revision  # noqa: E402
 
 CONFIG = ROOT / "reports" / "fine_tuning_config.json"
 MANIFEST = ROOT / "submission.json"
@@ -43,13 +42,6 @@ def attachment(path: Path, role: str) -> dict:
     if not path.exists():
         return {"path": rel(path), "role": role, "present": False}
     return {"path": rel(path), "role": role, "present": True, "bytes": path.stat().st_size, "sha256": sha256(path)}
-
-
-def base_revision() -> str | None:
-    """Commit of the base model in the local Hugging Face cache (the weights the adapter is loaded on)."""
-    hub = Path(os.getenv("HF_HUB_CACHE") or Path(os.getenv("HF_HOME", Path.home() / ".cache" / "huggingface")) / "hub")
-    ref = hub / f"models--{BASE_MODEL.replace('/', '--')}" / "refs" / "main"
-    return ref.read_text().strip() if ref.exists() else None
 
 
 def training_args(adapter: Path) -> dict | None:
