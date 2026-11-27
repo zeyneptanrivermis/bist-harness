@@ -139,7 +139,7 @@ Sistem, "kanıtsız sayı üretme" riskini mimariyle sınırlıyor: deterministi
 
 ## Kaynaklar
 
-1. CSE-481 Mühendislik Ekonomisi Dönem Projesi Şartnamesi, 2026 (`roadmap/Engineering Economics Project_2026_CSE-481.pdf`; bölüm 12, 18, 31).
+1. CSE-481 Mühendislik Ekonomisi Dönem Projesi Şartnamesi, 2026 (ders materyali, repoda yok; bölüm 12, 18, 31).
 2. Lee, Y. ve ark. *Meta-Harness: End-to-End Optimization of Model Harnesses.* arXiv:2603.28052, 2026.
 3. Ning, X. ve ark. *Code as Agent Harness: Toward Executable, Verifiable, and Stateful Agent Systems.* arXiv:2605.18747, 2026.
 4. Hou, Y. ve ark. *Harness-G: A Graph-Structured Harness for Search Agents.* arXiv:2607.27652, 2026.
