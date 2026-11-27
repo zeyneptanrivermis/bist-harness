@@ -1,6 +1,6 @@
 {
  "project": "BIST 100 agent harness (CSE-481 Engineering Economics)",
- "generated_at": "2026-11-26T14:11:22+00:00",
+ "generated_at": "2026-11-27T14:42:44+00:00",
  "base_model": {
   "name": "Qwen/Qwen3-4B",
   "version": "1cfa9a7208912126459214e8b04321603b3df60c",
@@ -129,8 +129,8 @@
    "path": "scripts/make_slides.py",
    "role": "source",
    "present": true,
-   "bytes": 9721,
-   "sha256": "b10214f431e3882fe17c7e06a6154557d584bed4d3bff376caffe620d3a791b6"
+   "bytes": 9816,
+   "sha256": "2bd60d6620bf3b6b52be660fa210a43b4abaea9787b4bb4f4d5f7687f01271ea"
   },
   {
    "path": "scripts/make_submission.py",

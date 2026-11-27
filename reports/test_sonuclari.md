@@ -7,17 +7,17 @@ Her soru iki ayrı çalıştırmada sorulmuş, planlar ve cevaplar birebir aynı
 
 | Metrik | Base | Adaptör |
 |---|---|---|
-| Geçersiz araç çağrısı | 0,667 | 0,000 |
+| Geçersiz araç çağrısı | 0,750 | 0,000 |
 | Yanlış plan | 0,750 | 0,083 |
 | Desteklenmeyen sonuç | 0,250 | 0,000 |
 | Look-ahead | 0,167 | 0,000 |
 | Kanıt eksikliği | 0,250 | 0,000 |
 | Tekrarlanabilirlik hatası | 0,000 | 0,000 |
-| Sayısal halüsinasyon (ham çıktı) | 0,000 | 0,333 |
+| Sayısal halüsinasyon (ham çıktı) | 0,000 | 0,167 |
 | Kural ihlali (ham çıktı) | 0,000 | 0,000 |
-| Guard'ın cevabı değiştirdiği oran | 0,250 | 0,333 |
+| Guard'ın cevabı şablonla değiştirdiği oran | 0,000 | 0,167 |
 
-Not: Adaptör araç planını belirgin düzeltti (geçersiz çağrı %66,7 → %0, yanlış plan %75 → %8,3). Ham metinde 4/12 cevapta ±0,1 puanlık yuvarlama sapmaları kalıyor (%33,3); guard bunları yakalayıp deterministik kanıt özetiyle değiştiriyor. Bu tablo Colab ölçümüdür; aşağıdaki cevaplar Mac üzerinde (HF, bf16) alındı.
+Not: Adaptör araç planını belirgin düzeltti (geçersiz çağrı %75 → %0, yanlış plan %75 → %8,3). Yeni guard ile (yeniden yazım + yuvarlama düzeltmesi) adaptörün ham metni 2/12 cevapta kanıtta olmayan sayı içeriyor (%16,7); yeniden yazım da geçemediği için bu ikisinde kullanıcıya deterministik kanıt özeti gidiyor. Bu tablo Colab ölçümüdür (A100, yeni guard, `reports/evidence/eval_report_colab_newguard.json`); aşağıdaki cevaplar Mac üzerinde (HF, bf16) alındı.
 
 ## Sorular ve cevaplar (guard sonrası, son kullanıcıya giden metin)
 
