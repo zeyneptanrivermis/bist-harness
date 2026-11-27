@@ -1,0 +1,108 @@
+{
+ "base_model": "Qwen/Qwen3-4B",
+ "method": "QLoRA: 4-bit NF4 base (double quantization), LoRA adapter trained with TRL SFTTrainer, loss on the answer only",
+ "lora": {
+  "r": 32,
+  "lora_alpha": 64,
+  "lora_dropout": 0.05,
+  "target_modules": [
+   "gate_proj",
+   "q_proj",
+   "down_proj",
+   "k_proj",
+   "up_proj",
+   "v_proj",
+   "o_proj"
+  ],
+  "bias": "none",
+  "task_type": "CAUSAL_LM",
+  "peft_version": "0.21.2"
+ },
+ "training": {
+  "num_train_epochs": 4,
+  "per_device_train_batch_size": 1,
+  "gradient_accumulation_steps": 8,
+  "learning_rate": 0.0002,
+  "lr_scheduler_type": "linear",
+  "warmup_steps": 0,
+  "weight_decay": 0.0,
+  "optim": "adamw_torch_fused",
+  "max_grad_norm": 1.0,
+  "max_length": 4096,
+  "seed": 481,
+  "bf16": true,
+  "fp16": false,
+  "gradient_checkpointing": true,
+  "completion_only_loss": true,
+  "eval_strategy": "epoch",
+  "save_strategy": "epoch"
+ },
+ "quantization_during_training": {
+  "load_in_4bit": true,
+  "bnb_4bit_quant_type": "nf4",
+  "bnb_4bit_use_double_quant": true,
+  "bnb_4bit_compute_dtype": "bfloat16"
+ },
+ "inference_decoding": {
+  "temperature": 0,
+  "do_sample": false,
+  "seed": null,
+  "note": "greedy decoding (argmax), no sampling: temperature 0, seed not used"
+ },
+ "dataset": {
+  "path": "data/llm/dataset_v3/records.jsonl",
+  "builder": "python -m src.llm.dataset --output-dir data/llm/dataset_v3 --per-family 120 --reports-per-family 90",
+  "builder_commit": "cfc6b46",
+  "provenance": {
+   "status": "regenerated",
+   "reason": "The original records.jsonl used for training stayed in the Colab runtime and was lost; manifest.json is the original.",
+   "builder_commit": "cfc6b46",
+   "builder_command": "BIST_LLM_OFFLINE=1 python -m src.llm.dataset --output-dir data/llm/dataset_v3 --per-family 120 --reports-per-family 90",
+   "seed": 481,
+   "data": "bist_data.zip (prices and macro up to 2026-09-10); the same result is obtained with the full local cache",
+   "regenerated_at": "2026-11-26",
+   "match_with_original_manifest": "1230 records; by_task, by_family, holdout_tickers and seed identical. report_status differs by one record: WATCH 121 vs 122, TECHNICAL_REVERSAL_CANDIDATE 30 vs 29 (manifest_regenerated.json). Most likely a price-data difference in the original Colab run.",
+   "note": "Targets are deterministic templates over tool outputs, not model text, so the file is rebuilt by running the builder. The current code builds different records; check out builder_commit first."
+  },
+  "split": "src.llm.training_data.stable_split (train+test used for training, validation for eval)",
+  "manifest": {
+   "seed": 481,
+   "records": 1230,
+   "by_task": {
+    "tool_selection": 660,
+    "evidence_report": 510,
+    "safe_refusal": 60
+   },
+   "by_family": {
+    "sector": 210,
+    "weekday": 210,
+    "reversal": 210,
+    "fundamental": 210,
+    "macro": 210,
+    "misc": 120,
+    "refusal": 60
+   },
+   "report_status": {
+    "INVESTIGATE": 289,
+    "WATCH": 122,
+    "REJECT_SIGNAL": 70,
+    "TECHNICAL_REVERSAL_CANDIDATE": 29
+   },
+   "holdout_tickers": [
+    "ENKAI",
+    "FROTO",
+    "ISMEN",
+    "MPARK",
+    "OYAKC",
+    "TCELL"
+   ],
+   "skipped": [],
+   "target_source": "deterministic_template (tool outputs + summaries.py), not model generated"
+  }
+ },
+ "sources": {
+  "lora": "artifacts/llm/qwen_bist_lora/adapter/adapter_config.json",
+  "training": "artifacts/llm/qwen_bist_lora/adapter/training_args.bin",
+  "notebook": "notebooks/bist_llm_training.ipynb"
+ }
+}

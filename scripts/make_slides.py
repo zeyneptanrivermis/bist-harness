@@ -118,19 +118,19 @@ slide("Backtest ve benchmark", [
     "Dürüst bulgu: güçlü yükselen piyasada basit kurallar al-tut'un gerisinde.",
 ])
 
-s = slide("Yerel model ve guard (12 soru, ham taslak, Colab)")
-table(s, [["Metrik", "Base", "Adaptör"], ["Geçersiz araç çağrısı", "%66,7", "%0"], ["Yanlış plan", "%75,0", "%8,3"],
-          ["Desteklenmeyen sonuç", "%25,0", "%0"], ["Kural ihlali (tavsiye)", "%0", "%0"], ["Sayısal halüsinasyon (ham taslak)", "%0*", "%33,3"]],
+s = slide("Yerel model ve guard (12 soru, ham taslak, Colab, yeni guard)")
+table(s, [["Metrik", "Base", "Adaptör"], ["Geçersiz araç çağrısı", "%75,0", "%0"], ["Yanlış plan", "%75,0", "%8,3"],
+          ["Desteklenmeyen sonuç", "%25,0", "%0"], ["Kural ihlali (tavsiye)", "%0", "%0"], ["Sayısal halüsinasyon (ham taslak)", "%0*", "%16,7"], ["Guard şablona geçti", "%0", "%16,7"]],
       col_widths=[6.2, 2.85, 2.85])
 text(s, 0.7, 5.0, 11.9, 1.5, ["*Base çoğu soruda geçerli plan üretemediği için bu adil bir kıyas değil.",
-                              "Guard sapan taslakları deterministik özetle değiştirir. 12 soru: istatistiksel güven sınırlı."], size=16)
+                              "Guard bulguları modele geri verir, model bir kez yeniden yazar; o da geçemezse \"harness özeti\" etiketli deterministik özet. Adaptörde 12 cevabın 10'unu model yazdı (eski guard ile 8). 12 soru: güven sınırlı."], size=16)
 
-s = slide("A–E harness deneyi: gerçek model (15 soru, Colab T4)")
+s = slide("A–E harness deneyi: gerçek model (15 soru, Colab, yeni guard)")
 table(s, [["Ölçüt", "A", "B", "C", "D", "E"],
           ["Yanlış plan", "86,7%", "6,7%", "6,7%", "6,7%", "6,7%"],
-          ["Sayısal halüsinasyon (son cevap)", "0%", "20%", "26,7%", "0%", "0%"],
+          ["Sayısal halüsinasyon (son cevap)", "0%", "6,7%", "13,3%", "0%", "0%"],
           ["Kalite kapısı atlandı (bozuk veri)", "20%", "20%", "20%", "0%", "0%"],
-          ["Guard'ın cevabı değiştirdiği", "0%", "0%", "0%", "26,7%", "26,7%"]],
+          ["Guard'ın cevabı şablonla değiştirdiği", "0%", "0%", "0%", "13,3%", "13,3%"]],
       col_widths=[5.4, 1.3, 1.3, 1.3, 1.3, 1.3])
 text(s, 0.7, 4.4, 11.9, 2.2, ["Kalite kapısı (D) üç bozuk veri sorusunun üçünü de durdurdu; kapısız B ve C bozuk veriyi analiz etti.",
                               "A'da araç planı yok, yanlış plan ölçütü anlamsız. 15 soru, sürüm başına tek ölçüm: eğilim gösterir, kanıt değildir."], size=18)

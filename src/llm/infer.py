@@ -16,6 +16,15 @@ ADAPTER_DIR = os.getenv("BIST_LLM_ADAPTER", "")
 DECODING = {"temperature": 0, "do_sample": False, "seed": None, "note": "greedy decoding (argmax), no sampling: temperature 0, seed not used"}
 
 
+def base_revision(name: str = BASE_MODEL) -> str | None:
+    """Commit of the base model in the local Hugging Face cache (the weights the adapter is loaded on)."""
+    from pathlib import Path
+
+    hub = Path(os.getenv("HF_HUB_CACHE") or Path(os.getenv("HF_HOME", Path.home() / ".cache" / "huggingface")) / "hub")
+    ref = hub / f"models--{name.replace('/', '--')}" / "refs" / "main"
+    return ref.read_text().strip() if ref.exists() else None
+
+
 def load(adapter_dir: str = ADAPTER_DIR, model_name: str = BASE_MODEL):
     """Load the base model (4-bit on CUDA) and, if given, the LoRA adapter."""
     import torch

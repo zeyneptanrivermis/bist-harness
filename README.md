@@ -2,10 +2,10 @@
 
 A question about BIST stocks goes in. The **model** turns it into a JSON tool plan and words the final summary.
 **Python code** runs the data-quality gate, the tools and the backtest, and picks the conclusion (WATCH, INVESTIGATE, ANALYSIS_UNSAFE, ...).
-A guard replaces any summary that invents numbers, gives advice or uses a date after the analysis date.
+A guard checks every summary for numbers not in the tool outputs, advice and dates after the analysis date. A failing summary goes back to the model once with the findings; if the rewrite also fails, a deterministic evidence summary is shown, labelled as harness output (`answer_source`), never as the model's answer.
 Everything runs on this machine. **No cloud AI API is called.**
 
-Analysis date is fixed at **2026-09-10** (`src/config.py`); nothing after it may be used.
+Analysis date defaults to **2026-09-10** (`src/config.py`); nothing after it may be used. Both the CLI and the web page take `--as-of YYYY-MM-DD` (for a live question on newer data, refresh the data first).
 
 ---
 
@@ -156,7 +156,7 @@ Loading the model takes a minute or more. Questions are answered with the temper
 
 ## Reproduce training and evaluation (optional)
 
-**Training** is done on a Colab T4: open `notebooks/bist_llm_training.ipynb`, choose a T4 GPU, and run it top to bottom. It builds the data, trains the QLoRA adapter and saves it to `artifacts/llm/qwen_bist_lora/adapter`. See `notebooks/README.md`.
+**Training** is done in Colab: open `notebooks/bist_llm_training.ipynb`, choose a GPU (a T4 is enough), and run it top to bottom. The notebook also runs on a T4 (fp16). The submitted adapter was trained in bf16 (`training_args.bin`: `bf16=true`, `fp16=false`); the notebook picks bf16 only on compute capability >= 8, so it was trained on a newer Colab GPU (e.g. L4/A100), not on a T4. It builds the data, trains the QLoRA adapter and saves it to `artifacts/llm/qwen_bist_lora/adapter`. See `notebooks/README.md`.
 
 **Dataset only** (needs the data from step 4):
 ```bash
@@ -174,6 +174,38 @@ python -m unittest discover -s tests
 ```
 
 ---
+
+## Submission package
+
+Run these on the machine that has the **evaluated** adapter (SHA-256 `4d62e052...cf96c4d5c`, see `reports/evidence/eval_report_colab.json`), in the LLM environment (`trl` and `torch` are needed to read `training_args.bin`):
+
+1. Put the training data in place: `data/llm/dataset_v3/records.jsonl`, `manifest.json` and `provenance.json`. The original `records.jsonl` was lost with the Colab runtime; it was rebuilt from commit `cfc6b46` (seed 481) and matches the original manifest except one report status (see `provenance.json`). To rebuild it:
+   ```bash
+   git worktree add ../bist-v3 cfc6b46 && cp -R data/processed data/raw data/macro data/fundamentals data/news ../bist-v3/data/
+   cd ../bist-v3 && BIST_LLM_OFFLINE=1 python -m src.llm.dataset --output-dir data/llm/dataset_v3 --per-family 120 --reports-per-family 90
+   ```
+2. Record the five scenarios with full traces (model, prompts, tool calls with arguments and outputs, answer source, timestamps, temperature 0, greedy, no seed):
+   ```bash
+   BIST_LLM_OFFLINE=1 python scripts/run_scenarios.py --adapter artifacts/llm/qwen_bist_lora/adapter
+   ```
+   -> `reports/execution_traces.json`
+3. Rebuild the knowledge-source file: `python scripts/make_rag_file.py` -> `reports/rag_knowledge_base.json`
+4. Write the manifest and the fine-tuning configuration:
+   ```bash
+   python scripts/make_submission.py --adapter artifacts/llm/qwen_bist_lora/adapter
+   ```
+   -> `submission.json` and `reports/fine_tuning_config.json` (LoRA and training values are read from the adapter's own `adapter_config.json` and `training_args.bin`). The script exits with 1 and prints `MISSING:` / `WARNING:` lines if an attachment is absent or the adapter is not the evaluated one.
+
+## Live question on newer data (demo)
+
+The reports use the frozen data (prices to 2026-09-30, FX to 2026-09-10). A fresh Yahoo download has the same prices but drops a few trading days before 2026-09-10, which would shift report numbers, so never overwrite the frozen data permanently. For a question about October-November 2026:
+```bash
+tar czf data/backup_frozen.tar.gz data/processed data/raw data/macro      # once
+rm -rf data/processed data/raw data/macro && tar xzf data/live_2026-11-26.tar.gz   # or download: python -c "from src.data_pipeline import download_entire_universe as d; d(force_refresh=True)"
+python -m src.llm.web --adapter artifacts/llm/qwen_bist_lora/adapter --as-of 2026-11-26
+rm -rf data/processed data/raw data/macro && tar xzf data/backup_frozen.tar.gz    # back to the frozen data
+```
+Policy rate, CPI and Fed funds are manual files; for dates after their last row the macro tool reports the last published value with its date.
 
 ## Troubleshooting
 
@@ -204,5 +236,6 @@ src/scenarios/          sector, weekday, reversal, fundamentals scenarios
 roadmap/                project plans and the report draft
 reports/01-09            written deliverables (data dictionary, four scenario reports, replay demo, backtests, A-E report, final report)
 reports/evidence/       raw tool outputs behind every number; rebuild with scripts/make_report_evidence.py
+reports/rag_knowledge_base.json  knowledge sources and their metadata (no RAG is used); rebuild with scripts/make_rag_file.py
 scripts/                evidence, strategy-variant and replay-demo scripts
 ```

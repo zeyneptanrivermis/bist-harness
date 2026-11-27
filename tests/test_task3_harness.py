@@ -17,7 +17,7 @@ from src.fundamentals import get_fundamental_metrics
 from src.indicators import calculate_all_indicators
 from src.scenarios.sector_laggard import rank_sector_laggards
 from src.scenarios.technical_reversals import detect_reversal_events
-from src.scenarios.weekday_patterns import test_weekday_pattern
+from src.scenarios.weekday_patterns import test_weekday_pattern as weekday_pattern  # alias: pytest would collect a test_* name
 
 
 def make_ohlcv(periods: int = 260) -> pd.DataFrame:
@@ -107,7 +107,7 @@ class ExistingEngineRegressionTests(unittest.TestCase):
         self.assertIn("RSI_14", enriched.columns)
         self.assertIn("Supertrend_Direction", enriched.columns)
 
-        self.assertFalse(test_weekday_pattern(price).empty)
+        self.assertFalse(weekday_pattern(price).empty)
         events = detect_reversal_events(enriched, market_df=benchmark)
         self.assertIsInstance(events, pd.DataFrame)
         ranks = rank_sector_laggards(

@@ -1,6 +1,6 @@
 # 08 – Ajan Harness Deneyi (A–E) Karşılaştırması
 
-> **Önemli açıklama:** Bu raporda iki ayrı tablo var. **§4.1 gerçek modelle** (Qwen3-4B + adaptör, Colab T4, 15 soru) alınmış A–E ölçümüdür ve asıl sonuçtur. **§2 simüle edilmiş bir sağlayıcıdan** gelir; yalnızca deney hattının çalıştığını gösteren bir boru hattı testidir ve model kalitesini ölçmez.
+> **Önemli açıklama:** Bu raporda iki ayrı tablo var. **§4.1 gerçek modelle** (Qwen3-4B + adaptör, Colab, 15 soru) alınmış A–E ölçümüdür ve asıl sonuçtur. **§2 simüle edilmiş bir sağlayıcıdan** gelir; yalnızca deney hattının çalıştığını gösteren bir boru hattı testidir ve model kalitesini ölçmez.
 
 ## 1. Deney nedir?
 
@@ -46,24 +46,24 @@ Bu beş engel kapatılmadan alınan "gerçek model A–E" sayıları yanıltıc�
 
 ## 4. Gerçek model için ölçüm
 
-### 4.1 Gerçek A–E koşusu (Colab, T4, Qwen3-4B + adaptör)
+### 4.1 Gerçek A–E koşusu (Colab, Qwen3-4B + adaptör)
 
-Simüle edilmiş tablonun yerine, aynı 15 soruyu (12 normal, 3 bozuk veri) gerçek model ile beş sürümde çalıştıran ölçüm geçti. Her soru iki kez soruldu. Sonuç: `reports/evidence/eval_ae_colab.json` (adaptör SHA-256 `4d62e052…cf96c4d5c`). Komut: `python -m src.llm.evaluate --ae --adapter <dizin>`.
+Simüle edilmiş tablonun yerine, aynı 15 soruyu (12 normal, 3 bozuk veri) gerçek model ile beş sürümde çalıştıran ölçüm geçti. Her soru iki kez soruldu. Ölçüm Colab'da (A100) yeni guard ile alındı (27.11.2026). Sonuç: `reports/evidence/eval_ae_colab_newguard.json` (adaptör SHA-256 `4d62e052…cf96c4d5c`). Eski guard ile alınan önceki ölçüm `reports/evidence/eval_ae_colab.json` içinde duruyor. Komut: `python -m src.llm.evaluate --ae --adapter <dizin>`.
 
 | Ölçüt | A | B | C | D | E |
 |---|---|---|---|---|---|
 | Yanlış plan | 86,7% | 6,7% | 6,7% | 6,7% | 6,7% |
-| Sayısal halüsinasyon (kullanıcıya giden cevap) | 0% | 20% | 26,7% | 0% | 0% |
+| Sayısal halüsinasyon (kullanıcıya giden cevap) | 0% | 6,7% | 13,3% | 0% | 0% |
 | Desteklenmeyen sonuç | 6,7% | 0% | 0% | 0% | 0% |
 | Kural ihlali (tavsiye) | 13,3% | 13,3% | 0% | 0% | 0% |
 | Kanıt eksikliği | 0% | 0% | 6,7% | 0% | 0% |
-| Guard'ın cevabı değiştirdiği | 0% | 0% | 0% | 26,7% | 26,7% |
+| Guard'ın cevabı şablonla değiştirdiği | 0% | 0% | 0% | 13,3% | 13,3% |
 | Kalite kapısı atlandı (bozuk veri) | 20% | 20% | 20% | 0% | 0% |
 | Geçersiz araç çağrısı, ileri bakış, çökme, tekrarlanabilirlik hatası | 0% | 0% | 0% | 0% | 0% |
 
 Okuma:
 - **Kalite kapısı (D):** Üç bozuk veri sorusunun üçünü de D ve E `ANALYSIS_UNSAFE` ile durdurdu. B ve C bozuk veriyi analiz etti; tekrarlayan tarihli ARCLK sorusunda ikisi de `WATCH` verdi.
-- **Guard (D'ye ekleme):** D ve E soruların %26,7'sinde modelin taslağını değiştirdi. Yani bu iki sürümde kullanıcıya giden cevapların dörtte birinden fazlası modelin değil şablonun metni.
+- **Guard (D'ye ekleme):** Guard önce taslağı bulgularla birlikte modele geri gönderiyor ve modelin kendisine bir kez yeniden yazdırıyor. Şablon yalnızca yeniden yazım da kuralı ihlal ederse devreye giriyor ve `answer_source: harness_template` ile işaretleniyor. D ve E'de bu, soruların %13,3'ünde oldu; eski guard ile aynı oran %26,7'ydi. Guard'ı olmayan B ve C'de kanıtta olmayan sayılar (%6,7 ve %13,3) ve tavsiye dili (B'de %13,3) kullanıcıya ulaştı.
 - **A'nın yanlış planı:** A'da araç planı yok; bu bir hata değil, tasarım gereği. A için kalite kapısı ölçütü de anlamsız.
 - **Sınır:** 15 soru ve her sürüm için tek ölçüm. Sonuçlar eğilim gösterir, kanıt değildir. Ayrıca A–E sırasında model yalnızca adaptörle çalıştı; base model A–E'de ölçülmedi.
 

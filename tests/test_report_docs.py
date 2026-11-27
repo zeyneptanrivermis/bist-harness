@@ -66,5 +66,73 @@ class SubmissionCleanupTest(unittest.TestCase):
         self.assertNotIn("0,583 | 0,000", text)  # the old adapter's guard rate
 
 
+class RagFileTest(unittest.TestCase):
+    def test_rag_file_states_no_rag_and_matches_the_code(self) -> None:
+        import importlib.util
+
+        from src.llm.training_data import DEFAULT_SYSTEM_PROMPT, project_tool_definitions
+
+        spec = importlib.util.spec_from_file_location("make_rag_file", Path("scripts/make_rag_file.py"))
+        module = importlib.util.module_from_spec(spec)
+        spec.loader.exec_module(module)
+        rag = module.build()
+        self.assertIs(rag["retrieval_augmented_generation"], False)
+        self.assertEqual(rag["procedural_memory"]["system_prompt"], DEFAULT_SYSTEM_PROMPT)
+        self.assertEqual(rag["procedural_memory"]["tool_definitions"], project_tool_definitions())
+        docs = {d["id"]: d for d in rag["documents"]}
+        self.assertTrue(all({"memory_type", "path", "source"} <= d.keys() for d in docs.values()))
+        self.assertEqual(docs["quarterly_fundamentals"]["tickers"], ["ASELS", "BIMAS", "FROTO", "THYAO", "TUPRS"])
+        self.assertIsNone(docs["quarterly_fundamentals"]["source"]["kap_reference"])
+        self.assertEqual(docs["news_events"]["rows"], 0)
+
+
+def _script(name: str):
+    import importlib.util
+
+    spec = importlib.util.spec_from_file_location(name, ROOT / "scripts" / f"{name}.py")
+    module = importlib.util.module_from_spec(spec)
+    spec.loader.exec_module(module)
+    return module
+
+
+class SubmissionScriptsTest(unittest.TestCase):
+    def test_fine_tuning_config_is_read_from_the_adapter_files(self) -> None:
+        import json
+        import tempfile
+
+        make = _script("make_submission")
+        with tempfile.TemporaryDirectory(dir=ROOT / "data") as tmp:
+            adapter = Path(tmp)
+            (adapter / "adapter_config.json").write_text(json.dumps({"base_model_name_or_path": "Qwen/Qwen3-4B", "r": 32, "lora_alpha": 64}), encoding="utf-8")
+            (adapter / "adapter_model.safetensors").write_bytes(b"abc")
+            config = make.fine_tuning_config(adapter)
+            self.assertEqual((config["lora"]["r"], config["lora"]["lora_alpha"], config["training"]), (32, 64, None))
+            self.assertEqual(config["inference_decoding"]["temperature"], 0)
+            weights = make.attachment(adapter / "adapter_model.safetensors", "w")
+            self.assertEqual(weights["sha256"], "ba7816bf8f01cfea414140de5dae2223b00361a396177a9cb410ff61f20015ad")
+            self.assertFalse(make.attachment(adapter / "none.json", "x")["present"])
+
+    def test_run_scenarios_writes_one_traced_record_per_scenario(self) -> None:
+        import json
+        import sys
+        import tempfile
+        from unittest.mock import patch
+
+        run = _script("run_scenarios")
+        fake = lambda messages: "Status: INVESTIGATE. Not enough evidence."  # noqa: E731 - a prose answer: no tools, no data needed
+        fake.meta = {"base_model": "fake", "temperature": 0, "seed": None}
+        with tempfile.TemporaryDirectory(dir=ROOT / "data") as tmp:
+            out = Path(tmp) / "traces.json"
+            with patch("src.llm.agent.local_chat_fn", return_value=fake), patch("src.llm.agent.log_decision", return_value=Path("x")), \
+                    patch.object(sys, "argv", ["run_scenarios.py", "--output", str(out)]):
+                self.assertEqual(run.main(), 0)
+            data = json.loads(out.read_text(encoding="utf-8"))
+        self.assertEqual(len(data["records"]), 5)
+        self.assertEqual(data["model"]["base_model"], "fake")
+        first = data["records"][0]
+        self.assertEqual((first["scenario"], first["answer_source"]), ("Sector laggard", "model"))
+        self.assertEqual(first["trace"]["model_calls"][0]["messages"][0]["role"], "system")
+
+
 if __name__ == "__main__":
     unittest.main()

@@ -54,3 +54,11 @@ checkpoints/
 
 # Matplotlib font cache
 .matplotlib/
+
+# Course material and third-party papers: kept locally, not ours to redistribute
+roadmap/*.pdf
+roadmap/questions.txt
+
+# Data backups and local Claude settings
+*.tar.gz
+.claude/settings.local.json

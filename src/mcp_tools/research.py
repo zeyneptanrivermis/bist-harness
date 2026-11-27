@@ -301,7 +301,7 @@ def calculate_fundamental_change_summary(ticker: str, as_of: str, start_date: Op
                 row[f"car_sector_{h}d"] = None
                 incomplete.append(f"{c['period']}:{h}d")
         rows.append(row)
-    out = _base("calculate_fundamental_change", as_of, start_date, end, ticker=ticker, quarters=rows, incomplete_windows=incomplete)
+    out = _base("calculate_fundamental_change", as_of, start_date, end, ticker=ticker, quarter_count=len(rows), quarters=rows, incomplete_windows=incomplete)  # the count is quoted in summaries, so it must be a tool output
     if incomplete:
         out["warnings"].append(f"Incomplete post-disclosure windows by {end} (excluded from averages): {', '.join(incomplete)}.")
     if all(r["car_sector_5d"] is None for r in rows):

@@ -25,6 +25,8 @@ Her cevap `data/analysis_logs/analysis_<kimlik>.json` olarak yazılır. Kimlik, 
 | `answer` | Kullanıcıya giden cevap |
 | `raw_answer` | Modelin guard'dan önceki ham taslağı |
 | `violations` | Guard'ın taslakta bulduğu ihlaller (burada boş) |
+| `retry_answer`, `retry_violations` | İhlal varsa modelin guard bulgularıyla yazdığı ikinci taslak ve onun ihlalleri (yoksa `null`) |
+| `answer_source` | Cevabı kim yazdı: `model`, `model_retry` (modelin yeniden yazımı), `harness_template` (ikinci taslak da geçemedi, deterministik özet), `harness_refusal` (kalite kapısı ya da router reddi) |
 | `replay_sha256` | Kayıt içeriğinin SHA-256 özeti |
 
 `raw_answer` ve `violations` alanları bu çalışmayla eklendi: önceki sürümde günlük yalnızca son cevabı saklıyordu, guard'ın modelin taslağını değiştirip değiştirmediği günlükten anlaşılamıyordu.
@@ -37,7 +39,7 @@ Her cevap `data/analysis_logs/analysis_<kimlik>.json` olarak yazılır. Kimlik, 
 |---|---|
 | `model` | Arka uç, taban model adı ve revizyonu, LoRA adaptörü ve SHA-256'sı, duyarlık (4-bit NF4 ya da bf16), `max_new_tokens`, `temperature`, `do_sample`, `seed`, torch/transformers/peft sürümleri |
 | `started_at`, `finished_at` | Tüm çalışmanın UTC zaman damgaları (ms) |
-| `model_calls[]` | Her model çağrısı: `step` (`plan_tools` ya da `write_summary`), başlangıç ve bitiş zamanı, **sistem ve kullanıcı istemi** (`messages`), modelin ham çıktısı |
+| `model_calls[]` | Her model çağrısı: `step` (`plan_tools`, `write_summary` ya da guard isterse `rewrite_summary`), başlangıç ve bitiş zamanı, **sistem ve kullanıcı istemi** (`messages`), modelin ham çıktısı |
 | `tool_calls[]` | Her araç çağrısı: `tool_name`, `arguments` (tarih aralıkları dahil), `as_of_date`, başlangıç ve bitiş zamanı, tam `output`. Harness'in kendi eklediği kalite kapısı, makro bağlam ve zorunlu backtest çağrıları da buradadır |
 
 **Temperature ve seed.** Çözümleme greedy'dir (`do_sample=False`): her adımda en olası belirteç seçilir, örnekleme yoktur. Bu yüzden `temperature=0` yazılır ve `seed` **kullanılmaz** (`null`); rastgelelik olmadığı için seed sonucu etkilemez. Ollama yolunda `temperature: 0` gönderilir, seed gönderilmez.

@@ -1,0 +1,371 @@
+{
+ "retrieval_augmented_generation": false,
+ "design_note": "The system does not use RAG. The model never searches or reads documents to find facts; it only (1) plans which deterministic tools to call and (2) words a summary of the committed tool evidence (E1, E2, ...). Every number comes from a tool over the files below, and a guard rejects numbers that are not in the evidence. This is deliberate: it limits unsupported numbers. The knowledge the system uses is listed here with its source metadata (spec section 24).",
+ "analysis_as_of_date": "2026-09-10",
+ "documents": [
+  {
+   "id": "study_universe",
+   "memory_type": "temporal",
+   "path": "src/universe.py",
+   "description": "Fixed 30-stock BIST 100 study universe and sector map.",
+   "source": {
+    "name": "Team-curated list",
+    "url": null
+   },
+   "rows": 30,
+   "sha256": "72547bcbaabfc93d4986c129f33133e157ba102bfaa35c1ecdea2790fb261c32",
+   "in_repository": true
+  },
+  {
+   "id": "daily_prices",
+   "memory_type": "temporal",
+   "path": "data/processed/<TICKER>.parquet",
+   "description": "Daily OHLCV of the 30-stock universe and XU100, with indicators computed by src/indicators.py.",
+   "source": {
+    "name": "Yahoo Finance via yfinance",
+    "url": "https://finance.yahoo.com/",
+    "retrieval": "python -m src.data_pipeline"
+   },
+   "publication_rule": "A bar is known at that day's close; signals act from t+1.",
+   "in_repository": false,
+   "note": "Gitignored; rebuilt from the source with the command above. The cache may run past the analysis date; every tool cuts the data at analysis_as_of_date.",
+   "available": true,
+   "files": 31,
+   "tickers": [
+    "AKBNK",
+    "AKSEN",
+    "ARCLK",
+    "ASELS",
+    "BIMAS",
+    "CCOLA",
+    "ECILC",
+    "EKGYO",
+    "ENJSA",
+    "ENKAI",
+    "EREGL",
+    "FROTO",
+    "GUBRF",
+    "ISMEN",
+    "KCHOL",
+    "KRDMD",
+    "MAVI",
+    "MGROS",
+    "MPARK",
+    "OYAKC",
+    "PETKM",
+    "PGSUS",
+    "SASA",
+    "TCELL",
+    "THYAO",
+    "TOASO",
+    "TRALT",
+    "TTKOM",
+    "TUPRS",
+    "TURSG",
+    "XU100"
+   ],
+   "first_date": "2024-01-02",
+   "last_date": "2026-09-30",
+   "sha256": {
+    "AKBNK": "a1753e0c9b10864178c8e48a4a54a712d65802c9585c40a25cdf30878d8710a1",
+    "AKSEN": "95c9665ddb42787636847257c3090633b7057a90bbf411ee5a56bfdfe98c2969",
+    "ARCLK": "9d21458a04de43286722a309af9b3202e0d161ccbeb4e27af93fb2e811765da0",
+    "ASELS": "539b00bf6a45572def484dc7348122f56d58d7369ffc473f29b2149d90147db4",
+    "BIMAS": "2e4a2e82109904c368b55b6ef0cccbfd128e544e27bec87b20fb42b77e72d3b6",
+    "CCOLA": "65546020130673ee7e7a99f489ecd02e1067325ce015a3416be2993f1a75b552",
+    "ECILC": "d8a5b5324c328f215047b856b9aeb89b7cd8583602183b0043144fa0541b6cad",
+    "EKGYO": "5ad874a8c4f0373d02c58e9e5b706f09c658df5a181860804968e71b5e8ba04e",
+    "ENJSA": "722070f0dde048786711637324913fc72380e248710f4e3863b6003fa2522ce2",
+    "ENKAI": "f2f8ee472f7e2016a7baf25ce3b4d25ba04e7c110a062d3dfa3220738fc23d10",
+    "EREGL": "07a22e44570a9dd3460d6e9bc8c7d15badd6d3058b208140c635ce50804d62eb",
+    "FROTO": "847b52a612f9829c5941cf188c4eea11fa305d67bb433c131f9427496b0e630d",
+    "GUBRF": "0d43399fe1dc92b03c2dbd5a1c09c2e1fb87d6719f33eacfdb450781bdee1b47",
+    "ISMEN": "9cc31b585b57e3821f18194402315ac3f17505007c596e0d72bc3b6a522b844c",
+    "KCHOL": "e5f86da6e77a0134ec8da79f48ee1d2c9ef6d1fcbf88fce68d1cc66b6abf1c9d",
+    "KRDMD": "f812da61a8858d83f7e84a3b2ecbe59c069bce90a8314afb82008d8352fd3338",
+    "MAVI": "60dc533c078a789b41183ac69531f321c4002218329253dcfff452a85d4c33f9",
+    "MGROS": "ac800aeee5147b3533e274d4083e5d73dff83431c2968a576ed8f82992adce97",
+    "MPARK": "feb7771b6f007cccf438192af1e09c716fe8fbe103d2cf634ef9706e1a46876d",
+    "OYAKC": "f95585069a53d3dc9fc1dc5484a75cdb27a09e1d00569132b7c9a8582c10a291",
+    "PETKM": "e481fd26723c8df9fb3fe5ccdcb16fad42d651e37cb0968290909314a1d210c5",
+    "PGSUS": "cef1634a6c63ca96a6c2739b1838b6fef5f2e17724dd34d84a66c80a222fefcd",
+    "SASA": "56fd51e0e5c898f2365b26fa6f589d329ee09a2de2692b9473ee6d9c39f164bd",
+    "TCELL": "93aa505cc5b24f31d7415321087975a201336a2271f4a72d70733a2321ec9d37",
+    "THYAO": "45c8d4ceeed78c3f2f1861f641c8c140ee3b11ed50f249ac0d192e89a9030b99",
+    "TOASO": "0b7db60c2aa3476ec05d6c339499f7de0d28dcc0db1598dbce1ef2ee37ab181f",
+    "TRALT": "27fcb76ee72457aa5f3f5d236c6195c50c4be0a3f1640c012ccb9e26bca03408",
+    "TTKOM": "2ec4de3a9ee6e034f3386cffc7d9a185278e323945dd0442d3a606e38cc9a3b8",
+    "TUPRS": "a13e572090214e1eaf2d1d624ef55b5299bbd6855203320cd2aa21b97eaa5e89",
+    "TURSG": "c3c55bb1f4983dcc40e7f1af27df7e7cf7638410072de12ebe55a19d535c5fbf",
+    "XU100": "4b5c45ed4401a08e08cadabd24eb14190091ac6ce5e30b885cc56f5db2d3d91e"
+   }
+  },
+  {
+   "id": "macro_usdtry",
+   "memory_type": "temporal",
+   "path": "data/macro/USDTRY.csv",
+   "description": "Macro series USDTRY.",
+   "source": {
+    "name": "Yahoo Finance (USDTRY=X)",
+    "url": "https://finance.yahoo.com/quote/USDTRY=X/",
+    "retrieval": "python -m src.macro --download (FX); official series entered by the team",
+    "query_and_download_date": null
+   },
+   "publication_rule": "Day-end value, usable the same day.",
+   "in_repository": true,
+   "available": true,
+   "rows": 754,
+   "first_date": "2024-01-01",
+   "last_date": "2026-11-26",
+   "sha256": "40dccd2ccc4474a87ae5b6004f63ffc13b6af106f32986b366eea4d5265f18f8"
+  },
+  {
+   "id": "macro_eurtry",
+   "memory_type": "temporal",
+   "path": "data/macro/EURTRY.csv",
+   "description": "Macro series EURTRY.",
+   "source": {
+    "name": "Yahoo Finance (EURTRY=X)",
+    "url": "https://finance.yahoo.com/quote/EURTRY=X/",
+    "retrieval": "python -m src.macro --download (FX); official series entered by the team",
+    "query_and_download_date": null
+   },
+   "publication_rule": "Day-end value, usable the same day.",
+   "in_repository": true,
+   "available": true,
+   "rows": 754,
+   "first_date": "2024-01-01",
+   "last_date": "2026-11-26",
+   "sha256": "7105ebaa57cb7651956b010f896410650dc655315c33d021bf5cf8b3d7f83289"
+  },
+  {
+   "id": "macro_tcmb_policy_rate",
+   "memory_type": "temporal",
+   "path": "data/macro/TCMB_POLICY_RATE.csv",
+   "description": "Macro series TCMB_POLICY_RATE.",
+   "source": {
+    "name": "TCMB EVDS, one-week repo rate (%)",
+    "url": "https://evds2.tcmb.gov.tr/",
+    "retrieval": "python -m src.macro --download (FX); official series entered by the team",
+    "query_and_download_date": null
+   },
+   "publication_rule": "Usable from published_date (decision day).",
+   "in_repository": true,
+   "available": true,
+   "rows": 11,
+   "first_date": "2024-01-26",
+   "last_date": "2026-01-23",
+   "sha256": "7ca1bed6fc463e0543361f868b9d7517c43de0a381222b8541feef84438e1155"
+  },
+  {
+   "id": "macro_tuik_cpi",
+   "memory_type": "temporal",
+   "path": "data/macro/TUIK_CPI.csv",
+   "description": "Macro series TUIK_CPI.",
+   "source": {
+    "name": "TUIK / TCMB EVDS, CPI",
+    "url": "https://data.tuik.gov.tr/",
+    "retrieval": "python -m src.macro --download (FX); official series entered by the team",
+    "query_and_download_date": null
+   },
+   "publication_rule": "Usable from published_date (early next month).",
+   "in_repository": true,
+   "available": true,
+   "rows": 32,
+   "first_date": "2024-01-01",
+   "last_date": "2026-08-01",
+   "sha256": "fa8f856fdcd6e646d841e0a7f537508279eb23a44e54beadcd344de4fe927f2d",
+   "note": "Values rise from about 62 to 135: an index level, not an annual inflation %; base year not stated in the file."
+  },
+  {
+   "id": "macro_fed_funds",
+   "memory_type": "temporal",
+   "path": "data/macro/FED_FUNDS.csv",
+   "description": "Macro series FED_FUNDS.",
+   "source": {
+    "name": "FRED FEDFUNDS (%)",
+    "url": "https://fred.stlouisfed.org/series/FEDFUNDS",
+    "retrieval": "python -m src.macro --download (FX); official series entered by the team",
+    "query_and_download_date": null
+   },
+   "publication_rule": "Usable from published_date (start of next month).",
+   "in_repository": true,
+   "available": true,
+   "rows": 32,
+   "first_date": "2024-01-01",
+   "last_date": "2026-08-01",
+   "sha256": "6d7f86d467619b13c67219ec32e51a1c6b5a77d92215a46e4e101bf03561e906"
+  },
+  {
+   "id": "quarterly_fundamentals",
+   "memory_type": "temporal",
+   "path": "src/fundamentals.py (CURATED_FUNDAMENTAL_RECORDS)",
+   "description": "Quarterly revenue, EBITDA, net income, net debt, ROE, EBITDA margin with disclosure dates.",
+   "source": {
+    "name": "Entered by hand by the team",
+    "url": null,
+    "kap_reference": null
+   },
+   "publication_rule": "A quarter is usable only after kap_disclosure_date.",
+   "rows": 40,
+   "tickers": [
+    "ASELS",
+    "BIMAS",
+    "FROTO",
+    "THYAO",
+    "TUPRS"
+   ],
+   "sha256": "b2b3fe6cfa7aa5f502f73e6db4bdd254b97cd8cd35bfb4090208e03469a85ad8",
+   "in_repository": true,
+   "note": "Sample data: no KAP notification id or source document, so the numbers cannot be verified."
+  },
+  {
+   "id": "news_events",
+   "memory_type": "temporal",
+   "path": "data/news/news_events.csv",
+   "description": "Timestamped news metadata (headline, source, URL; no article body).",
+   "source": {
+    "name": "Team-collected, legally accessible sources",
+    "url": null
+   },
+   "publication_rule": "Published at or after 18:00 (BIST close) -> usable the next day.",
+   "rows": 0,
+   "in_repository": true,
+   "note": "Empty: the tool (get_news_events) exists and returns a warning instead of inventing context."
+  },
+  {
+   "id": "speech_segments",
+   "memory_type": "temporal",
+   "path": "data/speech/speech_segments.csv",
+   "description": "Short timestamped transcript segments of instructor-approved videos.",
+   "source": {
+    "name": "Instructor-approved public videos",
+    "url": null
+   },
+   "rows": 0,
+   "available": false,
+   "in_repository": false,
+   "note": "No file: the tool (get_speech_features) exists and returns a warning instead of inventing commentary."
+  },
+  {
+   "id": "decision_logs",
+   "memory_type": "episodic",
+   "path": "data/analysis_logs/analysis_<id>.json",
+   "description": "Past analyses: question, plan, evidence, answer, raw model draft, guard violations, trace; SHA-256 sealed (src/harness/replay.py).",
+   "source": {
+    "name": "Produced by the agent",
+    "url": null
+   },
+   "in_repository": false,
+   "note": "Written by the agent; not read back into the model's prompt."
+  }
+ ],
+ "procedural_memory": {
+  "system_prompt": "You are the BIST Harness research assistant.\nWrite concise English research summaries using only supplied tool results and\ncommitted evidence. You may request an approved tool in the required JSON form\nwhen evidence is missing. Never invent numbers, sources, or tool results.\nNever use data after the stated as-of date. Do not issue BUY, SELL, or\nguaranteed-return advice. Use only the educational status vocabulary supplied\nby the harness.",
+  "tool_call_format": "When tools are needed, return exactly one JSON object and nothing else:\n{\"tool_calls\": [{\"tool_name\": \"<tool>\", \"arguments\": {...}}]}\nUse 1 to 4 calls. Dates are ISO (YYYY-MM-DD). Never request data after the analysis date. If the request cannot be answered safely, reply in prose that starts with \"Status: INVESTIGATE.\" or \"Status: ANALYSIS_UNSAFE.\".",
+  "tool_definitions": [
+   {
+    "name": "get_stock_history",
+    "arguments": "ticker, start_date, end_date",
+    "description": "Price history summary."
+   },
+   {
+    "name": "calculate_indicators",
+    "arguments": "ticker, start_date, end_date",
+    "description": "Latest SMA/RSI/Bollinger/KAMA/Supertrend/Ichimoku state."
+   },
+   {
+    "name": "detect_reversal_events",
+    "arguments": "ticker, event (BB_LOWER_TOUCH, BB_MIDDLE_TEST, BB_UPPER_TOUCH, RSI_OVERSOLD, RSI_OVERBOUGHT, SUPERTREND_BULLISH_FLIP, SUPERTREND_BEARISH_FLIP, KAMA_CROSS_UP, ICHIMOKU_CLOUD_BREAKOUT), start_date, end_date",
+    "description": "Event counts, forward returns, single vs combined conditions."
+   },
+   {
+    "name": "rank_sector_relative_strength",
+    "arguments": "tickers (list of 2+) or sector, horizon_days, start_date, end_date",
+    "description": "Peer lag gaps and historical catch-up hit rates."
+   },
+   {
+    "name": "test_weekday_pattern",
+    "arguments": "ticker, pattern (weekday, mon_tue_wed_down, consecutive_down, consecutive_up, large_down_day), start_date, end_date, oos_start_date",
+    "description": "Pattern statistics in-sample and out-of-sample."
+   },
+   {
+    "name": "get_fundamental_metrics",
+    "arguments": "ticker",
+    "description": "Point-in-time quarterly metrics."
+   },
+   {
+    "name": "calculate_fundamental_change",
+    "arguments": "ticker, start_date, end_date",
+    "description": "Quarterly changes and post-disclosure abnormal returns."
+   },
+   {
+    "name": "get_macro_context",
+    "arguments": "start_date, end_date, ticker (optional)",
+    "description": "USD/TRY, EUR/TRY, policy rate, CPI, Fed funds and FX link to a stock."
+   },
+   {
+    "name": "run_backtest",
+    "arguments": "ticker, start_date, end_date",
+    "description": "Cost-aware t+1 backtest."
+   },
+   {
+    "name": "check_data_quality",
+    "arguments": "ticker",
+    "description": "Mandatory quality gate."
+   }
+  ],
+  "tool_planning_system_prompt": "You are the BIST Harness research assistant.\nWrite concise English research summaries using only supplied tool results and\ncommitted evidence. You may request an approved tool in the required JSON form\nwhen evidence is missing. Never invent numbers, sources, or tool results.\nNever use data after the stated as-of date. Do not issue BUY, SELL, or\nguaranteed-return advice. Use only the educational status vocabulary supplied\nby the harness.\n\nWhen tools are needed, return exactly one JSON object and nothing else:\n{\"tool_calls\": [{\"tool_name\": \"<tool>\", \"arguments\": {...}}]}\nUse 1 to 4 calls. Dates are ISO (YYYY-MM-DD). Never request data after the analysis date. If the request cannot be answered safely, reply in prose that starts with \"Status: INVESTIGATE.\" or \"Status: ANALYSIS_UNSAFE.\".\n\nTools:\n- get_stock_history(ticker, start_date, end_date): Price history summary.\n- calculate_indicators(ticker, start_date, end_date): Latest SMA/RSI/Bollinger/KAMA/Supertrend/Ichimoku state.\n- detect_reversal_events(ticker, event (BB_LOWER_TOUCH, BB_MIDDLE_TEST, BB_UPPER_TOUCH, RSI_OVERSOLD, RSI_OVERBOUGHT, SUPERTREND_BULLISH_FLIP, SUPERTREND_BEARISH_FLIP, KAMA_CROSS_UP, ICHIMOKU_CLOUD_BREAKOUT), start_date, end_date): Event counts, forward returns, single vs combined conditions.\n- rank_sector_relative_strength(tickers (list of 2+) or sector, horizon_days, start_date, end_date): Peer lag gaps and historical catch-up hit rates.\n- test_weekday_pattern(ticker, pattern (weekday, mon_tue_wed_down, consecutive_down, consecutive_up, large_down_day), start_date, end_date, oos_start_date): Pattern statistics in-sample and out-of-sample.\n- get_fundamental_metrics(ticker): Point-in-time quarterly metrics.\n- calculate_fundamental_change(ticker, start_date, end_date): Quarterly changes and post-disclosure abnormal returns.\n- get_macro_context(start_date, end_date, ticker (optional)): USD/TRY, EUR/TRY, policy rate, CPI, Fed funds and FX link to a stock.\n- run_backtest(ticker, start_date, end_date): Cost-aware t+1 backtest.\n- check_data_quality(ticker): Mandatory quality gate.",
+  "allowed_statuses": [
+   "ANALYSIS_UNSAFE",
+   "FUNDAMENTAL_IMPROVEMENT_CANDIDATE",
+   "HOLD",
+   "INVESTIGATE",
+   "POTENTIAL_CATCH_UP_CANDIDATE",
+   "REJECT_SIGNAL",
+   "TECHNICAL_REVERSAL_CANDIDATE",
+   "WATCH"
+  ],
+  "state_tool_permissions": {
+   "CHECK_DATA_QUALITY": [
+    "check_data_quality"
+   ],
+   "RUN_SCENARIO": [
+    "calculate_fundamental_change",
+    "calculate_indicators",
+    "detect_reversal_events",
+    "find_support_resistance",
+    "get_fundamental_metrics",
+    "get_index_history",
+    "get_macro_context",
+    "get_stock_history",
+    "rank_sector_relative_strength",
+    "run_backtest",
+    "test_weekday_pattern"
+   ],
+   "LOAD_FUNDAMENTALS": [
+    "calculate_fundamental_change",
+    "get_fundamental_metrics"
+   ],
+   "LOAD_MACRO_CONTEXT": [
+    "get_macro_context"
+   ],
+   "LOAD_CONTEXT": [
+    "get_news_events",
+    "get_speech_features"
+   ],
+   "PREVIEW_STRATEGIES": [
+    "compare_strategy_variants"
+   ],
+   "RUN_BACKTEST": [
+    "run_backtest"
+   ]
+  },
+  "code": {
+   "prompts": "src/llm/training_data.py",
+   "permissions": "src/harness/permissions.py",
+   "router": "src/llm/tool_loop.py",
+   "guard": "src/llm/agent.py"
+  }
+ }
+}

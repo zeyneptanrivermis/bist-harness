@@ -27,7 +27,8 @@ button.go:disabled{opacity:.5;cursor:wait}
 .top{display:flex;justify-content:space-between;align-items:center;margin:32px 0 0}
 .top .lab{margin:0}
 button.link{font:inherit;font-size:12px;border:0;background:none;color:var(--muted);cursor:pointer;text-decoration:underline}
-.status{font-size:13px;font-weight:600;letter-spacing:.02em;margin:0 0 8px}
+.status{font-size:13px;font-weight:600;letter-spacing:.02em;margin:0 0 2px}
+.src{font-size:12px;color:var(--muted);margin:0 0 8px}
 .ans{white-space:pre-wrap;line-height:1.7;margin:0 0 24px}
 .note{font-size:13px;color:var(--warn);border-left:3px solid var(--warn);padding:2px 0 2px 12px;margin:0 0 20px}
 section{margin:0 0 24px}
@@ -64,7 +65,7 @@ dialog::backdrop{background:rgba(0,0,0,.45)}
 <body>
 <main>
 <h1>BIST research assistant</h1>
-<p class="sub">Analysis date 10 Sep 2026 · local model, no cloud API</p>
+<p class="sub">Analysis date {{AS_OF}} · local model, no cloud API</p>
 <span class="lab">Examples</span>
 <div class="samples" id="tabs"></div>
 <label class="lab" for="q">Question</label>
@@ -76,12 +77,14 @@ dialog::backdrop{background:rgba(0,0,0,.45)}
 <template id="tpl"><article class="out" aria-live="polite">
 <p class="q"></p>
 <p class="status"></p>
+<p class="src"></p>
 <p class="ans"></p>
 <p class="note hide"></p>
 <section><span class="lab">Tools called</span><div class="chips"></div></section>
 <section><span class="lab">Evidence</span><dl class="ev"></dl></section>
 <section class="ckbox"><span class="lab">Guard checks</span><div class="ck"></div></section>
-<details class="hide"><summary>Model draft before the guard</summary><pre></pre></details>
+<details class="hide raw"><summary>Model's first draft (failed the guard)</summary><pre></pre></details>
+<details class="hide retry"><summary>Model's rewrite after the guard's feedback</summary><pre></pre></details>
 <p><button class="trace hide" type="button">Run trace</button></p>
 </article></template>
 <dialog id="tr" aria-labelledby="trt"><div class="dh"><b id="trt">Run trace</b><button class="link" id="trx" type="button">Close</button></div><div class="db" id="trb"></div></dialog>
@@ -90,6 +93,11 @@ dialog::backdrop{background:rgba(0,0,0,.45)}
 <script>
 var $=function(id){return document.getElementById(id)};
 var COLORS={INVESTIGATE:"warn",WATCH:"warn",REJECT_SIGNAL:"bad",ANALYSIS_UNSAFE:"bad",HARD_BLOCK:"bad",INVALID_TOOL_REQUEST:"bad",TECHNICAL_REVERSAL_CANDIDATE:"ok",POTENTIAL_CATCH_UP_CANDIDATE:"ok"};
+var SOURCES={model:"the model",model_retry:"the model (its own rewrite after the guard's feedback)",harness_template:"the harness (deterministic evidence summary, not model output)",harness_refusal:"the harness (safety refusal, not model output)"};
+var NOTES={
+  model_retry:function(p){return "The model's first draft broke a rule ("+p.violations.join(", ")+"). The guard sent the findings back and the answer above is the model's own rewrite, which passed every check."},
+  harness_template:function(p){return "Not model output: the model's draft ("+p.violations.join(", ")+") and its rewrite ("+(p.retry_violations||[]).join(", ")+") both broke a rule, so the harness shows its deterministic summary of the tool evidence instead. Both model texts are below."}
+};
 function el(tag,cls,text){var e=document.createElement(tag);if(cls)e.className=cls;if(text!==undefined)e.textContent=text;return e}
 var KEY="bist-chat-history",MAX=20,hist=[];
 try{hist=JSON.parse(localStorage.getItem(KEY)||"[]")}catch(x){}
@@ -119,12 +127,15 @@ function render(p){
   q(".q").textContent=p.question;
   var s=q(".status");s.textContent=p.status;s.style.color="var(--"+(COLORS[p.status]||"text2")+")";
   q(".ans").textContent=p.answer;
-  if(p.guard_replaced){var note=q(".note");note.classList.remove("hide");note.textContent="The guard replaced the model draft with the deterministic summary ("+p.violations.join(", ")+").";}
+  var src=p.answer_source||(p.guard_replaced?"harness_template":"model"); // history saved before answer_source existed
+  q(".src").textContent="Answer written by: "+SOURCES[src];
+  var why=NOTES[src];if(why){var note=q(".note");note.classList.remove("hide");note.textContent=why(p);}
   p.tools.forEach(function(t){q(".chips").appendChild(el("span","chip",t))});
   p.evidence.forEach(function(x){q(".ev").appendChild(el("dt","",x.id));var d=el("dd","",x.label);if(x.note)d.appendChild(el("small","",x.note));q(".ev").appendChild(d)});
   p.checks.forEach(function(x){q(".ck").appendChild(el("span",x.ok?"ok":"no",(x.ok?"✓ ":"✗ ")+x.label))});
   if(!p.checks.length)q(".ckbox").classList.add("hide");
-  if(p.raw_answer){q("details").classList.remove("hide");q("pre").textContent=p.raw_answer}
+  if(p.raw_answer){q("details.raw").classList.remove("hide");q("details.raw pre").textContent=p.raw_answer}
+  if(p.retry_answer){q("details.retry").classList.remove("hide");q("details.retry pre").textContent=p.retry_answer}
   if(p.trace){var tb=q("button.trace");tb.classList.remove("hide");tb.onclick=function(){openTrace(p)}} // entries saved before traces existed have none
   return n;
 }
